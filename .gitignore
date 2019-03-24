@@ -1,9 +1,17 @@
+geoip/COPYRIGHT.txt
+geoip/GeoLite2-ASN.mmdb
+geoip/GeoLite2-City.mmdb
+geoip/GeoLite2-Country.mmdb
+geoip/LICENSE.txt
+geoip/README.txt
+
+
 *.py[cod]
 
-# C extensions
+#Cextensions
 *.so
 
-# Packages
+#Packages
 *.egg
 *.egg-info
 dist
@@ -19,24 +27,24 @@ lib
 lib64
 __pycache__
 
-# Installer logs
+#Installerlogs
 pip-log.txt
 
-# Unit test / coverage reports
+#Unittest/coveragereports
 .coverage
 .tox
 nosetests.xml
 
-# Translations
+#Translations
 *.mo
 
-# Mr Developer
+#MrDeveloper
 .mr.developer.cfg
 .project
 .pydevproject
 
-# vim 
+#vim
 *.swp
 
-# virtualenv
+#virtualenv
 env
