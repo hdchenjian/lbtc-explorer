@@ -4,12 +4,12 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='v8',
+    name='lbtc-v8',
     version='0.1',
     url='',
     license='MIT',
     author='Chen Jian',
-    author_email='chenjian@reconova.com',
+    author_email='hdchenjian@163.com',
     description='mysql engine',
     packages=find_packages(),
     include_package_data=False,

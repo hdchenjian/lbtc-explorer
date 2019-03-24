@@ -1,0 +1,60 @@
+<!doctype html>
+<head>
+  <title>Lbtc nodes</title>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="http://cdn.staticfile.org/twitter-bootstrap/3.2.0/css/bootstrap.css" rel="stylesheet" />
+  <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.min.js"></script>
+  <style>
+    .navigation_color {background: #00ff00;}
+  </style>
+</head>
+
+<body>
+  <div class="container-fluid">
+    <nav class="navbar navbar-inverse" role="navigation">
+      <ul class="nav navbar-nav">
+        <li class="active" id="alg_color_id"><a href="{{ url_for('nodes') }}" >Lbtc nodes</a></li>
+      </ul>
+
+    </nav>
+  </div>
+
+  <div class="container-fluid">
+
+    {% with messages = get_flashed_messages(category_filter=['success']) %}
+    {% if messages %}
+    <div class="alert alert-success" role="alert">
+      <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+
+    {% with messages = get_flashed_messages(category_filter=['error']) %}
+    {% if messages %}
+    <div class="alert alert-danger" role="alert">
+      <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block body %}
+    {% endblock %}
+
+    <script src="http://cdn.staticfile.org/twitter-bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="http://cdn.staticfile.org/twitter-bootstrap/3.2.0/js/modal.min.js"></script>
+
+    {% block js %}
+    {% endblock %}
+</body>

@@ -1,0 +1,9 @@
+flask
+fluent-logger
+gunicorn
+requests
+WTForms
+supervisor
+arrow==0.8.0
+PyMySQL==0.6.2
+SQLAlchemy==0.9

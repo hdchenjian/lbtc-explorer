@@ -416,6 +416,7 @@ class Connection(object):
             msgs[:] = sorted(msgs, key=itemgetter('command'), reverse=True)
         return msgs
 
+    
 if __name__ == '__main__':
     port = 9333
     host = '120.79.161.218'

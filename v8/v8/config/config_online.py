@@ -5,9 +5,9 @@ DEBUG = False
 
 MYSQLS = {
     'base': {
-        'db': 'base',
-        'user': 'cello',
-        'passwd': 'sxfMd4_f12508c',
+        'db': 'lbtcnode',
+        'user': 'lbtc',
+        'passwd': 'sxfMd4_f12508ccsdfdf',
         'host': 'localhost',
         'port': 3306,
     },
