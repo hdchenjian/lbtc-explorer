@@ -3,43 +3,38 @@
 
 #curl --user luyao:123456  --data-binary '{"jsonrpc":"1.0","id":"curltest","method": "getinfo","params":[]}' -H 'content-type:text/plain;' http://127.0.0.1:8332/
 
-import cPickle
-'''
-f = open('all_balance.txt', 'r+')
-all_balance = cPickle.load(f)
-f.close()
-print all_balance
-'''
-
-'''
-f = open('/home/luyao/git/blockparser/allBalances.txt', 'rU')
-all_balance = {}
-for line in f.readlines():
-    line = line.strip('\n')
-    try:
-        all_balance[line[26:]] = float(line[0:26])
-    except:
-        print 'convert to float error:', line, '|'
-f.close()
-print all_balance
-f = open('all_balance.txt', 'wb')
-cPickle.dump(all_balance, f)
-f.close
-'''
-
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+import pprint
 
-rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'r5ysVC3MdNl2S8ZBKoqLNoNSQoRQFAK9jFu1W0ePySo='))
+rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
 try:
-    print(rpc_connection.help())
-    print('\n\n')
+    #print(rpc_connection.help())
+    #print(rpc_connection.getmemoryinfo())
     #print(rpc_connection.getinfo())
-    print(rpc_connection.getblockchaininfo())
-    #print(rpc_connection.getnewaddress("account1"))
-    print(rpc_connection.getaddressesbylabel("account1"))  # 1BcNXePEwhJHDrvmC6xBszrzDsrcJ6wope
-    print(rpc_connection.getbalance())
-    getbalance('16ftSEQ4ctQFDtVZiUBusQUjRrGhM3JYwe')
-    #print(rpc_connection.setgenerate(True))
+    #print(rpc_connection.getmempoolinfo())
+    #print(rpc_connection.getrawmempool())
+    '''
+    delegates = rpc_connection.listdelegates()
+    pprint.pprint(delegates)
+    print len(delegates)
+    '''
+    delegateName = 'zmz'
+    #print(rpc_connection.getdelegatefunds(delegateName))
+    #print(rpc_connection.getdelegatevotes(delegateName))
+
+    
+    #print(rpc_connection.getmininginfo())
+    #print(rpc_connection.getnetworkinfo())
+    peerinfo = rpc_connection.getpeerinfo()
+    print(len(peerinfo), peerinfo)
+    #print(rpc_connection.getnettotals())
+    
+    #pprint.pprint(rpc_connection.getinfo())
+    #pprint.pprint(rpc_connection.getblockchaininfo())
+    #pprint.pprint(rpc_connection.getnewaddress("account1"))
+    #print(rpc_connection.getaddressesbylabel("account1"))  # 1BcNXePEwhJHDrvmC6xBszrzDsrcJ6wope
+    #pprint.pprint(rpc_connection.getbalance())
+    #pprint.pprint(rpc_connection.setgenerate(True))
 except Exception as e:
     print unicode(e)
 #print(rpc_connection.getaccount('1ZJaSNGw37MPYejr9uWzx9ZLyhvFt9b2C'))
