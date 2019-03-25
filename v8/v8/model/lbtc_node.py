@@ -18,6 +18,8 @@ class LbtcNode(BaseModel):
     network = Column(Integer)
     height = Column(Integer)
     pix = Column(Float)
+    latitude = Column(Float)
+    longitude = Column(Float)
     status = Column(Integer)
     deleted = Column(Integer)
     create_time = Column(DateTime)

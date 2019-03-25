@@ -19,7 +19,10 @@
         <tr>
           <td>{{ _node["id"] }}</td>
           <td>{{ _node["ip"] }}</td>
-	  <td>{{ _node["user_agent"] }}</td>
+	  <td>{{ _node["user_agent"] }}
+            <br>
+            <span class="text-muted">{{ _node["services"] }}</span>
+          </td>
 	  <td>{{ _node["height"] }}</td>
           <td>{{ _node["location"] }}</td>
 	  <td>{{ _node["network"] }}</td>

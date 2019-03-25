@@ -22,13 +22,13 @@ app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
 
 
-@app.route("/")
+@app.route("/lbtc/")
 def index():
     return redirect(url_for("nodes"))
 
 
 
-@app.route('/nodes', methods=["GET"])
+@app.route('/lbtc/nodes', methods=["GET"])
 def nodes():
     all_node = get_all_node()
     count = 1
@@ -108,4 +108,4 @@ def teardown_request(exception):
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5025, debug=False)
+    app.run(host='0.0.0.0', port=5025, debug=False)

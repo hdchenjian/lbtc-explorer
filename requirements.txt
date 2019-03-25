@@ -7,3 +7,4 @@ supervisor
 arrow==0.8.0
 PyMySQL==0.6.2
 SQLAlchemy==0.9
+geoip2

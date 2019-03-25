@@ -39,7 +39,6 @@ Reference: https://en.bitcoin.it/wiki/Protocol_specification
 '''
 
 
-import gevent
 import socket
 import socks
 import time
@@ -366,7 +365,6 @@ class Connection(object):
         data = self.recv(length=length)
         #print('get_messages ' + commands[0] + ', want ' + str(length) + ' get ' + str(len(data)))
         while len(data) > 0:
-            gevent.sleep(0)
             try:
                 (msg, data) = deserialize_msg(data)
             except PayloadTooShortError:
@@ -400,7 +398,7 @@ class Connection(object):
     def getaddr(self, block=True):
         if not block:
             return None
-        gevent.sleep(5)
+        time.sleep(5)
         msgs = self.get_messages(commands=["addr"])
         return msgs
 
@@ -409,7 +407,7 @@ class Connection(object):
         self.send(msg)
 
         # <<< [version 124 bytes] [verack 24 bytes]
-        gevent.sleep(3)
+        time.sleep(3)
         msgs = self.get_messages(length=148, commands=["version", "verack"])
         
         if len(msgs) > 0:
