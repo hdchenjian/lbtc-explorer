@@ -7,7 +7,7 @@ import traceback
 
 from flask import Flask, g, request, jsonify
 
-from v8.engine.handlers.node_handler import get_all_node, add_node, update_node
+from v8.engine.handlers.node_handler import get_all_node
 from v8.config import config
 
 from config import V8_CONFIG, DEBUG

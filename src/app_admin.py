@@ -9,9 +9,9 @@ import traceback
 from flask import Flask, g, request, jsonify, session, render_template, \
     flash, redirect, url_for
 
-from v8.engine.handlers.node_handler import get_all_node, add_node, update_node
+from v8.engine.handlers.node_handler import get_all_node
 
-from config import V8_CONFIG, DEBUG
+from config import V8_CONFIG
 from v8.config import config
 config.from_object(V8_CONFIG)  # noqa
 import form
@@ -108,4 +108,4 @@ def teardown_request(exception):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5025, debug=DEBUG)
+    app.run(host='127.0.0.1', port=5025, debug=False)

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# grant all privileges on *.* to lbtc@'%' identified by 'sxfMd4_f12508ccsdfdf';
 DEBUG = False
 
 MYSQLS = {

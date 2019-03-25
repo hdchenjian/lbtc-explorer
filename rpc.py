@@ -3,16 +3,10 @@
 
 #curl --user luyao:123456  --data-binary '{"jsonrpc":"1.0","id":"curltest","method": "getinfo","params":[]}' -H 'content-type:text/plain;' http://127.0.0.1:8332/
 
-from v8.config import config, config_test, config_online
-from v8.engine.handlers.node_handler import get_all_node, add_node, update_node
+from v8.config import config, config_online
+from v8.engine.handlers.node_handler import get_all_node, add_or_update_node, update_node
 
-test = True
-if test:
-    config.from_object(config_test)
-    print("test environment")
-else:
-    config.from_object(config_online)
-    print("online environment")
+config.from_object(config_online)
 
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 import pprint
@@ -21,7 +15,7 @@ rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DON
 try:
     #print(rpc_connection.help())
     #print(rpc_connection.getmemoryinfo())
-    #print(rpc_connection.getinfo())
+    print(rpc_connection.getinfo())
     #print(rpc_connection.getmempoolinfo())
     #print(rpc_connection.getrawmempool())
     '''
@@ -37,17 +31,23 @@ try:
     #print(rpc_connection.getmininginfo())
     #print(rpc_connection.getnetworkinfo())
     peerinfo = rpc_connection.getpeerinfo()
+    print peerinfo[0]
     print(len(peerinfo))
-    for item in peerinfo:
-        ip = item['addr']
-        user_agent = '/Satoshi:0.14.2/'
+    for _peer in peerinfo:
+        ip = _peer['addr']
+        user_agent = _peer['subver']
+        services = _peer['services']
+        if services == 13:
+            services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN'
+        else:
+            services = str(services) + 'todo'
         location = 'China'
         network = 'Hangzhou Alibaba Advertising Co.,Ltd.:AS37963'
         height = 4608395
         pix = 0.5
         status = 1
         try:
-            add_node(ip, user_agent, location, network, height, pix, status)
+            add_or_update_node(ip, user_agent, location, network, height, pix, status)
         except Exception as e:
             print(e)
     #print(rpc_connection.getnettotals())

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS `node` (
   `height` INT NOT NULL DEFAULT '0' COMMENT 'block height',
   `pix` float NOT NULL DEFAULT '0' COMMENT 'calculated properties and network metrics every 24 hours',
   `status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '0: offline, 1: online',
+  `deleted` tinyint(4) NOT NULL DEFAULT '0' COMMENT '0: normal, 1: deleted',
   `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `update_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   PRIMARY KEY (`id`),

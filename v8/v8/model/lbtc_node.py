@@ -19,6 +19,7 @@ class LbtcNode(BaseModel):
     height = Column(Integer)
     pix = Column(Float)
     status = Column(Integer)
+    deleted = Column(Integer)
     create_time = Column(DateTime)
     update_time = Column(DateTime)
     
