@@ -1,10 +1,9 @@
-geoip/COPYRIGHT.txt
-geoip/GeoLite2-ASN.mmdb
-geoip/GeoLite2-City.mmdb
-geoip/GeoLite2-Country.mmdb
-geoip/LICENSE.txt
-geoip/README.txt
-
+src/geoip/COPYRIGHT.txt
+src/geoip/GeoLite2-ASN.mmdb
+src/geoip/GeoLite2-City.mmdb
+src/geoip/GeoLite2-Country.mmdb
+src/geoip/LICENSE.txt
+src/geoip/README.txt
 
 *.py[cod]
 

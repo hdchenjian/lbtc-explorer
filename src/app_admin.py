@@ -27,15 +27,48 @@ def index():
     return redirect(url_for("nodes"))
 
 
+def node_cmp(a, b):
+    if a['height'] > b['height']:
+        return -1
+    elif a['height'] == b['height']:
+        port_a = int(a['ip'].split(':')[1])
+        port_b = int(b['ip'].split(':')[1])
+        if port_a == 9333:
+            return -1
+        elif port_b == 9333:
+            return 1
+        else:
+            return 0
+    else:
+        return 1
 
 @app.route('/lbtc/nodes', methods=["GET"])
 def nodes():
-    all_node = get_all_node()
-    count = 1
+    all_node = get_all_node(2)
+    '''
+    valid_node = []
     for _node in all_node:
+        if _node['ip'].endswith(':9333'):
+            valid_node.append(_node)
+    '''
+    valid_node = sorted(all_node, cmp=node_cmp)
+    count = 1
+    for _node in valid_node:
+        if '|' in _node['user_agent']:
+            _node['user_agent'], _node['services'] = _node['user_agent'].split('|')
+        else:
+            _node['services'] = ''
+        if '|' in _node['location']:
+            _node['location'], _node['timezone'] = _node['location'].split('|')
+        else:
+            _node['timezone'] = ''
+        if '|' in _node['network']:
+            _node['network'], _node['asn'] = _node['network'].split('|')
+        else:
+            _node['asn'] = ''
         _node['id'] = count
         count += 1
-    return render_template("index.html", all_node=all_node)
+    return render_template("index.html", all_node=valid_node)
         
 
 @app.before_request

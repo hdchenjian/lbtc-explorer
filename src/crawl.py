@@ -13,7 +13,8 @@ from decorators import singleton
 from connection import Connection
 
 from v8.config import config, config_online
-from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, delete_node
+from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, delete_node, \
+    get_node_by_ip
 
 config.from_object(config_online)
 
@@ -56,7 +57,6 @@ def find_node(node, max_height):
     to_addr = (host, int(port))
     to_services = 1  # NODE_NETWORK
     conn = Connection(to_addr, to_services=to_services)
-
     try:
         conn.open()
         handshake_msgs = conn.handshake()
@@ -75,38 +75,44 @@ def find_node(node, max_height):
             services + '(' + str(version_msg['services']) + ')'
         
         addr_msgs = conn.getaddr()
-        print addr_msgs
+        if len(addr_msgs) > 1:
+            print('get new node list', addr_msgs)
+        else:
+            pass
+            #print 'addr_msgs', addr_msgs
     except Exception as e:
-        print(node['ip'], e)
-        if max_height - node['height'] > 3 * 3600 or \
-           (max_height - node['height'] > 100 and ':9333' not in node['ip']):
-            print(node['ip'], 'long time offline, delete it')
+        #print(node['ip'], e)
+        if max_height - node['height'] > 3600 or \
+           (max_height - node['height'] > 300 and not node['ip'].endswith(':9333')):
+            #print(node['ip'], 'long time offline, delete it')
             delete_node(node['ip'])
         return
-    for item in addr_msgs[0]['addr_list']:
-        node_by_ip = None
-        ip = item['ipv4'] + ':' + str(item['port'])
-        if ip == node['ip']:
-            node_info = {'user_agent': user_agent,
-                         'height': height}
-        else:
-            node_by_ip = get_node_by_ip(ip)
-            
-            if item['services'] == 13:
-                user_agent_other_node = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN (13)'
+    for reponse in addr_msgs:
+        for item in reponse['addr_list']:
+            node_by_ip = None
+            ip = item['ipv4'] + ':' + str(item['port'])
+            if ip == node['ip']:
+                node_info = {'user_agent': user_agent,
+                             'height': height}
             else:
-                user_agent_other_node = str(13)
-            node_info = {
-                'user_agent': user_agent_other_node,
-            }
-        if ((ip == node['ip'] and (not node['location'] or not node['network'])) or
-            (not node_by_ip or (not node_by_ip['location'] or node_by_ip['network']))):
-            resolve_result = resolve_address(item['ipv4'])
-            if resolve_result:
-                node_info['location'] = resolve_result[0]
-                node_info['network'] = resolve_result[1]
-        update_or_add_node(ip, node_info)
-
+                node_by_ip = get_node_by_ip(ip)
+                
+                if item['services'] == 13:
+                    user_agent_other_node = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN (13)'
+                else:
+                    user_agent_other_node = str(13)
+                node_info = {
+                    'user_agent': user_agent_other_node,
+                    'height': max_height,
+                }
+            if ((ip == node['ip'] and (not node['location'] or not node['network'])) or
+                (not node_by_ip or (not node_by_ip['location'] or node_by_ip['network']))):
+                resolve_result = resolve_address(item['ipv4'])
+                if resolve_result:
+                    node_info['location'] = resolve_result[0]
+                    node_info['network'] = resolve_result[1]
+            update_or_add_node(ip, node_info)
+    
 
 @singleton('/tmp/crawl_all_node.pid')
 def crawl_all_node():
@@ -116,7 +122,7 @@ def crawl_all_node():
     if all_node:
         max_height = all_node[0]['height']
     for _node in all_node:
-        print('start', _node['ip'])
+        #print('start', _node['ip'])
         t = threading.Thread(target=find_node, args=(_node, max_height))
         t.start()
         tasks.append(t)

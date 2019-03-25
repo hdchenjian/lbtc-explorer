@@ -24,8 +24,14 @@
             <span class="text-muted">{{ _node["services"] }}</span>
           </td>
 	  <td>{{ _node["height"] }}</td>
-          <td>{{ _node["location"] }}</td>
-	  <td>{{ _node["network"] }}</td>
+          <td>{{ _node["location"] }}
+            <br>
+            <span class="text-muted">{{ _node["timezone"] }}</span>
+          </td>
+	  <td>{{ _node["network"] }}
+            <br>
+            <span class="text-muted">{{ _node["asn"] }}</span>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

@@ -396,6 +396,9 @@ class Connection(object):
 
 
     def getaddr(self, block=True):
+        msg = serialize_msg(command="getaddr")
+        self.send(msg)
+
         if not block:
             return None
         time.sleep(5)
@@ -418,7 +421,8 @@ class Connection(object):
 if __name__ == '__main__':
     port = 9333
     host = '120.79.161.218'
-    host = '47.244.9.131'
+    host = '101.132.70.217'
+    host = '159.138.28.122'
     to_addr = (host, port)
     to_services = 1  # NODE_NETWORK
     conn = Connection(to_addr, to_services=to_services)
