@@ -2,7 +2,8 @@
 # encoding: utf-8
 
 from v8.config import config, config_online
-from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, get_node_by_ip
+from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, get_node_by_ip, \
+    add_not_valid_node
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 from crawl import resolve_address
@@ -35,7 +36,9 @@ def update_rpc_node():
                     node_info['location'] = resolve_result[0]
                     node_info['network'] = resolve_result[1]
             #print node_info
-            update_or_add_node(ip, node_info)
+
+            update_or_add_node(ip, node_info) # comment this filter out node that can not connect to
+            #add_not_valid_node(ip)  # use this filter out node that can not connect to
     except Exception as e:
         print unicode(e)
     

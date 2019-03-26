@@ -11,7 +11,7 @@ SET collation_connection = utf8_general_ci;
 SET collation_server = utf8_general_ci;
 
 CREATE TABLE IF NOT EXISTS `node` (
-  `id` INT NOT NULL AUTO_INCREMENT, 
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT, 
   `ip` varchar(64) NOT NULL DEFAULT '' COMMENT 'ip and port',
   `user_agent` varchar(255) NOT NULL DEFAULT '' COMMENT 'client version',
   `height` INT NOT NULL DEFAULT '0' COMMENT 'block height',
@@ -24,6 +24,15 @@ CREATE TABLE IF NOT EXISTS `node` (
   `deleted` tinyint(4) NOT NULL DEFAULT '0' COMMENT '0: normal, 1: deleted',
   `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `update_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `lbtcnode_node_ip` (`ip`)
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `node_not_valid` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT, 
+  `ip` varchar(64) NOT NULL DEFAULT '' COMMENT 'ip and port',
+  `count` INT NOT NULL DEFAULT '0' COMMENT 'connection try times', 
+  `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   PRIMARY KEY (`id`),
   UNIQUE KEY `lbtcnode_node_ip` (`ip`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;

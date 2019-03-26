@@ -7,7 +7,7 @@ import datetime
 from sqlalchemy.sql import func
 
 from v8.engine import db_conn
-from v8.model.lbtc_node import LbtcNode
+from v8.model.lbtc_node import LbtcNode, NodeNotValid
 from v8.engine.util import model_to_dict
 
 
@@ -52,13 +52,13 @@ def get_all_node(node_status, deleted_node=1):
 
 
 def delete_node(ip):
-    """Get node info.
+    """delete node.
 
     Args:
         ip (string): node ip
 
     Returns:
-        dict of node info or None.
+        delete count or None.
     """
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
         count = 0
@@ -69,49 +69,6 @@ def delete_node(ip):
             session.rollback()
             raise
         return count
-
-
-'''
-def add_or_update_node(ip, user_agent, location, network, height, pix, status):
-    """Add a node, update a node when node exist.
-
-    Args:
-        ip (string): ip and port, for example: 120.78.147.20:9333
-        user_agent (string): client version
-        location (string): host location
-        network (string): network status
-        height (int): block height
-        pix (float): calculated properties and network metrics every 24 hours
-        status (int): 0: offline, 1: online
-
-    Returns:
-        dict of node info or None.
-    """
-    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
-        _node = session.query(LbtcNode).filter(LbtcNode.ip == ip).first()
-        time_now = datetime.datetime.now()
-        try:
-            if not _node:
-                _node = LbtcNode()
-                _node.ip = ip
-                _node.create_time = time_now
-                session.add(_node)
-                _node.deleted = 0
-                _node.latitude = latitud
-                _node.longitude = longitude
-            _node.user_agent = user_agent
-            _node.location = location
-            _node.network = network
-            _node.height = height
-            _node.pix = pix
-            _node.status = status
-            _node.update_time = time_now
-            session.commit()
-        except:
-            session.rollback()
-            raise
-        return model_to_dict(_node)
-'''
 
 
 def update_or_add_node(ip, node_info):
@@ -159,3 +116,77 @@ def update_or_add_node(ip, node_info):
             session.rollback()
             raise
         return model_to_dict(_node)
+
+
+def add_not_valid_node(ip):
+    """Add a node.
+
+    Args:
+        ip (string): ip and port, for example: 120.78.147.20:9333
+
+    Returns:
+        dict of node info or None.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        try:
+            _node = NodeNotValid()
+            _node.ip = ip
+            _node.count = 0
+            _node.create_time = datetime.datetime.now()
+            session.add(_node)
+            session.commit()
+            return model_to_dict(_node)
+        except:
+            session.rollback()
+            return None
+
+
+def add_not_valid_node_connect_try_times(ip):
+    """Update node info
+
+    Args:
+        ip (string): ip and port, for example: 120.78.147.9333
+        
+    Returns:
+        dict of node info or None.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        _node = session.query(NodeNotValid).filter(NodeNotValid.ip == ip).first()
+        _node.count += 1
+        session.commit()
+        return model_to_dict(_node)
+
+
+def delete_not_valid_node(node_ip):
+    """delete node.
+
+    Args:
+        node_ip (string): node ip
+
+    Returns:
+        delete count or None.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        count = 0
+        try:
+            count = session.query(NodeNotValid).filter(NodeNotValid.ip == node_ip).delete()
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        return count
+
+
+def get_all_not_valid_node():
+    """Get node info.
+
+    Args:
+
+    Returns:
+        list of node.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        ret = []
+        for _node in session.query(NodeNotValid):
+            ret.append(model_to_dict(_node))
+        return ret

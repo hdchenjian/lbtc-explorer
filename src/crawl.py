@@ -14,7 +14,8 @@ from connection import Connection
 
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, delete_node, \
-    get_node_by_ip
+    get_node_by_ip, add_not_valid_node_connect_try_times, add_not_valid_node, \
+    delete_not_valid_node, get_all_not_valid_node
 
 config.from_object(config_online)
 
@@ -79,16 +80,24 @@ def find_node(node, max_height):
             print('get new node list', addr_msgs)
         else:
             pass
-            #print 'addr_msgs', addr_msgs
     except Exception as e:
         #print(node['ip'], e)
-        if max_height - node['height'] > 3600 or \
-           (max_height - node['height'] > 300 and not node['ip'].endswith(':9333')):
-            #print(node['ip'], 'long time offline, delete it')
-            delete_node(node['ip'])
+        if node['height'] != -1:
+            if max_height - node['height'] > 3000 or \
+               (max_height - node['height'] > 1000 and not node['ip'].endswith(':9333')):
+                #print(node['ip'], 'long time offline, delete it')
+                delete_node(node['ip'])
+        else:
+            if node['count'] > 10:
+                delete_not_valid_node(node['ip'])
+            else:
+                add_not_valid_node_connect_try_times(node['ip'])
         return
-    for reponse in addr_msgs:
-        for item in reponse['addr_list']:
+    for response in addr_msgs:
+        for item in response['addr_list']:
+            if not item['ipv4']:
+                print('error ipv4 is empty: ', item)
+                continue
             node_by_ip = None
             ip = item['ipv4'] + ':' + str(item['port'])
             if ip == node['ip']:
@@ -96,7 +105,6 @@ def find_node(node, max_height):
                              'height': height}
             else:
                 node_by_ip = get_node_by_ip(ip)
-                
                 if item['services'] == 13:
                     user_agent_other_node = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN (13)'
                 else:
@@ -112,7 +120,25 @@ def find_node(node, max_height):
                     node_info['location'] = resolve_result[0]
                     node_info['network'] = resolve_result[1]
             update_or_add_node(ip, node_info)
-    
+            '''
+            node_by_ip = None
+            ip = item['ipv4'] + ':' + str(item['port'])
+            if ip == node['ip']:
+                node_info = {'user_agent': user_agent,
+                             'height': height}
+                if (not node['location'] or not node['network']):
+                    resolve_result = resolve_address(item['ipv4'])
+                    if resolve_result:
+                        node_info['location'] = resolve_result[0]
+                        node_info['network'] = resolve_result[1]
+                update_or_add_node(ip, node_info)
+                delete_not_valid_node(node['ip'])
+            else:
+                node_by_ip = get_node_by_ip(ip)
+                if not node_by_ip:
+                    add_not_valid_node(ip)
+            '''
+
 
 @singleton('/tmp/crawl_all_node.pid')
 def crawl_all_node():
@@ -121,6 +147,7 @@ def crawl_all_node():
     max_height = None
     if all_node:
         max_height = all_node[0]['height']
+
     for _node in all_node:
         #print('start', _node['ip'])
         t = threading.Thread(target=find_node, args=(_node, max_height))
@@ -129,7 +156,21 @@ def crawl_all_node():
         time.sleep(0.05)
     for t in tasks:
         t.join()
-
+'''
+    tasks_not_valid = []
+    all_not_valid_node = get_all_not_valid_node()
+    for _node in all_not_valid_node:
+        #print('start', _node['ip'])
+        _node['height'] = -1
+        _node['location'] = ''
+        _node['network'] = ''
+        t = threading.Thread(target=find_node, args=(_node, max_height))
+        t.start()
+        tasks_not_valid.append(t)
+        time.sleep(0.05)
+    for t in tasks_not_valid:
+        t.join()
+'''
 
 if __name__ == '__main__':
     crawl_all_node()

@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from v8.config import config, config_online
-from v8.engine.handlers.node_handler import get_all_node, update_or_add_node
+from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, \
+    add_not_valid_node, delete_not_valid_node, get_all_not_valid_node
 
 config.from_object(config_online)
 
@@ -28,5 +29,13 @@ def test_node():
     print('nodes num: ', len(get_all_node()))
 
 
+def test_not_valid_node():
+    add_not_valid_node('127.0.0.1:9333')
+    all_node = get_all_not_valid_node()
+    print(all_node)
+    delete_not_valid_node(all_node[0]['id'])
+
+
 if __name__ == '__main__':
-    test_node()
+    #test_node()
+    test_not_valid_node()

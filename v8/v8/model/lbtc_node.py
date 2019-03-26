@@ -25,3 +25,12 @@ class LbtcNode(BaseModel):
     create_time = Column(DateTime)
     update_time = Column(DateTime)
     
+
+class NodeNotValid(BaseModel):
+    __tablename__ = 'node_not_valid'
+
+    id = Column(Integer, primary_key=True)
+    ip = Column(String)
+    count = Column(Integer)
+    create_time = Column(DateTime)
+    
