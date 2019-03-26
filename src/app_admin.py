@@ -17,6 +17,10 @@ config.from_object(V8_CONFIG)  # noqa
 import form
 import rest_log
 
+from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+
+rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -24,7 +28,19 @@ app.config['SESSION_TYPE'] = 'filesystem'
 
 @app.route("/lbtc/")
 def index():
-    return redirect(url_for("nodes"))
+    return redirect(url_for("lbtc_block"))
+
+
+@app.route('/lbtc/block', methods=["GET"])
+def lbtc_block():
+    block_info = {}
+    return render_template("block.html", block_info=block_info)
+
+
+@app.route('/lbtc/search', methods=["GET"])
+def lbtc_search():
+    block_info = {}
+    return render_template("block.html", block_info=block_info)
 
 
 def node_cmp(a, b):

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+
+  <div class="container">
+    <div class="row">
+      <div class="panel panel-bm indexBlockList">
+        <div class="panel-heading">
+          <div class="panel-heading-title">最近出块</div>
+        </div>
+        <div class="panel-body">
+
+          <table class="table">
+            <tr id="append">
+              <th class="text-right">高度</th>
+              <th class="text-center">播报方</th>
+              <th class="text-right">大小(B)</th>
+              <th class="text-center">块收益</th>
+              <th class="text-right">时间</th>
+              <th class="text-center">块哈希</th>
+              <th class="text-right"> 块版本</th>
+            </tr>
+            <tr data-id="575454">
+              <td class="text-right" >
+                <a href="https://bch.btc.com/block/575454"
+                   ga-type="block"
+                   ga-target="from height" >
+                  575,454
+                </a>
+              </td>
+              <td class="text-left">
+                
+                <i class="icon-pool icon-pool-unknown"></i>
+                <div class="cell-poolname"><a href="https://bch.btc.com/stats/pool/prohashing.com">prohashing.com</a></div>
+              </td>
+              <td class="text-right">
+                <span data-toggle="tooltip" title="stripped size: 249">249</span>
+              </td>
+              <td class="text-center indexBlockList-blockAward">
+                12.5000<span class="text-muted">0000</span> BCH
+              </td>
+              <td class="text-right indexBlockList-blockTimestamp"
+                  data-timestamp="1553585645">29 分钟前</td>
+              <td class="text-center indexBlockList-blockhash">
+                <a href="https://bch.btc.com/000000000000000000b2d2e82a6562c7aa79c1a3d246f0b48c967bc136f3e866"
+                   ga-type="block"
+                   ga-target="from blockhash"
+                   >
+                  000000000000000000b2d2e82a6562c7aa79c1a3d246f0b48c967bc136f3e866
+                </a>
+              </td>
+              <td class="text-right">
+              </td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="row">
+          <div class="col-xs-6" style="padding-left: 0; padding-right: 10px;">
+            <div class="panel panel-bm indexPoolShare">
+              <div class="panel-heading">
+                <div class="panel-heading-corner">
+                  <a href="https://bch.btc.com/stats/pool">更多<i class="icon-arrow-right"></i></a>
+                </div>
+                <div class="panel-heading-title">
+                  矿池实时算力
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="pool-panel pool-panel-share">
+                  <table class="table table-condensed">
+                    <tr>
+                      <th></th>
+                      <th></th>
+                      <th width="140px"></th>
+                      <th class="text-right"></th>
+                      <th class="text-right" width="78px">24小时变化</th>
+                      <th class="text-right" width="80px" >3天幸运值</th>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-6" style="padding-right: 0; padding-left: 10px;">
+          <div class="panel panel-bm indexNetworkStats">
+            <div class="panel-heading">
+              <div class="panel-heading-corner">
+
+                
+              </div>
+              <div class="panel-heading-title">网络状态</div>
+            </div>
+            <div class="panel-body">
+              <ul>
+                <li>
+                  <dl>
+                    <dt>全网算力</dt>
+                    <dd>1.81 EH/s
+                    </dd>
+                  </dl>
+                </li>
+                <li>
+                  <dl>
+                    <dt>
+
+                      全网难度
+                      
+                    </dt>
+                    <dd><span class="text-muted">249,471,999,772
+                        - </span>249.47 G
+                    </dd>
+                  </dl>
+                </li>
+
+                <li>
+                  <dl>
+                    <dt>每T收益</dt>
+                    <dd>
+                      1T * 24H = 0.0010<span class="text-muted">0796</span> BCH
+                    </dd>
+                  </dl>
+                </li>
+              </ul>
+            
+              <ul data-toggle="tooltip" class="unconfirmed-txs-popover">
+                <li>
+                  <dl>
+                    <dt>
+                      <a style="display: block;float: left" href="https://bch.btc.com/stats/unconfirmed-tx">
+                        未确认交易
+                      </a>
+                      
+                    </dt>
+                    <dd class="unconfirmed-tx">
+                      <div class="unconfirmed-tx-item">
+                        <span class="text-muted text-left unconfirmed-tx-item-key">数量</span>
+                        <span class="tx-count">230</span>
+                      </div>
+                    </dd>
+                  </dl>
+                  <dl>
+                    <dt>
+                    </dt>
+                    <dd class="unconfirmed-tx">
+                      <div class="unconfirmed-tx-item">
+                        <span class="text-muted text-left unconfirmed-tx-item-key">体积</span>
+                        <span class="text-muted tx-size"></span> - <span class="tx-size-human"> Bytes</span>
+                      </div>
+                    </dd>
+                  </dl>
+                </li>
+              </ul>
+
+              <ul>
+                <li>
+                  <dl>
+                    <dt>24 小时交易速率</dt>
+                    <dd>0.28 交易/秒</dd>
+                  </dl>
+                  <dl>
+                    <dt>
+                      <a href="https://bch.btc.com/stats/block-size">
+                        近两周区块体积中位数
+                      </a>
+                    </dt>
+                    <dd>29,623 Bytes</dd>
+                  </dl>
+                </li>
+              </ul>
+
+              <ul>
+                <li>
+                  <dl>
+                    <dt>
+                      <a href="https://bch.btc.com/stats/unconfirmed-tx">
+                        当前最佳手续费
+                      </a>
+                    </dt>
+                    <dd>
+                      <b id="fees_recommended_sb"></b>
+                      <span> BCH/KB </span>
+                    </dd>
+                  </dl>
+                </li>
+              </ul>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+{% endblock %}
