@@ -82,7 +82,7 @@ def find_node(node, max_height):
             pass
     except Exception as e:
         #print(node['ip'], e)
-        if node['height'] != -1:
+        if True: #node['height'] != -1:
             if max_height - node['height'] > 3000 or \
                (max_height - node['height'] > 1000 and not node['ip'].endswith(':9333')):
                 #print(node['ip'], 'long time offline, delete it')
@@ -108,7 +108,7 @@ def find_node(node, max_height):
                 if item['services'] == 13:
                     user_agent_other_node = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN (13)'
                 else:
-                    user_agent_other_node = str(13)
+                    user_agent_other_node = str(item['services'])
                 node_info = {
                     'user_agent': user_agent_other_node,
                     'height': max_height,
