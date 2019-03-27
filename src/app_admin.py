@@ -25,22 +25,72 @@ app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
 
-
 @app.route("/lbtc/")
 def index():
     return redirect(url_for("lbtc_block"))
 
 
-@app.route('/lbtc/block', methods=["GET"])
+@app.route('/lbtc/explorer', methods=["GET"])
 def lbtc_block():
-    block_info = {}
-    return render_template("block.html", block_info=block_info)
+    lbtc_info = {}
+    new_block = []
+    rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+    time_now = datetime.datetime.now()
+    try:
+        for i in range(0, 10):
+            block_info = {}
+            if i == 0:
+                block_hash = rpc_connection.getbestblockhash()
+            else:
+                block_hash = new_block[i - 1]['previousblockhash']
+            block = rpc_connection.getblock(block_hash)
+            block_info['miner'] = 'miner name'
+            block_info['award'] = '0.0625'
+            block_info['height'] = "{:,}".format(block['height'])
+            block_info['size'] = "{:,}".format(block['strippedsize'])
+            block_info['time'] = str((time_now - datetime.datetime.fromtimestamp(block['time'])).seconds) + u'秒钟前'
+            for key in ['previousblockhash', 'hash']:
+                block_info[key] = block[key]
+            new_block.append(block_info)
+
+        lbtc_info['unconfirmed_tx_num'] = rpc_connection.getmempoolinfo()['size']
+    except Exception as e:
+        print unicode(e)
+    lbtc_info['block_info'] = new_block
+    return render_template("block.html", lbtc_info=lbtc_info)
+
+
+@app.route('/lbtc/get_block', methods=["GET"])
+def get_block_info():
+    print('get_block_info\n\n', request.args)
+    height = int(request.args.get('height', '-1').replace(',', ''))
+    print(height)
+    lbtc_info = {}
+    return render_template("block.html", lbtc_info=lbtc_info)
+
+@app.route('/lbtc/pool', methods=["GET"])
+def get_pool_info():
+    print('get_pool_info\n\n', request.args)
+    lbtc_info = {}
+    return render_template("block.html", lbtc_info=lbtc_info)
 
 
 @app.route('/lbtc/search', methods=["GET"])
 def lbtc_search():
-    block_info = {}
-    return render_template("block.html", block_info=block_info)
+    lbtc_info = {}
+    return render_template("block.html", lbtc_info=lbtc_info)
+
+
+@app.route('/lbtc/balance', methods=["GET"])
+def lbtc_balance():
+    lbtc_info = {}
+    return render_template("block.html", lbtc_info=lbtc_info)
+
+
+@app.route('/lbtc/tx', methods=["GET"])
+def lbtc_tx():
+    lbtc_info = {}
+    return render_template("block.html", lbtc_info=lbtc_info)
 
 
 def node_cmp(a, b):
@@ -157,4 +207,5 @@ def teardown_request(exception):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5025, debug=False)
+    app.config['DEBUG'] = True
+    app.run(host='0.0.0.0', port=5025)

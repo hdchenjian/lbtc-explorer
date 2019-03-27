@@ -21,9 +21,24 @@
           <nav class="nav">
             <ul>
               <li class="nav-item">
-                <a href="{{ url_for('lbtc_block') }}" target="_blank"></a>
+                <a href="{{ url_for('lbtc_block') }}" target="_blank">LBTC explorer</a>
               </li>
-              
+            
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_tx') }}" target="_blank">交易</a>
+              </li>
+            
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_balance') }}" target="_blank">余额排行榜</a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_balance') }}" target="_blank">Committee</a>
+              </li>
+            
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_balance') }}" target="_blank">Proposals</a>
+              </li>
+            
             </ul>
           </nav>
 
@@ -77,8 +92,6 @@
     {% block body %}
     {% endblock %}
 
-    <script src="http://cdn.staticfile.org/twitter-bootstrap/3.2.0/js/bootstrap.min.js"></script>
-    <script src="http://cdn.staticfile.org/twitter-bootstrap/3.2.0/js/modal.min.js"></script>
 
     {% block js %}
     {% endblock %}

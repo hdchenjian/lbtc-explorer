@@ -14,13 +14,13 @@ def update_rpc_node():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
         #print(rpc_connection.help())
-        #print(rpc_connection.getbestblockhash())
+        best_block_hash = rpc_connection.getbestblockhash()
         blockhash = rpc_connection.getblockhash(1)
-        print(blockhash)
-        print(rpc_connection.getblock(blockhash))
-        print(rpc_connection.gettxinfo('8c7ee1999644b81200390a182a0b9e4f85574991cddb7b7235538f02b79d2c26'))
+        best_block = rpc_connection.getblock(best_block_hash)
+        #print best_block
+        #print(rpc_connection.gettxinfo('8c7ee1999644b81200390a182a0b9e4f85574991cddb7b7235538f02b79d2c26'))
         #print(rpc_connection.getchaintips())
-        #print(rpc_connection.getmempoolinfo())
+        print(rpc_connection.getmempoolinfo())
         #print(rpc_connection.getrawmempool(True))
     except Exception as e:
         print unicode(e)
