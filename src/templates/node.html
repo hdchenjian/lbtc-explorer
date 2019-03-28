@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <div class="panel-heading">
+        <div class="panel-heading-title">节点分布</div>
+    </div>
+    <div class="big col-md-2 text-center">
+      <br><br><br>
+      <h4>{{ node_status["node_num"] }}</h4> <p class="text-muted">Nodes</p>
+      <h4>{{ node_status["ipv4"] }}</h4> <p class="text-muted">IPv4</p>
+      <h4>{{ node_status["ipv6"] }}</h4><p class="text-muted">IPv6</p>
+      <h4>{{ node_status["onion"] }}</h4><p class="text-muted">.onion</p>
+    </div>
+    
+    <div class="col-xs-10" style="padding-left: 10; padding-right: 0px;">
+      <div class="panel-heading">
+      </div>
+      <div class="panel-body">
+        <table class="table">
+          <tr>
+            <th class="text-left">排名</th>
+            <th class="text-left">地区</th>
+            <th class="text-left">节点数</th>
+          </tr>
+          {% for distribution_info in node_distribution %}
+          <tr>
+            <td class="text-left" >
+              {{ distribution_info["rank"] }}
+            </td>
+            <td class="text-left">
+              <a href="{{ url_for('lbtc_nodes', type=3, country=distribution_info['country']) }}"> {{ distribution_info["country"] }} </a>
+            </td>
+            <td class="text-left">
+              {{ distribution_info["node_num"] }}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-heading">
+    <div class="panel-heading-title">{{ country }}</div>
+  </div>
+  <div class="panel-body">
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered table-condensed" id="update_rule_table" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>ADDRESS</th>
+            <th>USER AGENT</th>
+            <th>HEIGHT</th>
+            <th>LOCATION</th>
+            <th>NETWORK</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for _node in all_node %}
+          <tr>
+            <td>{{ _node["id"] }}</td>
+            <td>{{ _node["ip"] }}</td>
+	    <td>{{ _node["user_agent"] }}
+              <br>
+              <span class="text-muted">{{ _node["services"] }}</span>
+            </td>
+	    <td>{{ _node["height"] }}</td>
+            <td>{{ _node["location"] }}
+              <br>
+              <span class="text-muted">{{ _node["timezone"] }}</span>
+            </td>
+	    <td>{{ _node["network"] }}
+              <br>
+              <span class="text-muted">{{ _node["asn"] }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

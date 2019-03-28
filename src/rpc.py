@@ -21,12 +21,13 @@ def update_rpc_node():
             user_agent = _peer['subver'] + ' (' + str(_peer['version']) + ')'
             services = _peer['services']
             if services == '000000000000000d':
-                services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN (13)'
+                services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN ( 13)'
             else:
                 services = str(services) + 'todo'
-            user_agent = user_agent + '|' + services
+            user_agent = user_agent
             height = _peer['synced_blocks']
             node_info = {'user_agent': user_agent,
+                         'services': services,
                          'height': height}
             node_by_ip = get_node_by_ip(ip)
             #print node_by_ip
@@ -34,7 +35,9 @@ def update_rpc_node():
                 resolve_result = resolve_address(ip.split(':')[0])
                 if resolve_result:
                     node_info['location'] = resolve_result[0]
-                    node_info['network'] = resolve_result[1]
+                    node_info['timezone'] = resolve_result[1]
+                    node_info['network'] = resolve_result[2]
+                    node_info['asn'] = resolve_result[3]
             #print node_info
 
             update_or_add_node(ip, node_info) # comment this filter out node that can not connect to

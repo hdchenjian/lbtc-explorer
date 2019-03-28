@@ -15,8 +15,9 @@ from connection import Connection
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, delete_node, \
     get_node_by_ip, add_not_valid_node_connect_try_times, add_not_valid_node, \
-    delete_not_valid_node, get_all_not_valid_node
+    delete_not_valid_node, get_all_not_valid_node, update_node_distribution, update_block_status
 
+from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE
 config.from_object(config_online)
 
 # MaxMind databases
@@ -46,8 +47,11 @@ def resolve_address(address):
         if city_name is None:
             city_name = gcity.country.names['en']
         else:
-            city_name = city_name + ', ' + gcity.country.names['en'] + '|' + timezone
-        return city_name, org + '|' + asn
+            city_name = city_name + ', ' + gcity.country.names['en']
+        if not city_name: city_name = ''
+        if not timezone: timezone = ''
+        if not org: org = ''
+        return (city_name, timezone, org, asn)
         
     except AddressNotFoundError:
         return None
@@ -72,8 +76,8 @@ def find_node(node, max_height):
             services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN'
         else:
             services = str(services) + 'todo'
-        user_agent = version_msg['user_agent'] + ' (' + str(version_msg['version']) + ')|' + \
-            services + '(' + str(version_msg['services']) + ')'
+        user_agent = version_msg['user_agent'] + ' (' + str(version_msg['version']) + ')'
+        services = services + '(' + str(version_msg['services']) + ')'
         
         addr_msgs = conn.getaddr()
         if len(addr_msgs) > 1:
@@ -95,30 +99,41 @@ def find_node(node, max_height):
         return
     for response in addr_msgs:
         for item in response['addr_list']:
-            if not item['ipv4']:
-                print('error ipv4 is empty: ', item)
+            if item['ipv4']:
+                ip = item['ipv4'] + ':' + str(item['port'])
+            elif item['ipv6']:
+                ip = item['ipv6'] + ':' + str(item['port'])
+                print('get ipv6: ', item, '\n\n')
+            elif item['onion']:
+                ip = item['onion']
+                print('get onion: ', item, '\n\n')
+            else:
+                print('error: ip is empty: ', item)
                 continue
             node_by_ip = None
-            ip = item['ipv4'] + ':' + str(item['port'])
             if ip == node['ip']:
                 node_info = {'user_agent': user_agent,
+                             'services': services,
                              'height': height}
             else:
                 node_by_ip = get_node_by_ip(ip)
                 if item['services'] == 13:
-                    user_agent_other_node = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN (13)'
+                    user_agent_other_node = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN ( 13)'
                 else:
                     user_agent_other_node = str(item['services'])
                 node_info = {
-                    'user_agent': user_agent_other_node,
+                    'user_agent': '',
+                    'services': user_agent_other_node,
                     'height': max_height,
                 }
             if ((ip == node['ip'] and (not node['location'] or not node['network'])) or
                 (not node_by_ip or (not node_by_ip['location'] or node_by_ip['network']))):
-                resolve_result = resolve_address(item['ipv4'])
+                resolve_result = resolve_address(ip.split(':')[0])
                 if resolve_result:
                     node_info['location'] = resolve_result[0]
-                    node_info['network'] = resolve_result[1]
+                    node_info['timezone'] = resolve_result[1]
+                    node_info['network'] = resolve_result[2]
+                    node_info['asn'] = resolve_result[3]
             update_or_add_node(ip, node_info)
             '''
             node_by_ip = None
@@ -140,9 +155,52 @@ def find_node(node, max_height):
             '''
 
 
+def get_node_NodeDistribution():
+    all_node = get_all_node(2)
+    country_map = {}
+    country_info = {}
+    ip_type = {'node_num': len(all_node),
+               'ipv4': 0,
+               'ipv6': 0,
+               'onion': 0,}
+    for _node in all_node:
+        if _node['ip'].endswith(".onion"): ip_type['onion'] += 1
+        elif ":" in _node['ip'].split(':')[0]: ip_type['ipv6'] += 1
+        else: ip_type['ipv4'] += 1
+
+        country = _node['location']
+        if ', ' in country:
+            city_name, country = country.split(', ')
+        if country not in country_map:
+            country_map[country] = 1
+        else:
+            country_map[country] += 1
+    update_block_status(REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, ip_type)
+    total_node = 0
+    for country in country_map:
+        total_node += country_map[country]
+    if total_node == 0: return
+    country_map_list = []
+    for country in country_map:
+        country_map_list.append((country, country_map[country]))
+    country_map_list.sort(key=lambda x: x[1], reverse=True)
+    rank = 1
+    for country in country_map_list:
+        info = {}
+        info['rank'] = rank
+        info['node_num'] = country[1]
+        info['node_persent'] = float(country[1]) / total_node * 100
+        rank += 1
+        country_info[country[0]] = info
+    #print country_info
+    if country_info:
+        update_node_distribution(country_info)
+
+
 @singleton('/tmp/crawl_all_node.pid')
 def crawl_all_node():
-    all_node = get_all_node(2, deleted_node=1)
+    
+    all_node = get_all_node(2)
     tasks = []
     max_height = None
     if all_node:
@@ -156,6 +214,8 @@ def crawl_all_node():
         time.sleep(0.05)
     for t in tasks:
         t.join()
+    get_node_NodeDistribution()
+
 '''
     tasks_not_valid = []
     all_not_valid_node = get_all_not_valid_node()

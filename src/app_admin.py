@@ -6,18 +6,19 @@ import os
 import time
 import traceback
 
+from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+
 from flask import Flask, g, request, jsonify, session, render_template, \
     flash, redirect, url_for
-
-from v8.engine.handlers.node_handler import get_all_node
-
-from config import V8_CONFIG
-from v8.config import config
-config.from_object(V8_CONFIG)  # noqa
 import form
 import rest_log
 
-from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
+    get_block_status
+from v8.config import config, config_online
+config.from_object(config_online)  # noqa
+
+from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE
 
 rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
 
@@ -25,13 +26,9 @@ app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
 
-@app.route("/lbtc/")
-def index():
-    return redirect(url_for("lbtc_block"))
-
 
 @app.route('/lbtc/explorer', methods=["GET"])
-def lbtc_block():
+def lbtc_index():
     lbtc_info = {}
     new_block = []
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
@@ -57,40 +54,75 @@ def lbtc_block():
     except Exception as e:
         print unicode(e)
     lbtc_info['block_info'] = new_block
-    return render_template("block.html", lbtc_info=lbtc_info)
+    lbtc_info['delegate_count'] = 0
+    lbtc_info['active_delegate_count'] = 0
+    lbtc_info['delegate_area'] = 0
+    lbtc_info['address_count'] = 0
+    lbtc_info['average_tx_speed'] = 0
+    lbtc_info['tx_count'] = 0
+    lbtc_info['average_tx_cost'] = 0
+    lbtc_info['average_block_size'] = 0
+
+    node_status = get_block_status(REST_BLOCK_STATUS_KYE_NODE_IP_TYPE)
+    lbtc_info['delegate_count'] = node_status['node_num']
+    node_distribution = get_node_distribution(7)
+    for _distribution in node_distribution:
+        _distribution['node_num'] = str(_distribution['node_num']) + " ({0:.2f}%)".format(_distribution['node_persent'])
+    lbtc_info['node_distribution'] = node_distribution
+    return render_template("index.html", lbtc_info=lbtc_info)
 
 
 @app.route('/lbtc/get_block', methods=["GET"])
 def get_block_info():
-    print('get_block_info\n\n', request.args)
     height = int(request.args.get('height', '-1').replace(',', ''))
     print(height)
     lbtc_info = {}
-    return render_template("block.html", lbtc_info=lbtc_info)
+    return render_template("index.html", lbtc_info=lbtc_info)
 
 @app.route('/lbtc/pool', methods=["GET"])
 def get_pool_info():
-    print('get_pool_info\n\n', request.args)
     lbtc_info = {}
-    return render_template("block.html", lbtc_info=lbtc_info)
+    return render_template("index.html", lbtc_info=lbtc_info)
 
 
 @app.route('/lbtc/search', methods=["GET"])
 def lbtc_search():
     lbtc_info = {}
-    return render_template("block.html", lbtc_info=lbtc_info)
+    return render_template("index.html", lbtc_info=lbtc_info)
 
 
 @app.route('/lbtc/balance', methods=["GET"])
 def lbtc_balance():
     lbtc_info = {}
-    return render_template("block.html", lbtc_info=lbtc_info)
+    return render_template("index.html", lbtc_info=lbtc_info)
+
+
+@app.route('/lbtc/address', methods=["GET"])
+def lbtc_address():
+    lbtc_info = {}
+    return render_template("index.html", lbtc_info=lbtc_info)
 
 
 @app.route('/lbtc/tx', methods=["GET"])
 def lbtc_tx():
-    lbtc_info = {}
-    return render_template("block.html", lbtc_info=lbtc_info)
+    hash = request.args.get("hash", "")
+    if not hash:
+        flash(u"交易hash错误", 'error')
+        return redirect(url_for("lbtc_index"))
+    tx_info = {"hash": hash,
+               "height": 0,
+               "size": 10,
+               "confirm_num": 110,
+               "time": "2019-03-28 16:12:16",
+               "lbtc_input": "0.11",
+               "lbtc_output": "0.1",
+               "fee": "0.01",
+               "input_num": 1,
+               "output_num": 1,
+               "input_tx": [{"address": "qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm", "amount": "0.11"}],
+               "output_tx": [{"address": "qam82nh4heasz84ga3wc88pnl4saj50pru592c46vm", "amount": "0.10"}],
+    }
+    return render_template("tx.html", tx_info=tx_info)
 
 
 def node_cmp(a, b):
@@ -109,32 +141,30 @@ def node_cmp(a, b):
         return 1
 
 @app.route('/lbtc/nodes', methods=["GET"])
-def nodes():
-    all_node = get_all_node(2)
+def lbtc_nodes():
+    node_distribution = get_node_distribution(10)
+    for _distribution in node_distribution:
+        _distribution['node_num'] = str(_distribution['node_num']) + \
+                                    " ({0:.2f}%)".format(_distribution['node_persent'])
+    node_status = get_block_status(REST_BLOCK_STATUS_KYE_NODE_IP_TYPE)
+
+    country = request.args.get('country', '')
+    valid_node = get_all_node(2, country=country)
+    if not country: country = u'所有地区节点列表'
+    else: country += u' 节点列表'
     '''
     valid_node = []
     for _node in all_node:
         if _node['ip'].endswith(':9333'):
             valid_node.append(_node)
     '''
-    valid_node = sorted(all_node, cmp=node_cmp)
+    #valid_node = sorted(all_node, cmp=node_cmp)
     count = 1
     for _node in valid_node:
-        if '|' in _node['user_agent']:
-            _node['user_agent'], _node['services'] = _node['user_agent'].split('|')
-        else:
-            _node['services'] = ''
-        if '|' in _node['location']:
-            _node['location'], _node['timezone'] = _node['location'].split('|')
-        else:
-            _node['timezone'] = ''
-        if '|' in _node['network']:
-            _node['network'], _node['asn'] = _node['network'].split('|')
-        else:
-            _node['asn'] = ''
         _node['id'] = count
         count += 1
-    return render_template("index.html", all_node=valid_node)
+    return render_template("node.html", all_node=valid_node, country=country,
+                           node_distribution=node_distribution, node_status=node_status)
         
 
 @app.before_request
