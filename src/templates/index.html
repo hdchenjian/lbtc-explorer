@@ -25,11 +25,11 @@
             {% for block_info in lbtc_info['block_info'] %}
             <tr>
               <td class="text-right" >
-                <a href="{{ url_for('get_block_info', height=block_info['height']) }}"> {{ block_info["height"] }} </a>
+                <a href="{{ url_for('lbtc_block', height=block_info['height']) }}"> {{ block_info["height"] }} </a>
               </td>
               <td class="text-right">
                 <div class="cell-poolname">
-                  <a href="{{ url_for('get_pool_info', name=block_info['miner']) }}" > {{ block_info["miner"] }}</a>
+                  <a href="{{ url_for('lbtc_pool', name=block_info['miner']) }}" > {{ block_info["miner"] }}</a>
                 </div>
               </td>
               <td class="text-right">
@@ -42,7 +42,7 @@
                 {{ block_info["time"] }}
               </td>
               <td class="text-center indexBlockList-blockhash">
-                <a href="{{ url_for('get_block_info', block_hash=block_info['hash']) }}">
+                <a href="{{ url_for('lbtc_block', block_hash=block_info['hash']) }}">
                   {{ block_info["hash"] }}
                 </a>
               </td>
@@ -99,7 +99,7 @@
                       {{ distribution_info["node_num"] }}
                     </td>
                   </tr>
-                  {% endfor %}            
+                  {% endfor %}
                 </table>
               </div>
             </div>

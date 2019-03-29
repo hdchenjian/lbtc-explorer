@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import datetime
@@ -20,18 +20,18 @@ config.from_object(config_online)  # noqa
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE
 
-rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
 
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
 
 
-@app.route('/lbtc/explorer', methods=["GET"])
+@app.route('/lbtc/explorer', methods=['GET'])
 def lbtc_index():
     lbtc_info = {}
     new_block = []
-    rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+    rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
     time_now = datetime.datetime.now()
     try:
         for i in range(0, 10):
@@ -43,8 +43,8 @@ def lbtc_index():
             block = rpc_connection.getblock(block_hash)
             block_info['miner'] = 'miner name'
             block_info['award'] = '0.0625'
-            block_info['height'] = "{:,}".format(block['height'])
-            block_info['size'] = "{:,}".format(block['strippedsize'])
+            block_info['height'] = '{:,}'.format(block['height'])
+            block_info['size'] = '{:,}'.format(block['strippedsize'])
             block_info['time'] = str((time_now - datetime.datetime.fromtimestamp(block['time'])).seconds) + u'秒钟前'
             for key in ['previousblockhash', 'hash']:
                 block_info[key] = block[key]
@@ -52,7 +52,7 @@ def lbtc_index():
 
         lbtc_info['unconfirmed_tx_num'] = rpc_connection.getmempoolinfo()['size']
     except Exception as e:
-        print unicode(e)
+        print(unicode(e))
     lbtc_info['block_info'] = new_block
     lbtc_info['delegate_count'] = 0
     lbtc_info['active_delegate_count'] = 0
@@ -67,62 +67,152 @@ def lbtc_index():
     lbtc_info['delegate_count'] = node_status['node_num']
     node_distribution = get_node_distribution(7)
     for _distribution in node_distribution:
-        _distribution['node_num'] = str(_distribution['node_num']) + " ({0:.2f}%)".format(_distribution['node_persent'])
+        _distribution['node_num'] = str(_distribution['node_num']) + ' ({0:.2f}%)'.format(_distribution['node_persent'])
     lbtc_info['node_distribution'] = node_distribution
-    return render_template("index.html", lbtc_info=lbtc_info)
+    return render_template('index.html', lbtc_info=lbtc_info)
 
 
-@app.route('/lbtc/get_block', methods=["GET"])
-def get_block_info():
-    height = int(request.args.get('height', '-1').replace(',', ''))
-    print(height)
+@app.route('/lbtc/get_block', methods=['GET'])
+def lbtc_block():
+    block_hash = request.args.get('hash', None)
+    height = None
+    if not block_hash:
+        height = int(request.args.get('height', '0').replace(',', ''))
+        if not height:
+            flash(u'区块Hash或高度错误', 'error')
+            return redirect(url_for('lbtc_index'))
+    rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
+    try:
+        if height:
+            block_hash = rpc_connection.getblockhash(height)
+        if not block_hash:
+            flash(u'区块Hash或高度错误', 'error')
+            return redirect(url_for('lbtc_index'))
+        _info_block = rpc_connection.getblock(block_hash)
+    except Exception as e:
+        flash(u'区块Hash或高度错误', 'error')
+        return redirect(url_for('lbtc_index'))
+    
+    tx_info = [{'income': '0.1',
+                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
+                'height': 1000,
+                'size': 10,
+                'confirm_num': 110,
+                'time': '2019-03-28 16:12:16',
+                'lbtc_input': '0.11',
+                'lbtc_output': '0.1',
+                'fee': '0.01',
+                'input_num': 1,
+                'output_num': 1,
+                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
+                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],},
+               {'income': '-0.1',
+                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
+                'height': 1000,
+                'size': 10,
+                'confirm_num': 110,
+                'time': '2019-03-28 16:12:16',
+                'lbtc_input': '0.11',
+                'lbtc_output': '0.1',
+                'fee': '0.01',
+                'input_num': 1,
+                'output_num': 1,
+                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
+                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],
+               }]
+
+    block_info = {'tx_info': tx_info}
+    for key in ['merkleroot', 'nonce', 'previousblockhash', 'hash', 'height', 'confirmations',
+                'time', 'versionHex', 'strippedsize', 'tx']:
+        block_info[key] = _info_block[key]
+    block_info['time'] = datetime.datetime.fromtimestamp(block_info['time']).strftime('%Y-%m-%d %H:%M:%S')
+    block_info['transaction_num'] = len(_info_block['tx'])
+    block_info['miner_name'] = 'miner_name'
+    block_info['next_hash'] = ''
+    block_info['height'] = '{:,}'.format(block_info['height'])
+    return render_template('block.html', block_info=block_info, show_tx_hash=True, float=float)
+
+
+@app.route('/lbtc/pool', methods=['GET'])
+def lbtc_pool():
     lbtc_info = {}
-    return render_template("index.html", lbtc_info=lbtc_info)
-
-@app.route('/lbtc/pool', methods=["GET"])
-def get_pool_info():
-    lbtc_info = {}
-    return render_template("index.html", lbtc_info=lbtc_info)
+    return render_template('index.html', lbtc_info=lbtc_info)
 
 
-@app.route('/lbtc/search', methods=["GET"])
+@app.route('/lbtc/search', methods=['GET'])
 def lbtc_search():
     lbtc_info = {}
-    return render_template("index.html", lbtc_info=lbtc_info)
+    return render_template('index.html', lbtc_info=lbtc_info)
 
 
-@app.route('/lbtc/balance', methods=["GET"])
+@app.route('/lbtc/balance', methods=['GET'])
 def lbtc_balance():
     lbtc_info = {}
-    return render_template("index.html", lbtc_info=lbtc_info)
+    return render_template('index.html', lbtc_info=lbtc_info)
 
 
-@app.route('/lbtc/address', methods=["GET"])
+@app.route('/lbtc/address', methods=['GET'])
 def lbtc_address():
-    lbtc_info = {}
-    return render_template("index.html", lbtc_info=lbtc_info)
+    address = request.args.get('address', '')
+    if not address:
+        flash(u'钱包地址错误', 'error')
+        return redirect(url_for('lbtc_index'))
+    tx_info = [{'income': '0.1',
+                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
+                'height': 1000,
+                'size': 10,
+                'confirm_num': 110,
+                'time': '2019-03-28 16:12:16',
+                'lbtc_input': '0.11',
+                'lbtc_output': '0.1',
+                'fee': '0.01',
+                'input_num': 1,
+                'output_num': 1,
+                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
+                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],},
+               {'income': '-0.1',
+                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
+                'height': 1000,
+                'size': 10,
+                'confirm_num': 110,
+                'time': '2019-03-28 16:12:16',
+                'lbtc_input': '0.11',
+                'lbtc_output': '0.1',
+                'fee': '0.01',
+                'input_num': 1,
+                'output_num': 1,
+                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
+                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],
+               }]
+    address_info = {'address': address,
+                    'balance': '0.1',
+                    'transaction_num': 2,
+                    'create_time': '2019-03-28 16:12:16',
+                    'tx_info': tx_info}
+    return render_template('address.html', address_info=address_info, not_href_address=address,
+                           show_income=True, show_tx_hash=True, show_tx_height=True, float=float)
 
 
-@app.route('/lbtc/tx', methods=["GET"])
+@app.route('/lbtc/tx', methods=['GET'])
 def lbtc_tx():
-    hash = request.args.get("hash", "")
-    if not hash:
-        flash(u"交易hash错误", 'error')
-        return redirect(url_for("lbtc_index"))
-    tx_info = {"hash": hash,
-               "height": 0,
-               "size": 10,
-               "confirm_num": 110,
-               "time": "2019-03-28 16:12:16",
-               "lbtc_input": "0.11",
-               "lbtc_output": "0.1",
-               "fee": "0.01",
-               "input_num": 1,
-               "output_num": 1,
-               "input_tx": [{"address": "qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm", "amount": "0.11"}],
-               "output_tx": [{"address": "qam82nh4heasz84ga3wc88pnl4saj50pru592c46vm", "amount": "0.10"}],
+    tx_hash = request.args.get('hash', '')
+    if not tx_hash:
+        flash(u'交易hash错误', 'error')
+        return redirect(url_for('lbtc_index'))
+    tx_info = {'hash': tx_hash,
+               'height': 1000,
+               'size': 10,
+               'confirm_num': 110,
+               'time': '2019-03-28 16:12:16',
+               'lbtc_input': '0.11',
+               'lbtc_output': '0.1',
+               'fee': '0.01',
+               'input_num': 1,
+               'output_num': 1,
+               'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
+               'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],
     }
-    return render_template("tx.html", tx_info=tx_info)
+    return render_template('tx.html', tx_info=tx_info, show_income=False, show_tx_height=True)
 
 
 def node_cmp(a, b):
@@ -140,12 +230,12 @@ def node_cmp(a, b):
     else:
         return 1
 
-@app.route('/lbtc/nodes', methods=["GET"])
+@app.route('/lbtc/nodes', methods=['GET'])
 def lbtc_nodes():
     node_distribution = get_node_distribution(10)
     for _distribution in node_distribution:
         _distribution['node_num'] = str(_distribution['node_num']) + \
-                                    " ({0:.2f}%)".format(_distribution['node_persent'])
+                                    ' ({0:.2f}%)'.format(_distribution['node_persent'])
     node_status = get_block_status(REST_BLOCK_STATUS_KYE_NODE_IP_TYPE)
 
     country = request.args.get('country', '')
@@ -163,7 +253,7 @@ def lbtc_nodes():
     for _node in valid_node:
         _node['id'] = count
         count += 1
-    return render_template("node.html", all_node=valid_node, country=country,
+    return render_template('node.html', all_node=valid_node, country=country,
                            node_distribution=node_distribution, node_status=node_status)
         
 

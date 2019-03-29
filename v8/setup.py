@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
@@ -17,8 +17,6 @@ setup(
     platforms='any',
     classifiers=['Private :: Do Not Upload'],
     install_requires=[
-        'arrow==0.8.0',
-        'PyMySQL==0.6.2',
-        'SQLAlchemy==0.9',
+        #'arrow==0.8.0',
     ],
 )

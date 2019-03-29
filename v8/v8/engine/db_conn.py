@@ -1,9 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from pymongo import MongoClient
 
 
 mysql_url = \
@@ -25,3 +26,18 @@ def gen_session_class(conn_name):
         cls['cls'] = sessionmaker(bind=cls['engine'])
         session_classes[conn_name] = cls
     return session_classes[conn_name]['cls']
+
+
+mongo_connections = dict()
+
+
+def gen_mongo_connection(conn_name):
+    if conn_name not in mongo_connections:
+        from v8.config import config
+        mongo_connection = MongoClient(
+            host=config['MONGO'][conn_name]['host'],
+            replicaSet=config['MONGO'][conn_name].get('replicaset', ''),
+            connectTimeoutMS=config['MONGO'][conn_name]['connect_timeout'],
+        )
+        mongo_connections[conn_name] = mongo_connection
+    return mongo_connections[conn_name]

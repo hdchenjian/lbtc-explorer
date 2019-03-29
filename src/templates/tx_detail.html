@@ -1,0 +1,123 @@
+<!-- same for tx.html address.html block.html -->
+<div class="panel panel-bm txDetail">
+  <div class="panel-heading">
+    <div class="row">
+      
+      {% if show_tx_hash %}
+      <div class="col-xs-6">
+        <div class="panel-heading-title" style="text-align: left;font-size:13px">
+          <a href="{{ url_for('lbtc_tx', hash=tx_info["hash"]) }}" class="txio-address" ga-type="address">
+          {{ tx_info["hash"] }}
+          </a>
+        </div>
+      </div>
+      <div class="col-xs-2">
+        <div class="panel-heading-title">
+          输入 ({{ tx_info["input_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_input"] }} LBTC</span>
+        </div>
+      </div>
+      <div class="col-xs-2">
+        <div class="panel-heading-title">
+          输出 ({{ tx_info["output_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_output"] }}LBTC</span>
+        </div>
+      </div>
+      {% if show_tx_height %}
+      <div class="col-xs-2">
+        <div class="panel-heading-title" style="text-align: center">
+          <a href="{{ url_for('lbtc_block', height=tx_info['height']) }}" class="txio-address" ga-type="address">
+            块高 {{ tx_info["height"] }}
+          </a>
+        </div>
+      </div>
+      {% endif %}
+      
+      {% else %}
+
+      <div class="col-xs-6">
+        <div class="panel-heading-title">
+          输入 ({{ tx_info["input_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_input"] }} LBTC</span>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="panel-heading-title">
+          输出 ({{ tx_info["output_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_output"] }}LBTC</span>
+        </div>
+      </div>
+      <div class="col-xs-2">
+        <div class="panel-heading-title" style="text-align: center">
+          <a href="{{ url_for('lbtc_block', height=tx_info['height']) }}" class="txio-address" ga-type="address">
+            块高 {{ tx_info["height"] }}
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <div class="panel-body">
+    <div class="tx-item">
+      <table class="table">
+        <tr class="txio">
+          <td>
+            <ul>
+              {% for tx_input in tx_info["input_tx"] %}
+              <li>
+                {% if not_href_address and not_href_address == tx_input['address'] %}
+                  {{ tx_input['address'] }}
+                {% else %}
+                <a href="{{ url_for('lbtc_address', address=tx_input['address']) }}" class="txio-address" ga-type="address">
+                  {{ tx_input['address'] }}
+                </a>
+                {% endif %}
+                <span class="txio-amount">
+                  {{ tx_input['amount'] }}
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+          </td>
+          <td width="60px">
+            <span style='text-align: center;font-size:25px;'> &#8594 </span>
+          </td>
+          <td>
+            <ul>
+              {% for tx_output in tx_info["output_tx"] %}
+              <li>
+                <a href="{{ url_for('lbtc_address', address=tx_output['address']) }}" class="txio-address" ga-type="address">
+                  {{ tx_output['address'] }}
+                </a>
+                <span class="txio-amount">
+                  {{ tx_output['amount'] }}
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+          </td>
+        </tr>
+
+        <tr class="tx-item-footer">
+          <td class="tx-item-footer-note"></td>
+          <td class="tx-item-footer-note"></td>
+          <td class="tx-item-footer-additional">
+            <span class="tx-item-footer-additional-box">确认数 {{ tx_info["confirm_num"] }} </span>
+            {% if show_income %}
+            {% if float(tx_info["income"]) >= 0 %}
+            <span class="tx-item-footer-additional-box txio-address-income">
+              + {{ tx_info["income"] }}
+            </span>
+            {% else %}
+            <span class="tx-item-footer-additional-box txio-address-outcome">
+              {{ tx_info["income"] }}
+            </span>
+            {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>

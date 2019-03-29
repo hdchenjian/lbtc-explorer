@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
+      <li>块 - {{ block_info["address"] }} </li> 
+    </ol>
+  </div>
+
+  <div class="row">
+    <div class="panel panel-bm txAbstract">
+      <div class="panel-heading">
+        <div class="panel-heading-title">概要</div>
+      </div>
+      <div class="panel-body text-center">
+        <div class="abstract-inner txAbstract-inner">
+          <div class="blockAbstract-section">
+            <dl>
+              <dt>高度</dt>
+              <dd> {{ block_info["height"] }} </dd>
+            </dl>
+            <dl>
+              <dt>确认数</dt>
+              <dd> {{ block_info["confirmations"] }} </dd>
+            </dl>
+            <dl>
+              <dt>大小</dt>
+              <dd> {{ block_info["strippedsize"] }} Bytes </dd>
+            </dl>
+            <dl>
+              <dt>交易数</dt>
+              <dd> {{ block_info["transaction_num"] }} </dd>
+            </dl>
+            
+          </div>
+          
+          <div class="blockAbstract-section">
+            <dl>
+              <dt>时间</dt>
+              <dd> {{ block_info["time"] }} </dd>
+            </dl>
+            <dl>
+              <dt>版本</dt>
+              <dd>{{ block_info["versionHex"] }}</dd>
+            </dl>
+            <dl>
+              <dt>Nonce</dt>
+              <dd> {{ block_info["nonce"] }} </dd>
+            </dl>
+            <dl>
+              <dt>播报方</dt>
+              <dd> {{ block_info["miner_name"] }} </dd>
+            </dl>
+          </div>
+
+          <div class="blockAbstract-section blockAbstract-section-smallsize">
+            <dl>
+              <dt>块哈希</dt>
+              <dd>{{ block_info["hash"] }}</dd>
+            </dl>
+            <dl>
+              <dt>前一个块</dt>
+              <dd> {{ block_info["previousblockhash"] }} </dd>
+            </dl>
+            <dl>
+              <dt>后一个块</dt>
+              <dd> {{ block_info["next_hash"] }} </dd>
+            </dl>
+            <dl>
+              <dt>Merkle Root</dt>
+              <dd> {{ block_info["merkleroot"] }} </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    {% for tx_info in block_info["tx_info"] %}
+    {% include "tx_detail.html" %}
+    {% endfor %}
+    
+  </div>
+</div>
+{% endblock %}

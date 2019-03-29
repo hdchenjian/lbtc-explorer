@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import contextlib
@@ -299,3 +299,39 @@ def update_block_status(key, value):
         except:
             session.rollback()
             raise
+
+
+def add_tx(tx):
+    """Add new oil station.
+
+    Args:
+        oil_station (dict): oil station.
+
+    Returns:
+        dict of new oil_station.
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    _oil_station = base.OilStation(oil_station)
+    _id = conn.martin.oil_station.insert(_oil_station)
+
+    station = conn.martin.oil_station.find_one({'_id': _id})
+    return base.OilStation(station).to_dict()
+
+
+def query_oil_station(oil_station_id):
+    """Get oil station with oil_station_id.
+
+    Args:
+        oil_station_id (int): oil station id.
+
+    Returns:
+        oil station dict or None.
+    """
+    conn = db_conn.gen_mongo_connection('martin')
+    oil_station = \
+        conn.martin.oil_station.find_one({'id': oil_station_id})
+    if not oil_station:
+        return
+    ret = base.OilStation(oil_station).to_dict()
+    ret['id'] = int(ret['id'])
+    return ret
