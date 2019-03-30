@@ -4,8 +4,8 @@
 import datetime
 
 from v8.config import config, config_online
-from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, get_node_by_ip, \
-    add_not_valid_node, add_many_tx, add_one_tx, update_one_tx, find_one_tx, find_many_tx
+from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
+    get_block_status, add_block_info, update_many_address_info
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 config.from_object(config_online)
@@ -17,13 +17,21 @@ def parse_lbtc_block():
         best_block_hash = rpc_connection.getbestblockhash()
         best_block = rpc_connection.getblock(best_block_hash)
         best_height = best_block['height']
-        #best_height = 10
-        current_height = 5126
+        best_height = 4765484
+        block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
+        current_height = block_status['height']
+        next_block_hash = ''
         while current_height <= best_height:
-            current_block_hash = rpc_connection.getblockhash(current_height)
-            current_block_info = rpc_connection.getblock(current_block_hash)
+            if not next_block_hash:
+                next_block_hash = rpc_connection.getblockhash(current_height)
+            current_block_info = rpc_connection.getblock(next_block_hash)
+            #print(current_block_info)
+            if not current_block_info:
+                break
+            next_block_hash = current_block_info['nextblockhash']
+            
             vin_tx_id = []
-            tx_id_to_tx_info = {}
+            tx_id_to_raw_tx_info = {}
             tx_mongos = []
             for _tx_id in current_block_info['tx']:
                 tx_info = rpc_connection.gettransactionnew(_tx_id)
@@ -33,7 +41,7 @@ def parse_lbtc_block():
                             'input': [],
                             'output': []}
                 #print(tx_info)
-                tx_id_to_tx_info[_tx_id] = tx_info
+                tx_id_to_raw_tx_info[_tx_id] = tx_info
                 for _vin in tx_info['vin']:
                     if 'coinbase' in _vin:
                         pass
@@ -61,20 +69,50 @@ def parse_lbtc_block():
                     old_mongo_tx_info_map[item['_id']] = item
                 for item in tx_mongos:
                     old_mongo_tx_info_map[item['_id']] = item
-            for _tx_info in tx_mongos:
-                tx_info = tx_id_to_tx_info[_tx_info['_id']]
+            for _tx_info_mongo in tx_mongos:
+                tx_info = tx_id_to_raw_tx_info[_tx_info_mongo['_id']]
                 for _vin in tx_info['vin']:
                     if 'coinbase' in _vin:
-                        _tx_info['input'] += ['coinbase', '']
+                        _tx_info_mongo['input'] += ['coinbase', '']
                     else:
-                        _tx_info['input'] += [old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 1],
+                        _tx_info_mongo['input'] += [old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 1],
                                               old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 2]]
                     
             #print(current_block_info)
             add_many_tx(tx_mongos)
-            print('current_height ', current_height, tx_mongos)
+
+            current_block_info['tx_num'] = len(current_block_info['tx'])
+            add_block_info_result = add_block_info(current_block_info)
+            if not add_block_info_result:
+                print('add_block_info failed, current_height ', current_height)
+                break
+
+            current_tx_ids = []
+            for _tx_id in current_block_info['tx']:
+                current_tx_ids.append(_tx_id)
+            mongo_tx_info = find_many_tx(current_tx_ids)
+            need_update = []
+            for item in mongo_tx_info:
+                for i in range(0, len(item['input']) // 2):
+                    if item['input'][2*i] == 'coinbase': continue
+                    need_update.append({'address': item['input'][2*i],
+                                        'amount': 0 - Decimal(item['input'][2*i + 1]),
+                                        'time': item['time'],
+                                        'height': current_height,
+                                        'hash': item['_id']})
+                for i in range(0, len(item['output']) // 3):
+                    if item['output'][3*i + 1] == 'nulldata': continue
+                    need_update.append({'address': item['output'][3*i + 1],
+                                        'amount': item['output'][3*i + 2],
+                                        'time': item['time'],
+                                        'height': current_height,
+                                        'hash': item['_id']})
+            update_many_address_info(need_update)
+
+            print('current_height ', current_height)
             current_height += 1
             #exit()
+        update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {'height': current_height})
     except Exception as e:
         print(e)
         raise
