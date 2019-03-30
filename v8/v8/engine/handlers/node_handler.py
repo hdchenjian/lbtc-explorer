@@ -331,6 +331,44 @@ def add_one_tx(tx):
     return result.inserted_id
 
 
+def update_one_delegate(delegate):
+    """Add one delegate.
+
+    Args:
+        tx (dict): dict of delegate
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    _delegate = conn.lbtc.lbtc_delegate.find_one({'_id': delegate['_id']})
+    if _delegate is None:
+        delegate['active'] = False
+        result = conn.lbtc.lbtc_delegate.insert_one(delegate)
+        return result.inserted_id
+    else:
+        modify_dict = {'funds': delegate['funds'],
+                       'votes': delegate['votes'],
+                       'votes_address': delegate['votes_address']
+        }
+        if 'active' in delegate:
+            modify_dict['active'] = delegate['active']
+        conn.lbtc.lbtc_delegate.update_one({'_id': delegate['_id']}, {'$set': modify_dict}, upsert=False)
+
+
+def update_many_delegate_active(delegate_ids):
+    """Add one delegate.
+
+    Args:
+        tx (dict): dict of delegate
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    conn.lbtc.lbtc_delegate.update_many({'_id': { '$in': delegate_ids}}, {'$set': {'active': True}}, upsert=False)
+
+
 def find_one_tx(tx_id):
     """Find one tx.
 
@@ -359,20 +397,6 @@ def find_many_tx(tx_ids):
     for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }):
         result.append(doc)
     return result
-
-
-def update_one_tx(tx):
-    """Add one tx.
-
-    Args:
-        tx (dict): dict of tx
-
-    Returns:
-        
-    """
-    conn = db_conn.gen_mongo_connection('base')
-    result = conn.lbtc.lbtc_tx.update_one({'_id': tx['_id']}, {'$set': tx}, upsert=True)
-    return result.matched_count
 
 
 def add_block_info(block_info):

@@ -67,7 +67,7 @@ def lbtc_index():
 
         lbtc_info['unconfirmed_tx_num'] = rpc_connection.getmempoolinfo()['size']
     except Exception as e:
-        print(unicode(e))
+        print(e)
     lbtc_info['block_info'] = new_block
     lbtc_info['delegate_count'] = 0
     lbtc_info['active_delegate_count'] = 0

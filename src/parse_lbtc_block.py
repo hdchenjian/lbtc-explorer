@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import random
 from decimal import Decimal
 
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
-    get_block_status, add_block_info, update_many_address_info, add_many_tx
+    get_block_status, add_block_info, update_many_address_info, add_many_tx, \
+    update_one_delegate, update_many_delegate_active
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 config.from_object(config_online)
@@ -14,10 +16,11 @@ config.from_object(config_online)
 
 from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT
 
+rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
 
 def parse_lbtc_block_main():
-    rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
+        coinbase_address = []
         best_block_hash = rpc_connection.getbestblockhash()
         best_block = rpc_connection.getblock(best_block_hash)
         best_height = best_block['height']
@@ -114,18 +117,36 @@ def parse_lbtc_block_main():
             print('current_height ', current_height)
             current_height += 1
             #exit()
+
+            for item in tx_mongos:
+                for i in range(0, len(item['input']) // 2):
+                    if item['input'][2*i] == 'coinbase':
+                        coinbase_address.append(item['output'][1])
         update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {'height': current_height})
+        update_many_delegate_active(coinbase_address)
     except Exception as e:
         print(e)
         raise
         
-    
+
+def query_all_delegate():
+    all_delegate = rpc_connection.listdelegates()
+    for _delegate in all_delegate:
+        _delegate['_id'] = _delegate['address']
+        _delegate.pop('address')
+        _delegate['funds'] = str(Decimal(rpc_connection.getdelegatefunds(_delegate['name'])) / 100000000)
+        _delegate['votes'] = str(Decimal(rpc_connection.getdelegatevotes(_delegate['name'])) / 100000000)
+        _delegate['votes_address'] = rpc_connection.listreceivedvotes(_delegate['name'])
+        update_one_delegate(_delegate)
+
+
 @singleton('/tmp/parse_lbtc_block.pid')
 def parse_lbtc_block():
     while(True):
         parse_lbtc_block_main()
-        break
-        time.sleep(3)
+        if random.random() > 0.1:
+            query_all_delegate()
+        time.sleep(2)
 
 
 if __name__ == '__main__':
