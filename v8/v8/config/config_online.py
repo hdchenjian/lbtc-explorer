@@ -17,6 +17,5 @@ MYSQLS = {
 MONGO = {
     'base': {
         'host': '127.0.0.1:27017',
-        'connect_timeout': 5000,
     },
 }

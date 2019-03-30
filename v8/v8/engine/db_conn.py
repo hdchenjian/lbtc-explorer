@@ -34,10 +34,6 @@ mongo_connections = dict()
 def gen_mongo_connection(conn_name):
     if conn_name not in mongo_connections:
         from v8.config import config
-        mongo_connection = MongoClient(
-            host=config['MONGO'][conn_name]['host'],
-            replicaSet=config['MONGO'][conn_name].get('replicaset', ''),
-            connectTimeoutMS=config['MONGO'][conn_name]['connect_timeout'],
-        )
+        mongo_connection = MongoClient(config['MONGO'][conn_name]['host'])
         mongo_connections[conn_name] = mongo_connection
     return mongo_connections[conn_name]

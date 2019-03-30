@@ -61,3 +61,36 @@ CREATE TABLE IF NOT EXISTS `block_status` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `block_status_key` (`key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `block_info` (
+  `height` INT UNSIGNED NOT NULL COMMENT '', 
+  `hash` varchar(64) NOT NULL DEFAULT '' COMMENT '',
+  `tx_num` INT NOT NULL DEFAULT '0' COMMENT '',
+  `strippedsize` INT NOT NULL DEFAULT '0' COMMENT '',
+  `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  PRIMARY KEY (`height`),
+  UNIQUE KEY `lbtcnode_block_info_hash` (`hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `address_info` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `address` varchar(64) NOT NULL DEFAULT '' COMMENT '',
+  `balance` decimal(20,10) NOT NULL DEFAULT '0.0',
+  `receive` decimal(25,10) NOT NULL DEFAULT '0.0',
+  `send` decimal(25,10) NOT NULL DEFAULT '0.0',
+  `tx_num` INT NOT NULL DEFAULT '0' COMMENT '',
+  `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `lbtcnode_address_info_address` (`address`)
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `transaction_info` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `hash` varchar(64) NOT NULL DEFAULT '' COMMENT '',
+  `height` INT UNSIGNED NOT NULL COMMENT '', 
+  `address` varchar(64) NOT NULL DEFAULT '' COMMENT '',
+  `amount` decimal(20,10) NOT NULL DEFAULT '0.0',
+  `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  PRIMARY KEY (`id`),
+  KEY `lbtcnode_transaction_info_address` (`address`)
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;

@@ -10,3 +10,4 @@ REST_TD_LOG = 'martin_rest'
 REST_LOG_FILE_LEVEL = logging.DEBUG
 
 REST_BLOCK_STATUS_KYE_NODE_IP_TYPE = 'rest_block_status:node_ip_type'
+PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT = 'parse_block_status:kye_mysql_current_height'

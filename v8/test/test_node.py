@@ -1,11 +1,25 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from decimal import Decimal
+import datetime
+
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, \
-    add_not_valid_node, delete_not_valid_node, get_all_not_valid_node
+    add_not_valid_node, delete_not_valid_node, get_all_not_valid_node, add_many_tx, \
+    add_one_tx, update_one_tx, find_one_tx
 
 config.from_object(config_online)
+
+def test_mongo():
+    tx = {'_id': '1234', 'au': '1',
+          'time': datetime.datetime.now(),
+          'input': ['input_address', str(Decimal('0.1')), 'input_address1', str(Decimal('0.1'))],
+          'output': ['output_address', str(Decimal('0.1')),'output_address1', str(Decimal('0.1'))]}
+    #print(add_one_tx(tx))
+    #print(update_one_tx(tx))
+    print(find_one_tx('f6f72448d1c87fcc5720f4e6b756981f5a7b866ed966c3166229779a5652c30b'))
+    
 
 def test_node():
     ip = '120.79.161.218:9333'
@@ -38,4 +52,5 @@ def test_not_valid_node():
 
 if __name__ == '__main__':
     #test_node()
-    test_not_valid_node()
+    #test_not_valid_node()
+    test_mongo()

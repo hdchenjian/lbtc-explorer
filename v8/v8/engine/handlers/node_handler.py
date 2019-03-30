@@ -5,9 +5,11 @@ import contextlib
 import datetime
 import json
 from sqlalchemy.sql import func
+from decimal import Decimal
 
 from v8.engine import db_conn
-from v8.model.lbtc_node import LbtcNode, NodeNotValid, NodeDistribution, BlockStatus
+from v8.model.lbtc_node import LbtcNode, NodeNotValid, NodeDistribution, BlockStatus, BlockInfo, \
+    AddressInfo, TransactionInfo
 from v8.engine.util import model_to_dict
 
 
@@ -301,37 +303,178 @@ def update_block_status(key, value):
             raise
 
 
-def add_tx(tx):
-    """Add new oil station.
+def add_many_tx(txs):
+    """Add many tx.
 
     Args:
-        oil_station (dict): oil station.
+        txs (list): list of tx
 
     Returns:
-        dict of new oil_station.
+        
     """
     conn = db_conn.gen_mongo_connection('base')
-    _oil_station = base.OilStation(oil_station)
-    _id = conn.martin.oil_station.insert(_oil_station)
-
-    station = conn.martin.oil_station.find_one({'_id': _id})
-    return base.OilStation(station).to_dict()
+    result = conn.lbtc.lbtc_tx.insert_many(txs)
+    return result.inserted_ids
 
 
-def query_oil_station(oil_station_id):
-    """Get oil station with oil_station_id.
+def add_one_tx(tx):
+    """Add one tx.
 
     Args:
-        oil_station_id (int): oil station id.
+        tx (dict): dict of tx
 
     Returns:
-        oil station dict or None.
+        
     """
-    conn = db_conn.gen_mongo_connection('martin')
-    oil_station = \
-        conn.martin.oil_station.find_one({'id': oil_station_id})
-    if not oil_station:
-        return
-    ret = base.OilStation(oil_station).to_dict()
-    ret['id'] = int(ret['id'])
-    return ret
+    conn = db_conn.gen_mongo_connection('base')
+    result = conn.lbtc.lbtc_tx.insert_one(tx)
+    return result.inserted_id
+
+
+def find_one_tx(tx_id):
+    """Find one tx.
+
+    Args:
+        tx_id (string): 
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    result = conn.lbtc.lbtc_tx.find_one({'_id': tx_id})
+    return result
+
+
+def find_many_tx(tx_ids):
+    """Find one tx.
+
+    Args:
+        tx_ids (list): 
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    result = []
+    for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }):
+        result.append(doc)
+    return result
+
+
+def update_one_tx(tx):
+    """Add one tx.
+
+    Args:
+        tx (dict): dict of tx
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    result = conn.lbtc.lbtc_tx.update_one({'_id': tx['_id']}, {'$set': tx}, upsert=True)
+    return result.matched_count
+
+
+def add_block_info(block_info):
+    """Add a node.
+
+    Args:
+
+    Returns:
+        dict of node info or None.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        try:
+            _block_info = BlockInfo()
+            for key in ['height', 'hash', 'tx_num', 'strippedsize']:
+                setattr(_block_info, key, block_info[key])
+            _block_info.create_time = datetime.datetime.fromtimestamp(block_info['time'])
+            session.add(_block_info)
+            session.commit()
+            return model_to_dict(_block_info)
+        except:
+            session.rollback()
+            return None
+
+
+def update_address_info(address, amount, time):
+    """Add a node.
+
+    Args:
+
+    Returns:
+        dict of node info or None.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        try:
+            _address_info = session.query(AddressInfo).filter(AddressInfo.address == address).first()
+            amount = Decimal(amount)
+            if _address_info is None:
+                _address_info = AddressInfo()
+                _address_info.address = address
+                _address_info.create_time = time
+                _address_info.balance = 0
+                _address_info.receive = 0
+                _address_info.send = 0
+                _address_info.tx_num = 0
+                session.add(_address_info)
+            if amount >= 0:
+                 _address_info.balance += amount
+                 _address_info.receive += amount
+            else:
+                _address_info.balance -= amount
+                _address_info.send += amount
+            _address_info.tx_num += 1
+            session.commit()
+            return True
+        except:
+            session.rollback()
+            raise
+
+
+def update_many_address_info(address_list):
+    """Add a node.
+
+    Args:
+
+    Returns:
+        dict of node info or None.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        try:
+            _address_info_match = []
+            for tx_info in address_list:
+                address = tx_info['address']
+                amount = Decimal(tx_info['amount'])
+                time = tx_info['time']
+                _address_info = session.query(AddressInfo).filter(AddressInfo.address == address).first()
+                if _address_info is None:
+                    _address_info = AddressInfo()
+                    _address_info.address = address
+                    _address_info.create_time = time
+                    _address_info.balance = 0
+                    _address_info.receive = 0
+                    _address_info.send = 0
+                    _address_info.tx_num = 0
+                    session.add(_address_info)
+                _address_info_match.append(_address_info)
+                if amount >= 0:
+                     _address_info.balance += amount
+                     _address_info.receive += amount
+                else:
+                    _address_info.balance += amount
+                    _address_info.send += (0 - amount)
+                _address_info.tx_num += 1
+
+                _transaction_info = TransactionInfo()
+                _transaction_info.hash = tx_info['hash']
+                _transaction_info.height = tx_info['height']
+                _transaction_info.address = address
+                _transaction_info.amount = amount
+                _transaction_info.create_time = time
+                session.add(_transaction_info)
+            session.commit()
+            return True
+        except:
+            session.rollback()
+            raise

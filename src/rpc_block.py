@@ -32,7 +32,9 @@ def update_rpc_node():
         #print(rpc_connection.gettxoutsetinfo())
 
         #print(rpc_connection.gettransactionnew('5db9dd92e738ed8a07a52d52a9907988b1b19d1354e160e0c11bd9ac0c5e058e'))
-        print(rpc_connection.gettransactionnew('b4ad2efca6144cac8de5edf23174facbee2b7b1de5b895753eba7d59d709f886'))
+        print(rpc_connection.gettransactionnew('65369628bbd137801aceba9859c55851a13bc931ccd8426f933f7dc3122b002f'))
+        
+        #print(rpc_connection.gettransactionnew('b4ad2efca6144cac8de5edf23174facbee2b7b1de5b895753eba7d59d709f886'))
         
         #print(rpc_connection.getchaintips())
         #print(rpc_connection.getmempoolinfo())
