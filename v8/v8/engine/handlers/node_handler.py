@@ -9,7 +9,7 @@ from decimal import Decimal
 
 from v8.engine import db_conn
 from v8.model.lbtc_node import LbtcNode, NodeNotValid, NodeDistribution, BlockStatus, BlockInfo, \
-    AddressInfo, TransactionInfo
+    AddressInfo, gen_address_tx_model
 from v8.engine.util import model_to_dict
 
 
@@ -490,12 +490,11 @@ def update_many_address_info(address_list):
                     _address_info.send += (0 - amount)
                 _address_info.tx_num += 1
 
+                TransactionInfo = gen_address_tx_model(address)
                 _transaction_info = TransactionInfo()
+                _address_info_match.append(_transaction_info)
                 _transaction_info.hash = tx_info['hash']
-                _transaction_info.height = tx_info['height']
                 _transaction_info.address = address
-                _transaction_info.amount = amount
-                _transaction_info.create_time = time
                 session.add(_transaction_info)
             session.commit()
             return True

@@ -84,13 +84,3 @@ CREATE TABLE IF NOT EXISTS `address_info` (
   UNIQUE KEY `lbtcnode_address_info_address` (`address`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `transaction_info` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `hash` varchar(64) NOT NULL DEFAULT '' COMMENT '',
-  `height` INT UNSIGNED NOT NULL COMMENT '', 
-  `address` varchar(64) NOT NULL DEFAULT '' COMMENT '',
-  `amount` decimal(20,10) NOT NULL DEFAULT '0.0',
-  `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
-  PRIMARY KEY (`id`),
-  KEY `lbtcnode_transaction_info_address` (`address`)
-) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;

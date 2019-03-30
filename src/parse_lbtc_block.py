@@ -26,7 +26,8 @@ def parse_lbtc_block_main():
         best_height = best_block['height']
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
         if not block_status:
-            update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {"height": 1})
+            block_status = {"height": 1}
+            update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, block_status)
         current_height = block_status['height']
         print('start from height ', current_height)
         next_block_hash = ''
@@ -47,6 +48,7 @@ def parse_lbtc_block_main():
                 tx_mongo = {'_id': _tx_id,
                             'time': datetime.datetime.fromtimestamp(current_block_info['time']),
                             'size': tx_info['vsize'],
+                            'height': current_height,
                             'input': [],
                             'output': []}
                 #print(tx_info)
@@ -103,15 +105,33 @@ def parse_lbtc_block_main():
                     need_update.append({'address': item['input'][2*i],
                                         'amount': 0 - Decimal(item['input'][2*i + 1]),
                                         'time': item['time'],
-                                        'height': current_height,
                                         'hash': item['_id']})
                 for i in range(0, len(item['output']) // 3):
                     if item['output'][3*i + 1] == 'nulldata': continue
                     need_update.append({'address': item['output'][3*i + 1],
                                         'amount': item['output'][3*i + 2],
                                         'time': item['time'],
-                                        'height': current_height,
                                         'hash': item['_id']})
+            tx_time = datetime.datetime.fromtimestamp(current_block_info['time'])
+            need_update_merge = {}
+            if len(need_update) > 1:
+                for item in need_update:
+                    if item['hash'] not in need_update_merge:
+                        need_update_merge[item['hash']] = {item['address']: Decimal(item['amount'])}
+                    else:
+                        if item['address'] not in need_update_merge[item['hash']]:
+                            need_update_merge[item['hash']][item['address']] = Decimal(item['amount'])
+                        else:
+                            need_update_merge[item['hash']][item['address']] += Decimal(item['amount'])
+            if need_update_merge:
+                need_update = []
+                for _hash in need_update_merge:
+                    for _address in need_update_merge[_hash]:
+                        need_update.append({'address': _address,
+                                            'amount': need_update_merge[_hash][_address],
+                                            'time':tx_time,
+                                            'hash': _hash
+                                            })
             update_many_address_info(need_update)
 
             print('current_height ', current_height)
@@ -121,9 +141,10 @@ def parse_lbtc_block_main():
             for item in tx_mongos:
                 for i in range(0, len(item['input']) // 2):
                     if item['input'][2*i] == 'coinbase':
-                        coinbase_address.append(item['output'][1])
+                        pass
+                        #coinbase_address.append(item['output'][1])
         update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {'height': current_height})
-        update_many_delegate_active(coinbase_address)
+        #update_many_delegate_active(coinbase_address)
     except Exception as e:
         print(e)
         raise
@@ -144,6 +165,7 @@ def query_all_delegate():
 def parse_lbtc_block():
     while(True):
         parse_lbtc_block_main()
+        break
         if random.random() > 0.1:
             query_all_delegate()
         time.sleep(2)

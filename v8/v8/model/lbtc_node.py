@@ -4,6 +4,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 
+import hashlib
 
 BaseModel = declarative_base()
 
@@ -81,12 +82,25 @@ class AddressInfo(BaseModel):
     create_time = Column(DateTime)
 
 
-class TransactionInfo(BaseModel):
-    __tablename__ = 'transaction_info'
+address_tx = dict()
 
-    id = Column(Integer, primary_key=True)
-    height = Column(Integer)
-    hash = Column(String)
-    address = Column(String)
-    amount = Column(Numeric(30, 15))
-    create_time = Column(DateTime)
+
+
+def gen_address_tx_model(address):
+    hl = hashlib.md5()
+    hl.update(address.encode(encoding='utf-8'))
+    address = int(hl.hexdigest()[-2:], 16)
+    table_name = 'zz_address_tx_%03d' % address
+    print(table_name)
+    cls_name = 'AddressTx_%03d' % address
+
+    if table_name not in address_tx:
+        cls_dict = {
+            '__tablename__': table_name,
+            
+            'id': Column(Integer, primary_key=True),
+            'hash': Column(String),
+            'address': Column(String),
+        }
+        address_tx[table_name] = type(cls_name, (BaseModel, ), cls_dict)
+    return address_tx[table_name]
