@@ -91,7 +91,6 @@ def gen_address_tx_model(address):
     hl.update(address.encode(encoding='utf-8'))
     address = int(hl.hexdigest()[-2:], 16)
     table_name = 'zz_address_tx_%03d' % address
-    print(table_name)
     cls_name = 'AddressTx_%03d' % address
 
     if table_name not in address_tx:
