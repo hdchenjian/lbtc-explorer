@@ -2,24 +2,30 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from decimal import Decimal
 
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
-    get_block_status, add_block_info, update_many_address_info
+    get_block_status, add_block_info, update_many_address_info, add_many_tx
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 config.from_object(config_online)
 
-@singleton('/tmp/parse_lbtc_block.pid')
-def parse_lbtc_block():
+
+from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT
+
+
+def parse_lbtc_block_main():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
         best_block_hash = rpc_connection.getbestblockhash()
         best_block = rpc_connection.getblock(best_block_hash)
         best_height = best_block['height']
-        best_height = 4765484
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
+        if not block_status:
+            update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {"height": 1})
         current_height = block_status['height']
+        print('start from height ', current_height)
         next_block_hash = ''
         while current_height <= best_height:
             if not next_block_hash:
@@ -87,12 +93,8 @@ def parse_lbtc_block():
                 print('add_block_info failed, current_height ', current_height)
                 break
 
-            current_tx_ids = []
-            for _tx_id in current_block_info['tx']:
-                current_tx_ids.append(_tx_id)
-            mongo_tx_info = find_many_tx(current_tx_ids)
             need_update = []
-            for item in mongo_tx_info:
+            for item in tx_mongos:
                 for i in range(0, len(item['input']) // 2):
                     if item['input'][2*i] == 'coinbase': continue
                     need_update.append({'address': item['input'][2*i],
@@ -118,6 +120,13 @@ def parse_lbtc_block():
         raise
         
     
+@singleton('/tmp/parse_lbtc_block.pid')
+def parse_lbtc_block():
+    while(True):
+        parse_lbtc_block_main()
+        break
+        time.sleep(3)
+
 
 if __name__ == '__main__':
     parse_lbtc_block()

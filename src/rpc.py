@@ -30,7 +30,6 @@ def update_rpc_node():
                          'services': services,
                          'height': height}
             node_by_ip = get_node_by_ip(ip)
-            #print node_by_ip
             if (not node_by_ip or (not node_by_ip['location'] or not node_by_ip['network'])):
                 resolve_result = resolve_address(ip.split(':')[0])
                 if resolve_result:
@@ -43,7 +42,7 @@ def update_rpc_node():
             update_or_add_node(ip, node_info) # comment this filter out node that can not connect to
             #add_not_valid_node(ip)  # use this filter out node that can not connect to
     except Exception as e:
-        print unicode(e)
+        print(unicode(e))
     
 
 if __name__ == '__main__':

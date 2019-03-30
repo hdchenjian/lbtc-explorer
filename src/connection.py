@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 
 '''
@@ -45,7 +45,7 @@ import time
 import struct
 import hashlib
 import random
-from cStringIO import StringIO
+from io import StringIO
 from operator import itemgetter
 
 HEADER_LEN = 24
@@ -368,7 +368,7 @@ class Connection(object):
             try:
                 (msg, data) = deserialize_msg(data)
             except PayloadTooShortError:
-                print 'PayloadTooShortError'
+                print('PayloadTooShortError')
                 data += self.recv(
                     length=self.serializer.required_len - len(data))
                 (msg, data) = self.serializer.deserialize_msg(data)
@@ -437,16 +437,16 @@ if __name__ == '__main__':
         if 'version' == item['command']:
             version_msg = item
             break
-    print version_msg['height']
+    print(version_msg['height'])
     services = version_msg['services']
     if services == 13:
         services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN'
     else:
         services = str(services) + 'todo'
-    print version_msg['user_agent'] + '|' + str(version_msg['version']) + '|' + services
+    print(version_msg['user_agent'] + '|' + str(version_msg['version']) + '|' + services)
     
     print("getaddr")
     addr_msgs = conn.getaddr()
-    print addr_msgs
+    print(addr_msgs)
     for item in addr_msgs[0]['addr_list']:
-        print item['ipv4'] + ':' + str(item['port'])
+        print(item['ipv4'] + ':' + str(item['port']))

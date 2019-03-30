@@ -19,6 +19,7 @@ from v8.config import config, config_online
 config.from_object(config_online)  # noqa
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE
+from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT
 
 rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
 
@@ -33,19 +34,33 @@ def lbtc_index():
     new_block = []
     rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
     time_now = datetime.datetime.now()
+    block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
+    if not block_status:
+        flash(u'区块高度错误', 'error')
+        return render_template('index.html', lbtc_info=lbtc_info)
+    previous_block_hash = ''
+    current_height = block_status['height']
+    best_height_time = 0
     try:
         for i in range(0, 10):
             block_info = {}
-            if i == 0:
-                block_hash = rpc_connection.getbestblockhash()
-            else:
-                block_hash = new_block[i - 1]['previousblockhash']
-            block = rpc_connection.getblock(block_hash)
+            if not previous_block_hash:
+                previous_block_hash = rpc_connection.getblockhash(current_height)
+            block = rpc_connection.getblock(previous_block_hash)
+            if not block:
+                flash(u'区块高度错误', 'error')
+                return render_template('index.html', lbtc_info=lbtc_info)
+            previous_block_hash = block['previousblockhash']
             block_info['miner'] = 'miner name'
             block_info['award'] = '0.0625'
             block_info['height'] = '{:,}'.format(block['height'])
             block_info['size'] = '{:,}'.format(block['strippedsize'])
-            block_info['time'] = str((time_now - datetime.datetime.fromtimestamp(block['time'])).seconds) + u'秒钟前'
+            time_delta = (time_now - datetime.datetime.fromtimestamp(block['time'])).seconds
+            if not best_height_time: best_height_time = block['time'] + 1
+            if time_delta < 3:
+                block_info['time'] = str(time_delta) + u'秒钟前'
+            else:
+                block_info['time'] = str(best_height_time - block['time']) + u'秒钟前'
             for key in ['previousblockhash', 'hash']:
                 block_info[key] = block[key]
             new_block.append(block_info)
