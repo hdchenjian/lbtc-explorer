@@ -6,6 +6,7 @@ import datetime
 import json
 from sqlalchemy.sql import func
 from decimal import Decimal
+import pymongo
 
 from v8.engine import db_conn
 from v8.model.lbtc_node import LbtcNode, NodeNotValid, NodeDistribution, BlockStatus, BlockInfo, \
@@ -275,6 +276,21 @@ def get_block_status(key):
             return json.loads(_block_status.value)
 
 
+def get_block_status_multi_key(key_list):
+    """Get node distribution.
+
+    Args:
+
+    Returns:
+        list of node.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        ret = {}
+        for _block_status in session.query(BlockStatus).filter(BlockStatus.key.in_(key_list)):
+            ret[_block_status.key] = json.loads(_block_status.value)
+        return ret
+
+
 def update_block_status(key, value):
     """Update node distribution info, add it when not exist.
 
@@ -317,6 +333,7 @@ def add_many_tx(txs):
     return result.inserted_ids
 
 
+                                      
 def add_one_tx(tx):
     """Add one tx.
 
@@ -329,6 +346,52 @@ def add_one_tx(tx):
     conn = db_conn.gen_mongo_connection('base')
     result = conn.lbtc.lbtc_tx.insert_one(tx)
     return result.inserted_id
+
+
+def query_coinbase_tx(txs):
+    """Add many tx.
+
+    Args:
+        txs (list): list of tx
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    ret = []
+    for doc in conn.lbtc.lbtc_tx.find({'_id': {'$in': txs}, 'input' : ['coinbase', '']}):
+        ret.append(doc)
+    return ret
+
+
+def find_one_tx(tx_id):
+    """Find one tx.
+
+    Args:
+        tx_id (string): 
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    result = conn.lbtc.lbtc_tx.find_one({'_id': tx_id})
+    return result
+
+
+def find_many_tx(tx_ids):
+    """Find one tx.
+
+    Args:
+        tx_ids (list): 
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    result = []
+    for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }):
+        result.append(doc)
+    return result
 
 
 def update_one_delegate(delegate):
@@ -369,34 +432,80 @@ def update_many_delegate_active(delegate_ids):
     conn.lbtc.lbtc_delegate.update_many({'_id': { '$in': delegate_ids}}, {'$set': {'active': True}}, upsert=False)
 
 
-def find_one_tx(tx_id):
-    """Find one tx.
+def update_all_committee(all_committee):
+    """Add all committee.
 
     Args:
-        tx_id (string): 
+        tx (list): list of committee
 
     Returns:
         
     """
     conn = db_conn.gen_mongo_connection('base')
-    result = conn.lbtc.lbtc_tx.find_one({'_id': tx_id})
-    return result
+    for _committee in all_committee:
+        conn.lbtc.lbtc_committee.update_one({'_id': _committee['address']}, {'$set': _committee}, upsert=True)
 
 
-def find_many_tx(tx_ids):
-    """Find one tx.
+def update_all_proposal(all_proposal):
+    """Add all proposal.
 
     Args:
-        tx_ids (list): 
+        tx (list): list of proposal
 
     Returns:
         
     """
     conn = db_conn.gen_mongo_connection('base')
-    result = []
-    for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }):
-        result.append(doc)
-    return result
+    for _proposal in all_proposal:
+        conn.lbtc.lbtc_proposal.update_one({'_id': _proposal['id']}, {'$set': _proposal}, upsert=True)
+
+
+def query_all_committee():
+    """Add all committee.
+
+    Args:
+
+    Returns:
+        tx (list): list of committee
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    ret = []
+    for _committee in conn.lbtc.lbtc_committee.find().sort("index", pymongo.ASCENDING):
+        ret.append(_committee)
+    return ret
+
+
+def query_all_proposal():
+    """Add all proposal.
+
+    Args:
+
+    Returns:
+        tx (list): list of proposal
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    ret = []
+    for _proposal in conn.lbtc.lbtc_proposal.find().sort("index", pymongo.ASCENDING):
+        ret.append(_proposal)
+    return ret
+
+
+def query_all_delegate():
+    """Add all delegate.
+
+    Args:
+
+    Returns:
+        tx (list): list of delegate
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    ret = []
+    for _delegate in conn.lbtc.lbtc_delegate.find().sort("index", pymongo.ASCENDING):
+        ret.append(_delegate)
+    return ret
 
 
 def add_block_info(block_info):
@@ -501,3 +610,27 @@ def update_many_address_info(address_list):
         except:
             session.rollback()
             raise
+
+
+def get_address_info(address, page=1, since_id=0, size=10):
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        _address_info = session.query(AddressInfo).filter(AddressInfo.address == address).first()
+        if _address_info is None:
+            return None
+        _address_info = model_to_dict(_address_info)
+        TransactionInfo = gen_address_tx_model(address)
+        _address_info['tx'] = []
+        filters = [TransactionInfo.address == address]
+        if since_id:
+            filters.append(TransactionInfo.id < since_id)
+            offset = 0
+        else:
+            offset = (page - 1) * size
+        for _transaction_info in session.query(TransactionInfo) \
+                                        .filter(*filters) \
+                                        .order_by(TransactionInfo.id.desc()) \
+                                        .limit(size) \
+                                        .offset(offset):
+            _address_info['tx'].append(model_to_dict(_transaction_info))
+        return _address_info
+

@@ -28,7 +28,13 @@
             <dl>
               <dt>余额 </dt>
               <dd>
-                {{ address_info["balance"] }}
+                {{ address_info["balance"] }} LBTC
+              </dd>
+            </dl>
+            <dl>
+              <dt>总接收量</dt>
+              <dd>
+                {{ address_info["receive"] }} LBTC
               </dd>
             </dl>
           </div>
@@ -36,11 +42,17 @@
           <div class="abstract-section">
             <dl>
               <dt>交易数量</dt>
-              <dd> {{ address_info["transaction_num"] }} LBTC </dd>
+              <dd> {{ address_info["transaction_num"] }} </dd>
             </dl>
             <dl>
               <dt>第一次交易时间</dt>
-              <dd> {{ address_info["create_time"] }} LBTC </dd>
+              <dd> {{ address_info["create_time"] }} </dd>
+            </dl>
+            <dl>
+              <dt>总发送量</dt>
+              <dd>
+                {{ address_info["send"] }} LBTC
+              </dd>
             </dl>
           </div>
         </div>
@@ -51,6 +63,54 @@
         {% for tx_info in address_info["tx_info"] %}
         {% include "tx_detail.html" %}
         {% endfor %}
+
+  <div class="row">
+    <div class="col-md-3">
+      <ul class="pagination">
+        {% if min_page - 2 <= 1 %}
+          {% set min_page = 1 %}
+        {% endif %}
+        {% if max_page + 2 >= total_page %}
+          {% set max_page = total_page %}
+        {% endif %}
+
+        {% if min_page != 1 %}
+	  <li class=""><a href="{{ url_for('lbtc_address', address=address, page=1) }}"><span>1</span></a></li>
+	  <li><span>...</span></li>
+	{% endif %}
+	{% for i in range(min_page, max_page + 1) %}
+          {% if i == current_page %}
+          <li class="active"><a href="{{ url_for('lbtc_address', address=address, page=current_page) }}"><span>{{ i }}</span></a></li>
+          {% else %}
+	  <li><a href="{{ url_for('lbtc_address', address=address, page=i) }}"><span>{{ i }}</span></a></li>
+          {% endif %}
+	{% endfor %}
+
+        {% if max_page != total_page %}
+	  <li><span>...</span></li>
+	  <li class=""><a href="{{ url_for('lbtc_address', address=address, page=total_page) }}"><span>{{ total_page }}</span></a></li>
+	{% endif %}
+      </ul>
+    </div>
+
+    <div class="col-md-1" style="margin-top: 20px" >
+      <form method="GET" action="{{ url_for('lbtc_address', address=address) }}">
+	<div class="form-group">
+          <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_up }}" />
+	  <button class="btn btn-primary" id="current_page_up_button" {% if current_page_up == 0 %} disabled="disabled" {% endif %} >上一页</button>
+	</div>
+      </form>
+    </div>
+    <div class="col-md-1" style="margin-top: 20px" >
+      <form method="GET" action="{{ url_for('lbtc_address', address=address) }}">
+	<div class="form-group">
+          <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_next }}" />
+	  <button class="btn btn-primary" id="current_page_next_button" {% if current_page_next == 0 %} disabled="disabled" {% endif %} >下一页</button>
+	</div>
+      </form>
+    </div>
+  </div>
+
     
   </div>
 </div>

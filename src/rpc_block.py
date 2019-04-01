@@ -6,7 +6,7 @@ import datetime
 
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, get_node_by_ip, \
-    add_not_valid_node, update_one_delegate
+    add_not_valid_node, update_one_delegate, update_all_committee, update_all_proposal
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 from crawl import resolve_address
@@ -18,7 +18,8 @@ def update_rpc_node():
     try:
         #print(rpc_connection.help())
         best_block_hash = rpc_connection.getbestblockhash()
-        blockhash = rpc_connection.getblockhash(2050113)
+        blockhash = rpc_connection.getblockhash(2050113*9)
+        print(blockhash)
         best_block = rpc_connection.getblock(blockhash)
         #print best_block
         #print(rpc_connection.gettxout('8c7ee1999644b81200390a182a0b9e4f85574991cddb7b7235538f02b79d2c26', 0)) # 1 block
@@ -38,36 +39,13 @@ def update_rpc_node():
         #print(rpc_connection.gettransactionnew('65369628bbd137801aceba9859c55851a13bc931ccd8426f933f7dc3122b002f'))
         
         #print(rpc_connection.gettransactionnew('b4ad2efca6144cac8de5edf23174facbee2b7b1de5b895753eba7d59d709f886'))
-        
+            
         #print(rpc_connection.getchaintips())
         #print(rpc_connection.getmempoolinfo())
         #print(rpc_connection.getrawmempool(True))
 
-        all_bill = rpc_connection.listbills()
-        all_proposal = []
-        for _bill in all_bill:
-            _bill_detail = rpc_connection.getbill(_bill['id'])
-            for key in _bill: print(key, _bill[key])
-            print('\n\n')
-            for key in _bill_detail: print(key, _bill_detail[key])
-            _proposal = {}
-            _proposal['id'] = _bill['id']
-            _proposal['title'] = _bill['title']
-            _proposal['detail'] = _bill_detail['detail']
-            _proposal['start_time'] = datetime.datetime.fromtimestamp(_bill_detail['starttime'])
-            _proposal['end_time'] = datetime.datetime.fromtimestamp(_bill_detail['endtime'])
-            _proposal['state'] = _bill_detail['state']
-            _proposal['options'] = _bill_detail['options']
-            _proposal['url'] = _bill_detail['url']
-            _proposal['committee'] = _bill_detail['committee']
-            print('\n\n')
-            
-            
         '''
-        getcommittee address
-        listbillvoters
         listcommitteebills committeename
-        listcommittees
         listcommitteevoters committeename
         listvoterbills address
         listvotercommittees address

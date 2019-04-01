@@ -7,8 +7,9 @@ import datetime
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, \
     add_not_valid_node, delete_not_valid_node, get_all_not_valid_node, add_many_tx, \
-    add_one_tx, update_one_tx, find_one_tx
-
+    add_one_tx, find_one_tx, query_all_committee, query_all_delegate, query_all_proposal, \
+    query_coinbase_tx
+          
 config.from_object(config_online)
 
 def test_mongo():
@@ -53,4 +54,8 @@ def test_not_valid_node():
 if __name__ == '__main__':
     #test_node()
     #test_not_valid_node()
-    test_mongo()
+    #test_mongo()
+    #print(query_all_committee())
+    #print(query_all_delegate())
+    #print(query_all_proposal())
+    print(query_coinbase_tx(['8c7ee1999644b81200390a182a0b9e4f85574991cddb7b7235538f02b79d2c26'])[0])

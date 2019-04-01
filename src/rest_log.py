@@ -21,7 +21,7 @@ class RESTRecordFormatter(FluentRecordFormatter):
         return data
 
 
-logger = logging.getLogger('martin_REST')
+logger = logging.getLogger('lbtc_REST')
 logger.setLevel(REST_LOG_FILE_LEVEL)
 
 formatter = logging.Formatter(

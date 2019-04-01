@@ -8,13 +8,14 @@ from decimal import Decimal
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
     get_block_status, add_block_info, update_many_address_info, add_many_tx, \
-    update_one_delegate, update_many_delegate_active
+    update_one_delegate, update_many_delegate_active, update_all_committee, update_all_proposal
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 config.from_object(config_online)
 
 
-from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT
+from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, \
+    REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME
 
 rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
 
@@ -152,22 +153,64 @@ def parse_lbtc_block_main():
 
 def query_all_delegate():
     all_delegate = rpc_connection.listdelegates()
+    delegate_address_to_name = {}
     for _delegate in all_delegate:
         _delegate['_id'] = _delegate['address']
+        delegate_address_to_name[_delegate['address']] = _delegate['name']
         _delegate.pop('address')
         _delegate['funds'] = str(Decimal(rpc_connection.getdelegatefunds(_delegate['name'])) / 100000000)
         _delegate['votes'] = str(Decimal(rpc_connection.getdelegatevotes(_delegate['name'])) / 100000000)
         _delegate['votes_address'] = rpc_connection.listreceivedvotes(_delegate['name'])
         update_one_delegate(_delegate)
+    update_block_status(REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, delegate_address_to_name)
 
 
+def query_all_committee_proposal():
+    committee_address_map = {}
+    all_committee = []
+    index = 1
+    for _committee in rpc_connection.listcommittees():
+        _committee_detail = rpc_connection.getcommittee(_committee['address'])
+        _committee['votes'] = _committee_detail['votes']
+        _committee['index'] = index
+        index += 1
+        all_committee.append(_committee)
+        committee_address_map[_committee['address']] = _committee
+    update_all_committee(all_committee)
+
+    all_proposal = []
+    all_bill = rpc_connection.listbills()
+    index = 1
+    for _bill in all_bill:
+        _bill_detail = rpc_connection.getbill(_bill['id'])
+        
+        _proposal = {}
+        _proposal['index'] = index
+        index += 1
+        _proposal['id'] = _bill['id']
+        _proposal['title'] = _bill['title']
+        _proposal['detail'] = _bill_detail['detail']
+        _proposal['start_time'] = datetime.datetime.fromtimestamp(_bill_detail['starttime'])
+        _proposal['end_time'] = datetime.datetime.fromtimestamp(_bill_detail['endtime'])
+        _proposal['state'] = _bill_detail['state']
+        _proposal['options'] = _bill_detail['options']
+        _proposal['url'] = _bill_detail['url']
+        _proposal['committee'] = _bill_detail['committee']
+        _proposal['committee_name'] = committee_address_map[_proposal['committee']]['name']
+        _proposal['voters'] = rpc_connection.listbillvoters(_proposal['id'])
+        all_proposal.append(_proposal)
+    update_all_proposal(all_proposal)
+
+        
 @singleton('/tmp/parse_lbtc_block.pid')
 def parse_lbtc_block():
     while(True):
+        #if random.random() > 0.1:
+        query_all_delegate()
+        query_all_committee_proposal()
+        break
         parse_lbtc_block_main()
         break
-        if random.random() > 0.1:
-            query_all_delegate()
         time.sleep(2)
 
 

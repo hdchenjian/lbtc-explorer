@@ -5,6 +5,7 @@ import datetime
 import os
 import time
 import traceback
+from decimal import Decimal
 
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
@@ -14,14 +15,14 @@ import form
 import rest_log
 
 from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
-    get_block_status
+    get_block_status, get_block_status_multi_key, query_all_committee, query_all_delegate, \
+    query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info
 from v8.config import config, config_online
 config.from_object(config_online)  # noqa
 
-from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE
-from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT
+from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, \
+    REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT
 
-rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
 
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
@@ -32,15 +33,23 @@ app.config['SESSION_TYPE'] = 'filesystem'
 def lbtc_index():
     lbtc_info = {}
     new_block = []
-    rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
     time_now = datetime.datetime.now()
-    block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
-    if not block_status:
-        flash(u'区块高度错误', 'error')
-        return render_template('index.html', lbtc_info=lbtc_info)
+    key_list =[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
+               REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
+    block_status_multi_key_value = get_block_status_multi_key(key_list)
+    for key in key_list:
+        if key not in block_status_multi_key_value:
+            flash(u'区块数据未同步', 'error')
+            return render_template('index.html', lbtc_info=lbtc_info)
+    block_status = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]
+    delegate_address_to_name = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
+    node_status = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
+
     previous_block_hash = ''
-    current_height = block_status['height']
+    current_height = block_status['height'] - 1
     best_height_time = 0
+    _tx_id_list = []
+    rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
     try:
         for i in range(0, 10):
             block_info = {}
@@ -51,8 +60,9 @@ def lbtc_index():
                 flash(u'区块高度错误', 'error')
                 return render_template('index.html', lbtc_info=lbtc_info)
             previous_block_hash = block['previousblockhash']
-            block_info['miner'] = 'miner name'
-            block_info['award'] = '0.0625'
+            for _tx_id in block['tx']:
+                _tx_id_list.append(_tx_id)
+            block_info['tx'] = block['tx']
             block_info['height'] = '{:,}'.format(block['height'])
             block_info['size'] = '{:,}'.format(block['strippedsize'])
             time_delta = (time_now - datetime.datetime.fromtimestamp(block['time'])).seconds
@@ -67,7 +77,26 @@ def lbtc_index():
 
         lbtc_info['unconfirmed_tx_num'] = rpc_connection.getmempoolinfo()['size']
     except Exception as e:
-        print(e)
+        traceback.print_exc()
+        flash(u'获取区块数据错误', 'error')
+        return render_template('index.html', lbtc_info=lbtc_info)
+    _tx_list = query_coinbase_tx(_tx_id_list)
+    _tx_id_to_tx = {}
+    for _tx_item in _tx_list:
+        _tx_id_to_tx[_tx_item['_id']] = _tx_item
+    for _new_block in new_block:
+        _new_block['delegate_address'] = ''
+        _new_block['award'] = 0
+        _new_block['miner'] = ''
+        for _tx_id in _new_block['tx']:
+            if _tx_id in _tx_id_to_tx:
+                _new_block['delegate_address'] = _tx_id_to_tx[_tx_id]['output'][1]
+                _new_block['award'] = _tx_id_to_tx[_tx_id]['output'][2].rstrip('0').rstrip('.')
+                if _new_block['delegate_address'] == '166D9UoFdPcDEGFngswE226zigS8uBnm3C':
+                    _new_block['miner'] = 'LBTCSuperNode'
+                else:
+                    _new_block['miner'] = delegate_address_to_name[_new_block['delegate_address']]
+                break
     lbtc_info['block_info'] = new_block
     lbtc_info['delegate_count'] = 0
     lbtc_info['active_delegate_count'] = 0
@@ -78,13 +107,66 @@ def lbtc_index():
     lbtc_info['average_tx_cost'] = 0
     lbtc_info['average_block_size'] = 0
 
-    node_status = get_block_status(REST_BLOCK_STATUS_KYE_NODE_IP_TYPE)
     lbtc_info['delegate_count'] = node_status['node_num']
     node_distribution = get_node_distribution(7)
     for _distribution in node_distribution:
         _distribution['node_num'] = str(_distribution['node_num']) + ' ({0:.2f}%)'.format(_distribution['node_persent'])
     lbtc_info['node_distribution'] = node_distribution
     return render_template('index.html', lbtc_info=lbtc_info)
+
+
+def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_address=''):
+    tx_info = []
+    for _tx_item in _tx_list:
+        _tx_detail_info = {}
+        _tx_detail_info['hash'] = _tx_item['_id']
+        _tx_detail_info['height'] = _tx_item['height']
+        _tx_detail_info['size'] = _tx_item['size']
+        if confirmations:
+            _tx_detail_info['confirm_num'] = confirmations
+        else:
+            _tx_detail_info['confirm_num'] = current_height - _tx_item['height']
+        _tx_detail_info['time'] = _tx_item['time']
+        if income_address:
+            _tx_detail_info['income'] = Decimal(0)
+        if _tx_item['input'][0] == 'coinbase':
+            _tx_detail_info['lbtc_input'] = '0'
+            _tx_detail_info['input_tx'] =  [{'address': 'CoinBase', 'amount': ''}]
+            _tx_detail_info['input_num'] = '0'
+        else:
+            _tx_detail_info['lbtc_input'] = Decimal(0)
+            _tx_detail_info['input_tx'] = []
+            for i in range(0, len(_tx_item['input']) // 2):
+                _tx_detail_info['lbtc_input'] += Decimal(_tx_item['input'][2*i + 1])
+                _tx_detail_info['input_tx'].append(
+                    {'address': _tx_item['input'][2*i],
+                     'amount': _tx_item['input'][2*i + 1].rstrip('0').rstrip('.')})
+                if income_address and income_address == _tx_item['input'][2*i]:
+                    _tx_detail_info['income'] -= Decimal(_tx_item['input'][2*i + 1])
+            _tx_detail_info['input_num'] = len(_tx_item['input']) // 2
+        
+        _tx_detail_info['lbtc_output'] = Decimal(0)
+        _tx_detail_info['output_tx'] = []
+        _tx_detail_info['output_num'] = 0
+        for i in range(0, len(_tx_item['output']) // 3):
+            if _tx_item['output'][3*i + 1] == 'nulldata': continue
+            _tx_detail_info['lbtc_output'] += Decimal(_tx_item['output'][3*i + 2])
+            _tx_detail_info['output_tx'].append({'address': _tx_item['output'][3*i + 1], 'amount': _tx_item['output'][3*i + 2].rstrip('0').rstrip('.')})
+            _tx_detail_info['output_num'] += 1
+            if income_address and income_address == _tx_item['output'][3*i + 1]:
+                _tx_detail_info['income'] += Decimal(_tx_item['output'][3*i + 2])
+        if income_address:
+            _tx_detail_info['income'] = str(_tx_detail_info['income']).rstrip('0').rstrip('.')
+        if _tx_detail_info['lbtc_input'] == '0':
+            _tx_detail_info['fee'] = '0'
+        else:
+            _tx_detail_info['fee'] = _tx_detail_info['lbtc_input'] - _tx_detail_info['lbtc_output']
+        if _tx_detail_info['lbtc_input'] != '0':
+            _tx_detail_info['lbtc_input'] = str(_tx_detail_info['lbtc_input']).rstrip('0').rstrip('.')
+        _tx_detail_info['lbtc_output'] = str(_tx_detail_info['lbtc_output']).rstrip('0').rstrip('.')
+        
+        tx_info.append(_tx_detail_info)
+    return tx_info
 
 
 @app.route('/lbtc/get_block', methods=['GET'])
@@ -107,51 +189,50 @@ def lbtc_block():
     except Exception as e:
         flash(u'区块Hash或高度错误', 'error')
         return redirect(url_for('lbtc_index'))
-    
-    tx_info = [{'income': '0.1',
-                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
-                'height': 1000,
-                'size': 10,
-                'confirm_num': 110,
-                'time': '2019-03-28 16:12:16',
-                'lbtc_input': '0.11',
-                'lbtc_output': '0.1',
-                'fee': '0.01',
-                'input_num': 1,
-                'output_num': 1,
-                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
-                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],},
-               {'income': '-0.1',
-                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
-                'height': 1000,
-                'size': 10,
-                'confirm_num': 110,
-                'time': '2019-03-28 16:12:16',
-                'lbtc_input': '0.11',
-                'lbtc_output': '0.1',
-                'fee': '0.01',
-                'input_num': 1,
-                'output_num': 1,
-                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
-                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],
-               }]
+    if not _info_block:
+        flash(u'区块Hash或高度错误', 'error')
+        return redirect(url_for('lbtc_index'))
 
+    _tx_id_list = []
+    for _tx_id in _info_block['tx']:
+        _tx_id_list.append(_tx_id)
+    _tx_list = find_many_tx(_tx_id_list)
+    tx_info = []
+    key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
+    block_status_multi_key_value = get_block_status_multi_key(key_list)
+    for key in key_list:
+        if key not in block_status_multi_key_value:
+            flash(u'区块数据未同步', 'error')
+            return redirect(url_for('lbtc_index'))
+
+    current_height = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
+    tx_info = get_tx_detail_info(_tx_list, current_height=current_height, confirmations=_info_block['confirmations'])
     block_info = {'tx_info': tx_info}
     for key in ['merkleroot', 'nonce', 'previousblockhash', 'hash', 'height', 'confirmations',
                 'time', 'versionHex', 'strippedsize', 'tx']:
         block_info[key] = _info_block[key]
     block_info['time'] = datetime.datetime.fromtimestamp(block_info['time']).strftime('%Y-%m-%d %H:%M:%S')
     block_info['transaction_num'] = len(_info_block['tx'])
-    block_info['miner_name'] = 'miner_name'
-    block_info['next_hash'] = ''
+
+    coinbase_tx = query_coinbase_tx(_info_block['tx'])
+    if len(coinbase_tx) != 1:
+        flash(u'区块数据未同步', 'error')
+        return redirect(url_for('lbtc_index'))
+    block_info['delegate_address'] = coinbase_tx[0]['output'][1]
+    delegate_address_to_name = \
+        block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
+    if block_info['delegate_address'] == '166D9UoFdPcDEGFngswE226zigS8uBnm3C':
+        block_info['miner_name'] = 'LBTCSuperNode'
+    else:
+        block_info['miner_name'] = delegate_address_to_name[block_info['delegate_address']]
+
+    try:
+        block_info['next_hash'] = rpc_connection.getblockhash(_info_block['height'] + 1)
+    except Exception as e:
+        traceback.print_exc()
+        block_info['next_hash'] = ''
     block_info['height'] = '{:,}'.format(block_info['height'])
     return render_template('block.html', block_info=block_info, show_tx_hash=True, float=float)
-
-
-@app.route('/lbtc/pool', methods=['GET'])
-def lbtc_pool():
-    lbtc_info = {}
-    return render_template('index.html', lbtc_info=lbtc_info)
 
 
 @app.route('/lbtc/search', methods=['GET'])
@@ -169,43 +250,49 @@ def lbtc_balance():
 @app.route('/lbtc/address', methods=['GET'])
 def lbtc_address():
     address = request.args.get('address', '')
+    address = address.strip(' ')
+    tx_per_page = 10
+    current_page = int(request.args.get('page', 1))
+                                                
     if not address:
         flash(u'钱包地址错误', 'error')
         return redirect(url_for('lbtc_index'))
-    tx_info = [{'income': '0.1',
-                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
-                'height': 1000,
-                'size': 10,
-                'confirm_num': 110,
-                'time': '2019-03-28 16:12:16',
-                'lbtc_input': '0.11',
-                'lbtc_output': '0.1',
-                'fee': '0.01',
-                'input_num': 1,
-                'output_num': 1,
-                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
-                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],},
-               {'income': '-0.1',
-                'hash': '05b0f61ac567d35ed0a143a596a308685812d729762b039e9f849304183c7da3',
-                'height': 1000,
-                'size': 10,
-                'confirm_num': 110,
-                'time': '2019-03-28 16:12:16',
-                'lbtc_input': '0.11',
-                'lbtc_output': '0.1',
-                'fee': '0.01',
-                'input_num': 1,
-                'output_num': 1,
-                'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
-                'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],
-               }]
+    _address_info = get_address_info(address, page=current_page, size=tx_per_page)
+    address_tx_hash = []
+    for _tx_item in _address_info['tx']:
+        address_tx_hash.append(_tx_item['hash'])
+    address_tx_info = find_many_tx(address_tx_hash)
+    current_height = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)['height']
+    tx_info = get_tx_detail_info(address_tx_info, current_height=current_height, income_address=address)
     address_info = {'address': address,
-                    'balance': '0.1',
-                    'transaction_num': 2,
-                    'create_time': '2019-03-28 16:12:16',
+                    'balance': "{:.8f}".format(Decimal(_address_info['balance'])).rstrip('0').rstrip('.'),
+                    'transaction_num': _address_info['tx_num'],
+                    'create_time': _address_info['create_time'],
+                    'receive': str(_address_info['receive']).rstrip('0').rstrip('.'),
+                    'send': str(_address_info['send']).rstrip('0').rstrip('.'),
                     'tx_info': tx_info}
+    tx_count = _address_info['tx_num']
+    total_page = (tx_count + (tx_per_page - 1)) // tx_per_page
+    min_page = max(1, current_page - 2)
+    max_page = min(total_page, current_page + 2)
+    if current_page == 1:
+        current_page_up = 0
+    else:
+        current_page_up = current_page - 1
+    if current_page == total_page:
+        current_page_next = 0
+    else:
+        current_page_next = current_page + 1
     return render_template('address.html', address_info=address_info, not_href_address=address,
-                           show_income=True, show_tx_hash=True, show_tx_height=True, float=float)
+                           show_income=True, show_tx_hash=True, show_tx_height=True,
+                           show_tx_time=True, float=float,
+                           address=address,
+                           current_page=current_page,
+                           current_page_up=current_page_up,
+                           current_page_next=current_page_next,
+                           total_page=total_page,
+                           min_page=min_page,
+                           max_page=max_page)
 
 
 @app.route('/lbtc/tx', methods=['GET'])
@@ -214,20 +301,12 @@ def lbtc_tx():
     if not tx_hash:
         flash(u'交易hash错误', 'error')
         return redirect(url_for('lbtc_index'))
-    tx_info = {'hash': tx_hash,
-               'height': 1000,
-               'size': 10,
-               'confirm_num': 110,
-               'time': '2019-03-28 16:12:16',
-               'lbtc_input': '0.11',
-               'lbtc_output': '0.1',
-               'fee': '0.01',
-               'input_num': 1,
-               'output_num': 1,
-               'input_tx': [{'address': 'qrm82nh4heasz84ga3wc88pnl4saj50pru592c46vm', 'amount': '0.11'}],
-               'output_tx': [{'address': 'pz3t0g8699xrn65q6cdfel867svgc35ql5pvwhunse', 'amount': '0.10'}],
-    }
-    return render_template('tx.html', tx_info=tx_info, show_income=False, show_tx_height=True)
+    current_height = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)['height']
+    _tx_list = find_one_tx(tx_hash)
+    _tx_list = [_tx_list]
+    tx_info = get_tx_detail_info(_tx_list, current_height=current_height)
+    print(tx_info)
+    return render_template('tx.html', tx_info=tx_info[0], show_income=False, show_tx_height=True)
 
 
 def node_cmp(a, b):

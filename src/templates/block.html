@@ -53,7 +53,9 @@
             </dl>
             <dl>
               <dt>播报方</dt>
-              <dd> {{ block_info["miner_name"] }} </dd>
+              <dd>
+                <a href="{{ url_for('lbtc_address', name=block_info['delegate_address']) }}" > {{ block_info["miner_name"] }}</a>
+              </dd>
             </dl>
           </div>
 
@@ -64,11 +66,19 @@
             </dl>
             <dl>
               <dt>前一个块</dt>
-              <dd> {{ block_info["previousblockhash"] }} </dd>
+              <dd>
+                <a href="{{ url_for('lbtc_block', hash=block_info['previousblockhash']) }}">
+                  {{ block_info["previousblockhash"] }}
+                </a>
+              </dd>
             </dl>
             <dl>
               <dt>后一个块</dt>
-              <dd> {{ block_info["next_hash"] }} </dd>
+              <dd>
+                <a href="{{ url_for('lbtc_block', hash=block_info['next_hash']) }}">
+                  {{ block_info["next_hash"] }}
+                </a>
+              </dd>
             </dl>
             <dl>
               <dt>Merkle Root</dt>
