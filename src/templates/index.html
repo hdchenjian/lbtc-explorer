@@ -69,14 +69,14 @@
               <ul data-toggle="tooltip" class="unconfirmed-txs-popover">
                 <li>
                   <dl>
-                    <dt>
-                      <a style="display: block;float: left" href="{{ url_for('lbtc_nodes') }}">节点数</a>
-                    </dt>
-                    <dd>{{ lbtc_info["delegate_count"] }} </dd>
+                    <dt> 节点数 </dt>
+                    <dd>
+                      <a href="{{ url_for('lbtc_nodes') }}">{{ lbtc_info["delegate_count"] }}</a>
+                    </dd>
                   </dl>
                 </li>
               </ul>
-
+            
               <div class="panel-heading">
                 <div class="panel-heading-title">节点分布(TOP7)</div>
               </div>

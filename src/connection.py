@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # encoding: utf-8
 
 '''
@@ -45,12 +45,15 @@ import time
 import struct
 import hashlib
 import random
-from io import StringIO
+from cStringIO import StringIO
 from operator import itemgetter
+from base64 import b32decode, b32encode
+import codecs
 
 HEADER_LEN = 24
 MAGIC_NUMBER = "\xF9\xBE\xB3\xD5"
 SOCKET_BUFSIZE = 8192
+ONION_PREFIX = "\xFD\x87\xD8\x7E\xEB\x43"  # ipv6 prefix for .onion address
 
 # This is set prior to throwing PayloadTooShortError exception to
 # allow caller to fetch more data over the network.
@@ -192,7 +195,6 @@ def deserialize_network_address(data, has_timestamp=False):
         ipv6 = ""
         onion = ""
 
-        ONION_PREFIX = "\xFD\x87\xD8\x7E\xEB\x43"  # ipv6 prefix for .onion address
         if _ipv6[:6] == ONION_PREFIX:
             onion = b32encode(_ipv6[6:]).lower() + ".onion"  # use .onion
         else:
@@ -421,8 +423,8 @@ class Connection(object):
 if __name__ == '__main__':
     port = 9333
     host = '120.79.161.218'
-    host = '101.132.70.217'
-    host = '159.138.28.122'
+    #host = '101.132.70.217'
+    #host = '159.138.28.122'
     to_addr = (host, port)
     to_services = 1  # NODE_NETWORK
     conn = Connection(to_addr, to_services=to_services)

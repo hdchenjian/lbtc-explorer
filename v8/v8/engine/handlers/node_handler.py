@@ -212,7 +212,7 @@ def get_node_distribution(limit_count=7):
         ret = []
         for _node in session.query(NodeDistribution) \
                             .filter(NodeDistribution.deleted == 0) \
-                            .order_by(NodeDistribution.node_num.desc()) \
+                            .order_by(NodeDistribution.rank) \
                             .limit(limit_count):
             ret.append(model_to_dict(_node))
         return ret
@@ -378,7 +378,7 @@ def find_one_tx(tx_id):
     return result
 
 
-def find_many_tx(tx_ids):
+def find_many_tx(tx_ids, sort=False):
     """Find one tx.
 
     Args:
@@ -389,34 +389,13 @@ def find_many_tx(tx_ids):
     """
     conn = db_conn.gen_mongo_connection('base')
     result = []
-    for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }):
-        result.append(doc)
-    return result
-
-
-def update_one_delegate(delegate):
-    """Add one delegate.
-
-    Args:
-        tx (dict): dict of delegate
-
-    Returns:
-        
-    """
-    conn = db_conn.gen_mongo_connection('base')
-    _delegate = conn.lbtc.lbtc_delegate.find_one({'_id': delegate['_id']})
-    if _delegate is None:
-        delegate['active'] = False
-        result = conn.lbtc.lbtc_delegate.insert_one(delegate)
-        return result.inserted_id
+    if sort:
+        for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }).sort("height", pymongo.DESCENDING):
+            result.append(doc)
     else:
-        modify_dict = {'funds': delegate['funds'],
-                       'votes': delegate['votes'],
-                       'votes_address': delegate['votes_address']
-        }
-        if 'active' in delegate:
-            modify_dict['active'] = delegate['active']
-        conn.lbtc.lbtc_delegate.update_one({'_id': delegate['_id']}, {'$set': modify_dict}, upsert=False)
+        for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }):
+            result.append(doc)
+    return result
 
 
 def update_many_delegate_active(delegate_ids):
@@ -460,6 +439,20 @@ def update_all_proposal(all_proposal):
         conn.lbtc.lbtc_proposal.update_one({'_id': _proposal['id']}, {'$set': _proposal}, upsert=True)
 
 
+def update_all_delegate(all_delegate):
+    """Add one delegate.
+
+    Args:
+        tx (dict): dict of delegate
+
+    Returns:
+        
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    for _delegate in all_delegate:
+        conn.lbtc.lbtc_delegate.update_one({'_id': _delegate['_id']}, {'$set': _delegate}, upsert=True)
+    
+
 def query_all_committee():
     """Add all committee.
 
@@ -476,7 +469,7 @@ def query_all_committee():
     return ret
 
 
-def query_all_proposal():
+def query_all_proposal(bill_id=''):
     """Add all proposal.
 
     Args:
@@ -486,10 +479,14 @@ def query_all_proposal():
         
     """
     conn = db_conn.gen_mongo_connection('base')
-    ret = []
-    for _proposal in conn.lbtc.lbtc_proposal.find().sort("index", pymongo.ASCENDING):
-        ret.append(_proposal)
-    return ret
+    if bill_id:
+        _proposal = conn.lbtc.lbtc_proposal.find_one({'_id': bill_id})
+        return _proposal
+    else:
+        ret = []
+        for _proposal in conn.lbtc.lbtc_proposal.find().sort("index", pymongo.ASCENDING):
+            ret.append(_proposal)
+        return ret
 
 
 def query_all_delegate():
@@ -502,7 +499,9 @@ def query_all_delegate():
         
     """
     conn = db_conn.gen_mongo_connection('base')
-    ret = []
+    ret = [{'_id': '166D9UoFdPcDEGFngswE226zigS8uBnm3C',
+            'index': 1,
+            'funds': '0', 'votes': '21000000', 'name': 'LBTCSuperNode', 'active': False}]
     for _delegate in conn.lbtc.lbtc_delegate.find().sort("index", pymongo.ASCENDING):
         ret.append(_delegate)
     return ret
@@ -634,3 +633,34 @@ def get_address_info(address, page=1, since_id=0, size=10):
             _address_info['tx'].append(model_to_dict(_transaction_info))
         return _address_info
 
+
+def update_most_rich_address(key, top=100):
+    address_ids = []
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        for _address_info in session.query(AddressInfo) \
+                                    .order_by(AddressInfo.balance.desc()) \
+                                    .limit(top):
+            address_ids.append(_address_info.id)
+    update_block_status(key, address_ids)
+
+
+def query_most_rich_address(key, key_utxo):
+    ret = []
+    key_value = get_block_status_multi_key([key, key_utxo])
+    if not key_value[key]: return ret
+    total_amount = float(key_value[key_utxo]['total_amount'])
+    rank = 1
+    sum_balance = Decimal(0)
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        for _address_info in session.query(AddressInfo) \
+                                    .filter(AddressInfo.id.in_(key_value[key])) \
+                                    .order_by(AddressInfo.balance.desc()) :
+            _address_info_dict = model_to_dict(_address_info)
+            _address_info_dict['persent'] = "{0:.2f} %".format(float(_address_info_dict['balance']) / total_amount * 100)
+            sum_balance += Decimal(_address_info_dict['balance'])
+            _address_info_dict['sum_persent'] = "{0:.2f} %".format(float(sum_balance) / total_amount * 100)
+            _address_info_dict['balance'] = str(_address_info_dict['balance']).rstrip('0').rstrip('.')
+            _address_info_dict['rank'] = rank
+            rank += 1
+            ret.append(_address_info_dict)
+        return ret

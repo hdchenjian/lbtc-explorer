@@ -11,7 +11,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='assets/bootstrap_deadc0b.css') }}"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='assets/lbtc_theme_nav.css') }}"/>
 
+  <script src="{{ url_for('static', filename='js/qrcode.min_1dc0697.js') }}"></script>
   <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
 
 <body>
@@ -27,12 +29,17 @@
               <li class="nav-item">
                 <a href="{{ url_for('lbtc_balance') }}" target="_blank">余额排行榜</a>
               </li>
+
               <li class="nav-item">
-                <a href="{{ url_for('lbtc_balance') }}" target="_blank">Committee</a>
+                <a href="{{ url_for('lbtc_committee') }}" target="_blank">Committee</a>
               </li>
             
               <li class="nav-item">
-                <a href="{{ url_for('lbtc_balance') }}" target="_blank">Proposals</a>
+                <a href="{{ url_for('lbtc_proposal') }}" target="_blank">Proposals</a>
+              </li>
+
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_delegate') }}" target="_blank">Delegates</a>
               </li>
             
             </ul>

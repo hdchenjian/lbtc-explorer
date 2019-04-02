@@ -5,10 +5,14 @@
 <div class="container">
   <br>
   <div class="row">
-    <div class="panel-heading">
-        <div class="panel-heading-title">节点分布</div>
-    </div>
-    <div class="big col-md-2 text-center">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
+      <li>节点分布 </li> 
+    </ol>
+  </div>
+  
+  <div class="row">
+    <div class="big col-md-3 text-center">
       <br><br><br>
       <h4>{{ node_status["node_num"] }}</h4> <p class="text-muted">Nodes</p>
       <h4>{{ node_status["ipv4"] }}</h4> <p class="text-muted">IPv4</p>
@@ -16,7 +20,7 @@
       <h4>{{ node_status["onion"] }}</h4><p class="text-muted">.onion</p>
     </div>
     
-    <div class="col-xs-10" style="padding-left: 10; padding-right: 0px;">
+    <div class="col-xs-7" style="padding-left: 20; padding-right: 0px;">
       <div class="panel-heading">
       </div>
       <div class="panel-body">

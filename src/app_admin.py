@@ -16,12 +16,14 @@ import rest_log
 
 from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
     get_block_status, get_block_status_multi_key, query_all_committee, query_all_delegate, \
-    query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info
+    query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info, \
+    query_most_rich_address
 from v8.config import config, config_online
 config.from_object(config_online)  # noqa
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, \
-    REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT
+    REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, \
+    REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO
 
 
 app = Flask(__name__)
@@ -116,9 +118,16 @@ def lbtc_index():
 
 
 def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_address=''):
+    show_address_num = 5
     tx_info = []
+    tx_index = 1
     for _tx_item in _tx_list:
         _tx_detail_info = {}
+        _tx_detail_info['input_collapse_href'] = '#collapseTxInput' + str(tx_index)
+        _tx_detail_info['input_collapse_id'] = 'collapseTxInput' + str(tx_index)
+        _tx_detail_info['output_collapse_href'] = '#collapseTxOutput' + str(tx_index)
+        _tx_detail_info['output_collapse_id'] = 'collapseTxOutput' + str(tx_index)
+        tx_index += 1
         _tx_detail_info['hash'] = _tx_item['_id']
         _tx_detail_info['height'] = _tx_item['height']
         _tx_detail_info['size'] = _tx_item['size']
@@ -144,6 +153,12 @@ def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_ad
                 if income_address and income_address == _tx_item['input'][2*i]:
                     _tx_detail_info['income'] -= Decimal(_tx_item['input'][2*i + 1])
             _tx_detail_info['input_num'] = len(_tx_item['input']) // 2
+            if len(_tx_detail_info['input_tx']) > show_address_num:
+                _tx_detail_info['input_tx_hide'] = _tx_detail_info['input_tx'][show_address_num:]
+                _tx_detail_info['input_tx_hide_num'] = len(_tx_detail_info['input_tx_hide'])
+                _tx_detail_info['input_tx'] = _tx_detail_info['input_tx'][0:show_address_num]
+            else:
+                _tx_detail_info['input_tx_hide'] = None
         
         _tx_detail_info['lbtc_output'] = Decimal(0)
         _tx_detail_info['output_tx'] = []
@@ -151,10 +166,17 @@ def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_ad
         for i in range(0, len(_tx_item['output']) // 3):
             if _tx_item['output'][3*i + 1] == 'nulldata': continue
             _tx_detail_info['lbtc_output'] += Decimal(_tx_item['output'][3*i + 2])
-            _tx_detail_info['output_tx'].append({'address': _tx_item['output'][3*i + 1], 'amount': _tx_item['output'][3*i + 2].rstrip('0').rstrip('.')})
+            _tx_detail_info['output_tx'].append({'address': _tx_item['output'][3*i + 1],
+                                                 'amount': _tx_item['output'][3*i + 2].rstrip('0').rstrip('.')})
             _tx_detail_info['output_num'] += 1
             if income_address and income_address == _tx_item['output'][3*i + 1]:
                 _tx_detail_info['income'] += Decimal(_tx_item['output'][3*i + 2])
+        if len(_tx_detail_info['output_tx']) > show_address_num:
+            _tx_detail_info['output_tx_hide'] = _tx_detail_info['output_tx'][show_address_num:]
+            _tx_detail_info['output_tx_hide_num'] = len(_tx_detail_info['output_tx_hide'])
+            _tx_detail_info['output_tx'] = _tx_detail_info['output_tx'][0:show_address_num]
+        else:
+            _tx_detail_info['output_tx_hide'] = None
         if income_address:
             _tx_detail_info['income'] = str(_tx_detail_info['income']).rstrip('0').rstrip('.')
         if _tx_detail_info['lbtc_input'] == '0':
@@ -243,8 +265,58 @@ def lbtc_search():
 
 @app.route('/lbtc/balance', methods=['GET'])
 def lbtc_balance():
-    lbtc_info = {}
-    return render_template('index.html', lbtc_info=lbtc_info)
+    balance_info = query_most_rich_address(REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST,
+                                           REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO)
+    print(balance_info)
+    return render_template('balance.html', balance_info=balance_info)
+
+
+@app.route('/lbtc/committee', methods=['GET'])
+def lbtc_committee():
+    committee_info = query_all_committee()
+    return render_template('committee.html', committee_info=committee_info)
+
+
+@app.route('/lbtc/proposal', methods=['GET'])
+def lbtc_proposal():
+    proposal_info = query_all_proposal()
+    print('proposal_info', proposal_info[1])
+    return render_template('proposal.html', proposal_info=proposal_info)
+
+
+@app.route('/lbtc/bill', methods=['GET'])
+def lbtc_bill():
+    bill_id = request.args.get('id', '')
+    bill_id = bill_id.strip(' ')
+    if not bill_id:
+        flash(u'提案ID错误', 'error')
+        return redirect(url_for('lbtc_index'))
+    proposal_info = query_all_proposal(bill_id=bill_id)
+    if not proposal_info:
+        flash(u'提案ID错误', 'error')
+        return redirect(url_for('lbtc_index'))
+    print('proposal_info', proposal_info)
+    show_address_num = 5
+    option_index = 1
+    for _option in proposal_info["options"]:
+        if len(_option['vote_address']) > show_address_num:
+            _option['vote_address_hide'] = _option['vote_address'][show_address_num:]
+            _option['vote_address_hide_num'] = len(_option['vote_address_hide'])
+            _option['vote_address'] = _option['vote_address'][0:show_address_num]
+            _option['vote_collapse_href'] = '#collapseVote' + str(option_index)
+            _option['vote_collapse_id'] = 'collapseVote' + str(option_index)
+        else:
+            _option['vote_address_hide'] = None
+        option_index += 1
+        
+    return render_template('proposal_detail.html', proposal_info=proposal_info)
+
+
+@app.route('/lbtc/delegate', methods=['GET'])
+def lbtc_delegate():
+    delegate_info = query_all_delegate()
+    print('proposal_info', delegate_info[0])
+    return render_template('delegate.html', delegate_info=delegate_info)
 
 
 @app.route('/lbtc/address', methods=['GET'])
@@ -253,15 +325,17 @@ def lbtc_address():
     address = address.strip(' ')
     tx_per_page = 10
     current_page = int(request.args.get('page', 1))
-                                                
-    if not address:
-        flash(u'钱包地址错误', 'error')
+    if not address or current_page < 1:
+        flash(u'钱包地址或页码错误', 'error')
         return redirect(url_for('lbtc_index'))
     _address_info = get_address_info(address, page=current_page, size=tx_per_page)
+    if not _address_info:
+        flash(u'钱包地址错误', 'error')
+        return redirect(url_for('lbtc_index'))
     address_tx_hash = []
     for _tx_item in _address_info['tx']:
         address_tx_hash.append(_tx_item['hash'])
-    address_tx_info = find_many_tx(address_tx_hash)
+    address_tx_info = find_many_tx(address_tx_hash, sort=True)
     current_height = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)['height']
     tx_info = get_tx_detail_info(address_tx_info, current_height=current_height, income_address=address)
     address_info = {'address': address,
@@ -287,6 +361,7 @@ def lbtc_address():
                            show_income=True, show_tx_hash=True, show_tx_height=True,
                            show_tx_time=True, float=float,
                            address=address,
+                           address_js = '\"' + address + '\"',
                            current_page=current_page,
                            current_page_up=current_page_up,
                            current_page_next=current_page_next,
@@ -305,7 +380,6 @@ def lbtc_tx():
     _tx_list = find_one_tx(tx_hash)
     _tx_list = [_tx_list]
     tx_info = get_tx_detail_info(_tx_list, current_height=current_height)
-    print(tx_info)
     return render_template('tx.html', tx_info=tx_info[0], show_income=False, show_tx_height=True)
 
 

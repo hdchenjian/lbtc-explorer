@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
+      <li>余额TOP100 </li> 
+    </ol>
+  </div>
+
+  
+  <div class="row">
+    <div class="col-xs-12" style="padding-left: 10; padding-right: 0px;">
+      <div class="panel-body">
+        <table class="table">
+          <tr>
+            <th class="text-center">排名</th>
+            <th class="text-center">地址</th>
+            <th class="text-center">余额</th>
+            <th class="text-center">占比</th>
+            <th class="text-center">累计占比</th>
+            <th class="text-center">交易数量</th>
+            <th class="text-center">第一次交易时间</th>
+          </tr>
+          {% for _info in balance_info %}
+          <tr>
+            <td class="text-center" >
+              {{ _info["rank"] }}
+            </td>
+            <td class="text-center">
+              <a href="{{ url_for('lbtc_address', address=_info['address']) }}"> {{ _info["address"] }} </a>
+            </td>
+            <td class="text-center" >
+              {{ _info["balance"] }}
+            </td>
+            <td class="text-center">
+              {{ _info["persent"] }}
+            </td>
+            <td class="text-center">
+              {{ _info["sum_persent"] }}
+            </td>
+            <td class="text-center" >
+              {{ _info["tx_num"] }}
+            </td>
+            <td class="text-center">
+              {{ _info["create_time"] }}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

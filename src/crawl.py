@@ -8,6 +8,8 @@ from geoip2.errors import AddressNotFoundError
 from decimal import Decimal
 import threading
 import time
+import traceback
+import socket
 
 from decorators import singleton
 from connection import Connection
@@ -84,13 +86,18 @@ def find_node(node, max_height):
             print('get new node list', addr_msgs)
         else:
             pass
-    except Exception as e:
-        #print(node['ip'], e)
+    except (socket.timeout, socket.error,  OSError, ValueError) as e:
+        exception_str = str(e)
+        if 'timed out' not in exception_str and 'Connection refused' not in exception_str and \
+           'No route to host' not in exception_str and 'closed connection' not in exception_str \
+           and 'Network is unreachable' not in exception_str:
+            print(node['ip'], e)
         if True: #node['height'] != -1:
             if max_height - node['height'] > 3000 or \
                (max_height - node['height'] > 1000 and not node['ip'].endswith(':9333')):
                 #print(node['ip'], 'long time offline, delete it')
                 delete_node(node['ip'])
+                #pass
         else:
             if node['count'] > 10:
                 delete_not_valid_node(node['ip'])

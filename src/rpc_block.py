@@ -6,7 +6,7 @@ import datetime
 
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, get_node_by_ip, \
-    add_not_valid_node, update_one_delegate, update_all_committee, update_all_proposal
+    add_not_valid_node, update_all_committee, update_all_proposal
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 from crawl import resolve_address
@@ -18,8 +18,8 @@ def update_rpc_node():
     try:
         #print(rpc_connection.help())
         best_block_hash = rpc_connection.getbestblockhash()
-        blockhash = rpc_connection.getblockhash(2050113*9)
-        print(blockhash)
+        blockhash = rpc_connection.getblockhash(2050113)
+        #print(blockhash)
         best_block = rpc_connection.getblock(blockhash)
         #print best_block
         #print(rpc_connection.gettxout('8c7ee1999644b81200390a182a0b9e4f85574991cddb7b7235538f02b79d2c26', 0)) # 1 block
@@ -44,6 +44,9 @@ def update_rpc_node():
         #print(rpc_connection.getmempoolinfo())
         #print(rpc_connection.getrawmempool(True))
 
+        print(rpc_connection.listreceivedvotes('luo'))
+        print(rpc_connection.listcommitteevoters('TestCommitteesName'))
+        print(rpc_connection.listvoteddelegates('1LAMDkarMYfZXcRQX5ZKhSafQBJqcRf91v'))
         '''
         listcommitteebills committeename
         listcommitteevoters committeename

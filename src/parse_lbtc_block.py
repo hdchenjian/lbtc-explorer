@@ -8,14 +8,16 @@ from decimal import Decimal
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
     get_block_status, add_block_info, update_many_address_info, add_many_tx, \
-    update_one_delegate, update_many_delegate_active, update_all_committee, update_all_proposal
+    update_all_delegate, update_many_delegate_active, update_all_committee, update_all_proposal, \
+    update_most_rich_address
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 config.from_object(config_online)
 
 
 from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, \
-    REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME
+    REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, \
+    REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST
 
 rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
 
@@ -152,16 +154,25 @@ def parse_lbtc_block_main():
         
 
 def query_all_delegate():
-    all_delegate = rpc_connection.listdelegates()
+    list_delegate = rpc_connection.listdelegates()
     delegate_address_to_name = {}
-    for _delegate in all_delegate:
-        _delegate['_id'] = _delegate['address']
+    all_delegate = []
+    for _delegate in list_delegate:
+        _delegate_info = {}
+        _delegate_info['_id'] = _delegate['address']
+        _delegate_info['name'] = _delegate['name']
         delegate_address_to_name[_delegate['address']] = _delegate['name']
-        _delegate.pop('address')
-        _delegate['funds'] = str(Decimal(rpc_connection.getdelegatefunds(_delegate['name'])) / 100000000)
-        _delegate['votes'] = str(Decimal(rpc_connection.getdelegatevotes(_delegate['name'])) / 100000000)
-        _delegate['votes_address'] = rpc_connection.listreceivedvotes(_delegate['name'])
-        update_one_delegate(_delegate)
+        _delegate_info['funds'] = str(Decimal(rpc_connection.getdelegatefunds(_delegate['name'])) / 100000000)
+        _delegate_info['votes'] = str(Decimal(rpc_connection.getdelegatevotes(_delegate['name'])) / 100000000)
+        _delegate_info['active'] = False
+        all_delegate.append(_delegate_info)
+        #_delegate['votes_address'] = rpc_connection.listreceivedvotes(_delegate['name'])
+    all_delegate.sort(key=lambda x: Decimal(x['votes']), reverse=True)
+    index = 2
+    for _delegate in all_delegate:
+        _delegate['index'] = index
+        index += 1
+    update_all_delegate(all_delegate)
     update_block_status(REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, delegate_address_to_name)
 
 
@@ -197,17 +208,46 @@ def query_all_committee_proposal():
         _proposal['url'] = _bill_detail['url']
         _proposal['committee'] = _bill_detail['committee']
         _proposal['committee_name'] = committee_address_map[_proposal['committee']]['name']
-        _proposal['voters'] = rpc_connection.listbillvoters(_proposal['id'])
+
+        
+
+        _proposal_voters = rpc_connection.listbillvoters(_proposal['id'])
+        option_index = 0
+        for option in _proposal['options']:
+            for vote in _proposal_voters:
+                if vote['index'] == option_index:
+                    sum_vote = Decimal(0)
+                    address_list = []
+                    for _address in vote['addresses']:
+                        sum_vote += _address['votes']
+                        address_list.append(_address['voters'])
+                    option['votes'] = str(sum_vote / Decimal(100000000))
+                    option['vote_address'] = address_list
+                    break
+            option_index += 1
         all_proposal.append(_proposal)
     update_all_proposal(all_proposal)
 
-        
+
 @singleton('/tmp/parse_lbtc_block.pid')
 def parse_lbtc_block():
+    update_most_rich_address_time = None
     while(True):
+        query_all_committee_proposal()
+        time_now = datetime.datetime.now()
+        if update_most_rich_address_time is None or (time_now - update_most_rich_address_time).seconds > 30:
+            update_most_rich_address(REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, top=100)
+            update_most_rich_address_time = time_now
+
+        tx_out_set_info = rpc_connection.gettxoutsetinfo()
+        for key in ['bestblock', 'hash_serialized', 'txouts', 'bytes_serialized']:
+            tx_out_set_info.pop(key)
+        tx_out_set_info['total_amount'] = str(tx_out_set_info['total_amount'])
+        update_block_status(REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, tx_out_set_info)
+
+
         #if random.random() > 0.1:
         query_all_delegate()
-        query_all_committee_proposal()
         break
         parse_lbtc_block_main()
         break
