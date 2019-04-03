@@ -1,22 +1,22 @@
 <!doctype html>
 <html lang="zh-cn">
-<head>
-  <title>闪电比特币区块浏览器</title>
+  <head>
+    <title>闪电比特币区块浏览器</title>
 
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/main_df449dfef3c0.css') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/bootstrap_deadc0b.css') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/lbtc_theme_nav.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/main_df449dfef3c0.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/bootstrap_deadc0b.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/lbtc_theme_nav.css') }}"/>
 
-  <script src="{{ url_for('static', filename='js/qrcode.min_1dc0697.js') }}"></script>
-  <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.min.js"></script>
-  <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-</head>
+    <script src="{{ url_for('static', filename='js/qrcode.min_1dc0697.js') }}"></script>
+    <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
 
-<body>
+  <body>
     <header class="header">
       <div class="container">
         <div class="row">
@@ -25,7 +25,7 @@
               <li class="nav-item">
                 <a href="{{ url_for('lbtc_index') }}" target="_blank">LBTC explorer</a>
               </li>
-            
+
               <li class="nav-item">
                 <a href="{{ url_for('lbtc_balance') }}" target="_blank">余额排行榜</a>
               </li>
@@ -33,7 +33,7 @@
               <li class="nav-item">
                 <a href="{{ url_for('lbtc_committee') }}" target="_blank">Committee</a>
               </li>
-            
+
               <li class="nav-item">
                 <a href="{{ url_for('lbtc_proposal') }}" target="_blank">Proposals</a>
               </li>
@@ -41,7 +41,7 @@
               <li class="nav-item">
                 <a href="{{ url_for('lbtc_delegate') }}" target="_blank">Delegates</a>
               </li>
-            
+
             </ul>
           </nav>
 
@@ -53,7 +53,7 @@
                   <span class="glyphicon glyphicon-search"></span>
                 </button>
                 <div class="searchbar-input-container">
-                  <input type="search" class="searchbar-input" name="q"
+                  <input type="search" class="searchbar-input" name="param"
                          placeholder="地址、高度或哈希..."
                          autocomplete="off"
                          onfocus="$(this).addClass('active')"
@@ -69,12 +69,16 @@
 
     {% with messages = get_flashed_messages(category_filter=['success']) %}
     {% if messages %}
-    <div class="alert alert-success" role="alert">
+    <div class="alert alert-success alert-dismissible " role="alert">
       <ul>
         {% for message in messages %}
-        <li>{{ message }}</li>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <li style="text-align: center;font-size:17px">{{ message }}</li>
         {% endfor %}
       </ul>
+      
     </div>
     {% endif %}
     {% endwith %}
@@ -82,10 +86,13 @@
 
     {% with messages = get_flashed_messages(category_filter=['error']) %}
     {% if messages %}
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
       <ul>
         {% for message in messages %}
-        <li>{{ message }}</li>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <li style="text-align: center;font-size:17px">{{ message }}</li>
         {% endfor %}
       </ul>
     </div>
@@ -98,5 +105,5 @@
 
     {% block js %}
     {% endblock %}
-</body>
+  </body>
 </html>

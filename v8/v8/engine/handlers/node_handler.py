@@ -664,3 +664,12 @@ def query_most_rich_address(key, key_utxo):
             rank += 1
             ret.append(_address_info_dict)
         return ret
+
+
+def query_address_info(address):
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        _address_info = session.query(AddressInfo).filter(AddressInfo.address == address).first()
+        if _address_info:
+            return model_to_dict(_address_info)
+        else:
+            return None

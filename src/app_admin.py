@@ -17,13 +17,16 @@ import rest_log
 from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
     get_block_status, get_block_status_multi_key, query_all_committee, query_all_delegate, \
     query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info, \
-    query_most_rich_address
+    query_most_rich_address, query_address_info
 from v8.config import config, config_online
 config.from_object(config_online)  # noqa
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, \
     REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, \
-    REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO
+    REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, \
+    REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME, \
+    REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS, \
+    REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS
 
 
 app = Flask(__name__)
@@ -39,10 +42,6 @@ def lbtc_index():
     key_list =[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
                REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
-    for key in key_list:
-        if key not in block_status_multi_key_value:
-            flash(u'区块数据未同步', 'error')
-            return render_template('index.html', lbtc_info=lbtc_info)
     block_status = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]
     delegate_address_to_name = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
     node_status = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
@@ -222,11 +221,6 @@ def lbtc_block():
     tx_info = []
     key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
-    for key in key_list:
-        if key not in block_status_multi_key_value:
-            flash(u'区块数据未同步', 'error')
-            return redirect(url_for('lbtc_index'))
-
     current_height = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
     tx_info = get_tx_detail_info(_tx_list, current_height=current_height, confirmations=_info_block['confirmations'])
     block_info = {'tx_info': tx_info}
@@ -260,7 +254,37 @@ def lbtc_block():
 @app.route('/lbtc/search', methods=['GET'])
 def lbtc_search():
     lbtc_info = {}
-    return render_template('index.html', lbtc_info=lbtc_info)
+    param = request.args.get('param', '')
+    param = param.strip(' ')
+    if not param:
+        flash(u'没有搜索到您查找的结果,请检查输入是否正确', 'success')
+        return redirect(url_for('lbtc_index'))
+    height = None
+    try:
+        height = int(param)
+    except ValueError:
+        pass
+    if height:
+        return redirect(url_for('lbtc_block', height=height))
+    _address_info = query_address_info(param)
+    if _address_info:
+        return redirect(url_for('lbtc_address', address=param))
+    _tx_info = find_one_tx(param)
+    if _tx_info:
+        return redirect(url_for('lbtc_tx', hash=param))
+    key_list = [REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS, \
+                REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS]
+    block_status_multi_key_value = get_block_status_multi_key(key_list)
+    if param in block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS]:
+        delegate_address = \
+            block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS][param]
+        return redirect(url_for('lbtc_address', address=delegate_address))
+    if param in block_status_multi_key_value[REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS]:
+        committee_address = \
+            block_status_multi_key_value[REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS][param]
+        return redirect(url_for('lbtc_address', address=committee_address))
+    
+    return redirect(url_for('lbtc_bill', id=param))
 
 
 @app.route('/lbtc/balance', methods=['GET'])
@@ -293,7 +317,7 @@ def lbtc_bill():
         return redirect(url_for('lbtc_index'))
     proposal_info = query_all_proposal(bill_id=bill_id)
     if not proposal_info:
-        flash(u'提案ID错误', 'error')
+        flash(u'没有搜索到您查找的结果,请检查输入是否正确', 'error')
         return redirect(url_for('lbtc_index'))
     print('proposal_info', proposal_info)
     show_address_num = 5
@@ -336,7 +360,15 @@ def lbtc_address():
     for _tx_item in _address_info['tx']:
         address_tx_hash.append(_tx_item['hash'])
     address_tx_info = find_many_tx(address_tx_hash, sort=True)
-    current_height = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)['height']
+
+    key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
+                REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME,
+                REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME]
+    block_status_multi_key_value = get_block_status_multi_key(key_list)
+    current_height = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
+
+
+    
     tx_info = get_tx_detail_info(address_tx_info, current_height=current_height, income_address=address)
     address_info = {'address': address,
                     'balance': "{:.8f}".format(Decimal(_address_info['balance'])).rstrip('0').rstrip('.'),
@@ -357,17 +389,89 @@ def lbtc_address():
         current_page_next = 0
     else:
         current_page_next = current_page + 1
+    if current_page == 1:
+        rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
+        try:
+            voted_delegates = rpc_connection.listvoteddelegates(address)
+            delegate_address_to_name = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
+            if address in delegate_address_to_name:
+                delegate_name = delegate_address_to_name[address]
+                delegate_received_voter = rpc_connection.listreceivedvotes(delegate_name)
+            else:
+                delegate_received_voter = []
+                delegate_name = None
+
+            voted_committees = rpc_connection.listvotercommittees(address)
+            committee_address_to_name = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME]
+            if address in committee_address_to_name:
+                committee_name = committee_address_to_name[address]
+                committee_received_voter_list = rpc_connection.listcommitteevoters(committee_name)
+                committee_received_voter = []
+                for item in committee_received_voter_list:
+                    committee_received_voter.append(item['address'])
+                submit_bills = rpc_connection.listcommitteebills(committee_name)
+            else:
+                committee_received_voter = []
+                committee_name = None
+                submit_bills = []
+            voted_bills = rpc_connection.listvoterbills(address)
+
+            voted_delegates_num = len(voted_delegates)
+            delegate_received_voter_num = len(delegate_received_voter)
+            voted_committees_num = len(voted_committees)
+            committee_received_voter_num = len(committee_received_voter)
+            voted_bills_num = len(voted_bills)
+            submit_bills_num = len(submit_bills)
+        except Exception as e:
+            flash(u'地址错误', 'error')
+            return redirect(url_for('lbtc_index'))
+    else:
+        voted_delegates = None
+        delegate_received_voter = None
+        delegate_address_to_name = None
+        delegate_name = None
+        
+        voted_committees = None
+        committee_received_voter = None
+        committee_address_to_name = None
+        committee_name = None
+
+        submit_bills = None
+        voted_bills = None
+
+        voted_delegates_num = 0
+        delegate_received_voter_num = 0
+        voted_committees_num = 0
+        committee_received_voter_num = 0
+        voted_bills_num = 0
+        submit_bills_num = 0
+    print('voted_bills', voted_bills)
     return render_template('address.html', address_info=address_info, not_href_address=address,
                            show_income=True, show_tx_hash=True, show_tx_height=True,
                            show_tx_time=True, float=float,
                            address=address,
-                           address_js = '\"' + address + '\"',
                            current_page=current_page,
                            current_page_up=current_page_up,
                            current_page_next=current_page_next,
                            total_page=total_page,
                            min_page=min_page,
-                           max_page=max_page)
+                           max_page=max_page,
+                           voted_delegates=voted_delegates,
+                           delegate_received_voter=delegate_received_voter,
+                           delegate_address_to_name=delegate_address_to_name,
+                           delegate_name=delegate_name,
+                           voted_committees=voted_committees,
+                           committee_received_voter=committee_received_voter,
+                           committee_address_to_name=committee_address_to_name,
+                           committee_name=committee_name,
+                           submit_bills=submit_bills,
+                           voted_bills=voted_bills,
+                           voted_delegates_num = voted_delegates_num,
+                           delegate_received_voter_num = delegate_received_voter_num,
+                           voted_committees_num = voted_committees_num,
+                           committee_received_voter_num = committee_received_voter_num,
+                           voted_bills_num = voted_bills_num,
+                           submit_bills_num = submit_bills_num,)
 
 
 @app.route('/lbtc/tx', methods=['GET'])

@@ -60,60 +60,282 @@
         </div>
       </div>
     </div>
-    {% endif %}
 
-    {% for tx_info in address_info["tx_info"] %}
-    {% include "tx_detail.html" %}
-    {% endfor %}
-
-    <div class="row">
-      <div class="col-md-5">
-        <ul class="pagination">
-          {% if min_page - 2 <= 1 %}
-                                {% set min_page = 1 %}
-                                {% endif %}
-                                {% if max_page + 2 >= total_page %}
-            {% set max_page = total_page %}
-            {% endif %}
-
-            {% if min_page != 1 %}
-	    <li class=""><a href="{{ url_for('lbtc_address', address=address, page=1) }}"><span>1</span></a></li>
-	    <li><span>...</span></li>
-	    {% endif %}
-	    {% for i in range(min_page, max_page + 1) %}
-            {% if i == current_page %}
-            <li class="active"><a href="{{ url_for('lbtc_address', address=address, page=current_page) }}"><span>{{ i }}</span></a></li>
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            {% if delegate_name %}
+            挖矿({{ delegate_name }})
             {% else %}
-	    <li><a href="{{ url_for('lbtc_address', address=address, page=i) }}"><span>{{ i }}</span></a></li>
+            挖矿
             {% endif %}
-	    {% endfor %}
-
-            {% if max_page != total_page %}
-	    <li><span>...</span></li>
-	    <li class=""><a href="{{ url_for('lbtc_address', address=address, page=total_page) }}"><span>{{ total_page }}</span></a></li>
-	    {% endif %}
-        </ul>
+          </div>
+        </div>
       </div>
+      
+      <div class="panel-body">
+        <div class="row">
+          <table class="table">
+            <tr>
+              <td>
+                <button id="delegate_votes_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseDelegateVotes">
+                  <span class="glyphicon glyphicon-triangle-right"></span> 投票给({{ voted_delegates_num }})
+                </button>
 
-      <div class="col-md-1" style="margin-top: 20px" >
-        <form method="GET" action="{{ url_for('lbtc_address', address=address, page=current_page-1) }}">
-	  <div class="form-group">
-            <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_up }}" />
-            <input type="hidden" id='jump_page_next_address' name="address" value="{{ address }}" />
-	    <button class="btn btn-primary" id="current_page_up_button" {% if current_page_up == 0 %} disabled="disabled" {% endif %} >上一页</button>
-	  </div>
-        </form>
-      </div>
-      <div class="col-md-1" style="margin-top: 20px" >
-        <form method="GET" action="{{ url_for('lbtc_address', address=address, page=current_page+1) }}">
-	  <div class="form-group">
-            <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_next }}" />
-            <input type="hidden" id='jump_page_next_address' name="address" value="{{ address }}" />
-	    <button class="btn btn-primary" id="current_page_next_button" {% if current_page_next == 0 %} disabled="disabled" {% endif %} >下一页</button>
-	  </div>
-        </form>
+                <div id="collapseDelegateVotes" class="collapse">
+                  <div>
+                    {% for _delegates in voted_delegates %}
+                    <a href="{{ url_for('lbtc_address', address=_delegates['delegate']) }}">
+                      {{ _delegates["name"] }}
+                    </a>
+                    <span class="point">·</span>
+                    {% endfor %}
+                    
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <button id="delegate_voters_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseDelegateVoters">
+                  <span class="glyphicon glyphicon-triangle-right"></span> 获得投票({{ delegate_received_voter_num }})
+                </button>
+
+                <div id="collapseDelegateVoters" class="collapse">
+                  <div>
+                    {% for _address in delegate_received_voter %}
+                    <a href="{{ url_for('lbtc_address', address=_address) }}">
+                      {% if _address in delegate_address_to_name %}
+                      {{ delegate_address_to_name[_address] }}
+                      {% else %}
+                      {{ _address }}
+                      {% endif %}
+                    </a>
+                    <span class="point">·</span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </td>
+            <tr>
+          </table>
+        </div>
       </div>
     </div>
+
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            {% if committee_name %}
+            委员会({{ committee_name }})
+            {% else %}
+            委员会
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel-body">
+        <div class="row">
+          <table class="table">
+            <tr>
+              <td>
+                <button id="committee_votes_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseCommitteeVotes">
+                  <span class="glyphicon glyphicon-triangle-right"></span> 投票给({{ voted_committees_num }})
+                </button>
+
+                <div id="collapseCommitteeVotes" class="collapse">
+                  <div>
+                    {% for _committees in voted_committees %}
+                    {% if _committees["name"] == committee_name %}
+                    {{ _committees["name"] }}
+                    {% else %}
+                    <a href="{{ url_for('lbtc_address', address=_committees['committee']) }}">
+                      {{ _committees["name"] }}
+                    </a>
+                    <span class="point">·</span>
+                    {% endif %}
+                    {% endfor %}
+                    
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <button id="committee_voters_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseCommitteeVoters">
+                  <span class="glyphicon glyphicon-triangle-right"></span> 获得投票({{ committee_received_voter_num }})
+                </button>
+
+                <div id="collapseCommitteeVoters" class="collapse">
+                  <div>
+                    {% for _address in committee_received_voter %}
+                    {% if _address in committee_address_to_name %}
+                    {% if committee_address_to_name[_address] == committee_name %}
+                    {{ committee_address_to_name[_address] }}
+                    {% else %}
+                    <a href="{{ url_for('lbtc_address', address=_address) }}">
+                      {{ committee_address_to_name[_address] }}
+                    </a>
+                    {% endif %}
+                    {% else %}
+                    <a href="{{ url_for('lbtc_address', address=_address) }}">
+                      {{ _address }}
+                    </a>
+                    {% endif %}
+                    <span class="point">·</span>
+                    {% endfor %}
+
+                  </div>
+                </div>
+              </td>
+            <tr>
+          </table>
+        </div>
+      </div>
+      
+    </div>
+
+    
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            提案
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel-body">
+        <div class="row">
+          <table class="table">
+            <tr>
+              <td>
+                <button id="proposal_votes_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseProposalVotes">
+                <span class="glyphicon glyphicon-triangle-right"></span> 投票给({{ voted_bills_num }})
+              </button>
+
+              <div id="collapseProposalVotes" class="collapse">
+                <div>
+                  {% for _bills in voted_bills %}
+                  <a href="{{ url_for('lbtc_bill', id=_bills['id']) }}">
+                    {{ _bills["id"] }}
+                  </a>
+                  <span class="point">·</span>
+                  {% endfor %}
+                </div>
+              </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <button id="proposal_voters_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseProposalVoters">
+                <span class="glyphicon glyphicon-triangle-right"></span> 提交的提案({{ submit_bills_num }})
+              </button>
+
+              <div id="collapseProposalVoters" class="collapse">
+                <div>
+                  {% for bill in submit_bills %}
+                  <a href="{{ url_for('lbtc_bill', id=bill['billid']) }}">
+                    {{ bill['billid'] }}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+              </td>
+            <tr>
+          </table>
+        </div>
+      </div>
+      
+    </div>
+
+        
+
+    {% endif %}
+
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            交易
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="row">
+          
+          {% for tx_info in address_info["tx_info"] %}
+          {% include "tx_detail.html" %}
+          {% endfor %}
+
+          <div class="text-center">
+            <div class="col-md-5">
+              <ul class="pagination">
+                {% if min_page - 2 <= 1 %}
+                                      {% set min_page = 1 %}
+                                      {% endif %}
+                                      {% if max_page + 2 >= total_page %}
+                  {% set max_page = total_page %}
+                  {% endif %}
+
+                  {% if min_page != 1 %}
+	          <li class=""><a href="{{ url_for('lbtc_address', address=address, page=1) }}"><span>1</span></a></li>
+	          <li><span>...</span></li>
+	          {% endif %}
+	          {% for i in range(min_page, max_page + 1) %}
+                  {% if i == current_page %}
+                  <li class="active"><a href="{{ url_for('lbtc_address', address=address, page=current_page) }}"><span>{{ i }}</span></a></li>
+                  {% else %}
+	          <li><a href="{{ url_for('lbtc_address', address=address, page=i) }}"><span>{{ i }}</span></a></li>
+                  {% endif %}
+	          {% endfor %}
+
+                  {% if max_page != total_page %}
+	          <li><span>...</span></li>
+	          <li class=""><a href="{{ url_for('lbtc_address', address=address, page=total_page) }}"><span>{{ total_page }}</span></a></li>
+	          {% endif %}
+              </ul>
+            </div>
+
+            <div class="col-md-1" style="margin-top: 20px" >
+              <form method="GET" action="{{ url_for('lbtc_address', address=address, page=current_page-1) }}">
+	        <div class="form-group">
+                  <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_up }}" />
+                  <input type="hidden" id='jump_page_next_address' name="address" value="{{ address }}" />
+	          <button class="btn btn-primary" id="current_page_up_button" {% if current_page_up == 0 %} disabled="disabled" {% endif %} >上一页</button>
+	        </div>
+              </form>
+            </div>
+            <div class="col-md-1" style="margin-top: 20px" >
+              <form method="GET" action="{{ url_for('lbtc_address', address=address, page=current_page+1) }}">
+	        <div class="form-group">
+                  <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_next }}" />
+                  <input type="hidden" id='jump_page_next_address' name="address" value="{{ address }}" />
+	          <button class="btn btn-primary" id="current_page_next_button" {% if current_page_next == 0 %} disabled="disabled" {% endif %} >下一页</button>
+	        </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  
 
     
   </div>
@@ -122,6 +344,81 @@
 
 {% block js %}
 <script type="text/javascript">
+
+$(function () {
+    $('#collapseProposalVotes').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('proposal_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> 投票给(' + {{ voted_bills_num|tojson }} + ')';
+    });
+
+    $('#collapseProposalVotes').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('proposal_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> 投票给(' + {{ voted_bills_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseProposalVoters').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('proposal_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> 提交的提案(' + {{ submit_bills_num|tojson }} + ')';
+    });
+
+    $('#collapseProposalVoters').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('proposal_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> 提交的提案(' + {{ submit_bills_num|tojson }} + ')';
+    });
+});
+
+
+$(function () {
+    $('#collapseCommitteeVotes').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('committee_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> 投票给(' + {{ voted_committees_num|tojson }} + ')';
+    });
+
+    $('#collapseCommitteeVotes').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('committee_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> 投票给(' + {{ voted_committees_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseCommitteeVoters').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('committee_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> 获得投票(' + {{ committee_received_voter_num|tojson }} + ')';
+    });
+
+    $('#collapseCommitteeVoters').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('committee_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> 获得投票(' + {{ committee_received_voter_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseDelegateVotes').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('delegate_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> 投票给(' + {{ voted_delegates_num|tojson }} + ')';
+    });
+
+    $('#collapseDelegateVotes').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('delegate_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> 投票给(' + {{ voted_delegates_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseDelegateVoters').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('delegate_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> 获得投票(' + {{ delegate_received_voter_num|tojson }} + ')';
+    });
+
+    $('#collapseDelegateVoters').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('delegate_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> 获得投票(' + {{ delegate_received_voter_num|tojson }} + ')';
+    });
+});
+
+
 $(function(){
     $(".icon-address-qr").popover(
         {container:"body",

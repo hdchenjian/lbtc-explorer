@@ -17,7 +17,9 @@ config.from_object(config_online)
 
 from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, \
     REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, \
-    REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST
+    REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME, \
+    REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS, \
+    REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS
 
 rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
 
@@ -156,12 +158,14 @@ def parse_lbtc_block_main():
 def query_all_delegate():
     list_delegate = rpc_connection.listdelegates()
     delegate_address_to_name = {}
+    delegate_name_to_address = {}
     all_delegate = []
     for _delegate in list_delegate:
         _delegate_info = {}
         _delegate_info['_id'] = _delegate['address']
         _delegate_info['name'] = _delegate['name']
         delegate_address_to_name[_delegate['address']] = _delegate['name']
+        delegate_name_to_address[_delegate['name']] = _delegate['address']
         _delegate_info['funds'] = str(Decimal(rpc_connection.getdelegatefunds(_delegate['name'])) / 100000000)
         _delegate_info['votes'] = str(Decimal(rpc_connection.getdelegatevotes(_delegate['name'])) / 100000000)
         _delegate_info['active'] = False
@@ -174,12 +178,15 @@ def query_all_delegate():
         index += 1
     update_all_delegate(all_delegate)
     update_block_status(REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, delegate_address_to_name)
+    update_block_status(REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS, delegate_name_to_address)
 
 
 def query_all_committee_proposal():
     committee_address_map = {}
     all_committee = []
     index = 1
+    committee_address_to_name = {}
+    committee_name_to_address = {}
     for _committee in rpc_connection.listcommittees():
         _committee_detail = rpc_connection.getcommittee(_committee['address'])
         _committee['votes'] = _committee_detail['votes']
@@ -187,7 +194,12 @@ def query_all_committee_proposal():
         index += 1
         all_committee.append(_committee)
         committee_address_map[_committee['address']] = _committee
+        committee_address_to_name[_committee['address']] = _committee['name']
+        committee_name_to_address[_committee['name']] = _committee['address']
     update_all_committee(all_committee)
+    update_block_status(REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME, committee_address_to_name)
+    update_block_status(REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS, committee_name_to_address)
+
 
     all_proposal = []
     all_bill = rpc_connection.listbills()

@@ -44,15 +44,13 @@ def update_rpc_node():
         #print(rpc_connection.getmempoolinfo())
         #print(rpc_connection.getrawmempool(True))
 
-        print(rpc_connection.listreceivedvotes('luo'))
-        print(rpc_connection.listcommitteevoters('TestCommitteesName'))
-        print(rpc_connection.listvoteddelegates('1LAMDkarMYfZXcRQX5ZKhSafQBJqcRf91v'))
-        '''
-        listcommitteebills committeename
-        listcommitteevoters committeename
-        listvoterbills address
-        listvotercommittees address
-        '''
+        #print(rpc_connection.listreceivedvotes('TestDelegates'))
+        #print(rpc_connection.listvotercommittees('1CKbTd4ThjmRFhaGbGVfqa5B1ivLuxYHQD'))
+        #print(rpc_connection.listcommitteevoters('TestCommitteesName'))
+        #print(rpc_connection.listvoteddelegates('1LAMDkarMYfZXcRQX5ZKhSafQBJqcRf91v'))
+
+        print(rpc_connection.listcommitteebills('TestCommitteesName'))
+        print(rpc_connection.listvoterbills('1CKbTd4ThjmRFhaGbGVfqa5B1ivLuxYHQD'))
     except Exception as e:
         print(e)
         raise

@@ -76,6 +76,8 @@ def find_node(node, max_height):
         services = version_msg['services']
         if services == 13:
             services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN'
+        elif services == 1:
+            services = 'NODE_NETWORK'
         else:
             services = str(services) + 'todo'
         user_agent = version_msg['user_agent'] + ' (' + str(version_msg['version']) + ')'
@@ -93,8 +95,8 @@ def find_node(node, max_height):
            and 'Network is unreachable' not in exception_str:
             print(node['ip'], e)
         if True: #node['height'] != -1:
-            if max_height - node['height'] > 3000 or \
-               (max_height - node['height'] > 1000 and not node['ip'].endswith(':9333')):
+            if max_height - node['height'] > 30000 or \
+               (max_height - node['height'] > 10000 and not node['ip'].endswith(':9333')):
                 #print(node['ip'], 'long time offline, delete it')
                 delete_node(node['ip'])
                 #pass
@@ -126,6 +128,8 @@ def find_node(node, max_height):
                 node_by_ip = get_node_by_ip(ip)
                 if item['services'] == 13:
                     user_agent_other_node = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN ( 13)'
+                elif services == 1:
+                    services = 'NODE_NETWORK( 1)'
                 else:
                     user_agent_other_node = str(item['services'])
                 node_info = {
