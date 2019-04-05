@@ -46,7 +46,7 @@
               {{ _info["tx_num"] }}
             </td>
             <td class="text-center">
-              {{ _info["create_time"] }}
+              {{ _info["create_time"].replace('T', ' ') }}
             </td>
           </tr>
           {% endfor %}

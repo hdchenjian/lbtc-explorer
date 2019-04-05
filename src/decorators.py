@@ -50,7 +50,7 @@ def log_request(f):
         try:
             ret = f(*args, **kwargs)
             g.log_info['ret'] = ret.response
-        except:
+        except Exception:
             e = sys.exc_info()[0]
             g.log_info['exception'] = str(e)
             g.log_info['format_exc'] = traceback.format_exc()

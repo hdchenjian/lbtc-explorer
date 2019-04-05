@@ -123,15 +123,6 @@
               <ul data-toggle="tooltip" class="unconfirmed-txs-popover">
                 <li>
                   <dl>
-                    <dt>总账户数</dt>
-                    <dd>{{ lbtc_info["address_count"] }} </dd>
-                  </dl>
-                </li>
-              </ul>
-
-              <ul>
-                <li>
-                  <dl>
                     <dt> 未确认交易数 </dt>
                     <dd class="unconfirmed-tx">
                       <div class="unconfirmed-tx-item">
@@ -143,29 +134,49 @@
 
                 <li>
                   <dl>
+                    <dt>总账户数</dt>
+                    <dd>{{ lbtc_info["network_tx_statistics"]["address_num"] }} </dd>
+                  </dl>
+                </li>
+                <li>
+                  <dl>
+                    <dt>近24h新增账户数</dt>
+                    <dd>{{ lbtc_info["network_tx_statistics"]["address_num_24h"] }} </dd>
+                  </dl>
+                </li>
+                <li>
+                  <dl>
+                    <dt>近两周新增账户数</dt>
+                    <dd>{{ lbtc_info["network_tx_statistics"]["address_num_14d"] }} </dd>
+                  </dl>
+                </li>
+              </ul>
+
+              <ul>
+                <li>
+                  <dl>
                     <dt>24 小时交易速率</dt>
-                    <dd>{{ lbtc_info["average_tx_speed"] }} 交易/秒</dd>
+                    <dd>{{ '{0:.2f}'.format(lbtc_info["network_tx_statistics"]["tx_speed_24h"]) }} 交易/秒</dd>
                   </dl>
                 </li>
                 
                 <li>
                   <dl>
                     <dt>24 小时交易数(不含coinbase)</dt>
-                    <dd>{{ lbtc_info["tx_count"] }} 交易/秒</dd>
+                    <dd>{{ lbtc_info["network_tx_statistics"]["tx_num_no_coinbase_24h"] }} 个</dd>
                   </dl>
                 </li>
                 <li>
                   <dl>
                     <dt>近两周平均手续费</dt>
-                    <dd>{{ lbtc_info["average_tx_cost"] }} LBTC</dd>
+                    <dd>{{ '{0:.5f}'.format(lbtc_info["network_tx_statistics"]["avg_fee_14d"]) }} LBTC</dd>
                   </dl>
                 </li>
-              </ul>
-              <ul>
+              
                 <li>
                   <dl>
                     <dt> 近两周平均区块体积 </dt>
-                    <dd>{{ lbtc_info["average_block_size"] }} Bytes</dd>
+                    <dd>{{ '{0:.2f}'.format(lbtc_info["network_tx_statistics"]["block_size_avg_14d"]) }} Bytes</dd>
                   </dl>
                 </li>
               </ul>

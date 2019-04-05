@@ -39,6 +39,12 @@
                 {{ address_info["receive"] }} LBTC
               </dd>
             </dl>
+            <dl>
+              <dt>总发送量</dt>
+              <dd>
+                {{ address_info["send"] }} LBTC
+              </dd>
+            </dl>
           </div>
           
           <div class="abstract-section">
@@ -51,9 +57,12 @@
               <dd> {{ address_info["create_time"] }} </dd>
             </dl>
             <dl>
-              <dt>总发送量</dt>
+              <dt>最近一次交易时间</dt>
+              <dd> {{ address_info["update_time"] }} </dd>
+            </dl>
+            <dl>
+              <dt></dt>
               <dd>
-                {{ address_info["send"] }} LBTC
               </dd>
             </dl>
           </div>

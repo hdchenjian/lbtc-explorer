@@ -28,7 +28,7 @@ class LbtcNode(BaseModel):
     deleted = Column(Integer)
     create_time = Column(DateTime)
     update_time = Column(DateTime)
-    
+
 
 class NodeNotValid(BaseModel):
     __tablename__ = 'node_not_valid'
@@ -48,7 +48,7 @@ class NodeDistribution(BaseModel):
     node_num = Column(Integer)
     node_persent = Column(Float)
     deleted = Column(Integer)
-    
+
 
 class BlockStatus(BaseModel):
     __tablename__ = 'block_status'
@@ -62,7 +62,7 @@ class BlockStatus(BaseModel):
 
 class BlockInfo(BaseModel):
     __tablename__ = 'block_info'
-    
+
     height = Column(Integer, primary_key=True)
     hash = Column(String)
     tx_num = Column(Integer)
@@ -80,10 +80,10 @@ class AddressInfo(BaseModel):
     send = Column(Numeric(30, 15))
     tx_num = Column(Integer)
     create_time = Column(DateTime)
+    update_time = Column(DateTime)
 
 
 address_tx = dict()
-
 
 
 def gen_address_tx_model(address):
@@ -96,7 +96,7 @@ def gen_address_tx_model(address):
     if table_name not in address_tx:
         cls_dict = {
             '__tablename__': table_name,
-            
+
             'id': Column(Integer, primary_key=True),
             'hash': Column(String),
             'address': Column(String),

@@ -2,16 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import os
 import time
 import traceback
 from decimal import Decimal
 
-from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+from bitcoinrpc.authproxy import AuthServiceProxy
 
-from flask import Flask, g, request, jsonify, session, render_template, \
+from flask import Flask, g, request, jsonify, render_template, \
     flash, redirect, url_for
-import form
 import rest_log
 
 from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
@@ -19,15 +17,16 @@ from v8.engine.handlers.node_handler import get_all_node, get_node_distribution,
     query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info, \
     query_most_rich_address, query_address_info
 from v8.config import config, config_online
-config.from_object(config_online)  # noqa
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, \
     REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, \
     REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, \
     REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME, \
     REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS, \
-    REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS
+    REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS, REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS
 
+
+config.from_object(config_online)
 
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
@@ -39,11 +38,13 @@ def lbtc_index():
     lbtc_info = {}
     new_block = []
     time_now = datetime.datetime.now()
-    key_list =[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
-               REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
+    key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
+                REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_NODE_IP_TYPE,
+                REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
     block_status = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]
-    delegate_address_to_name = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
+    delegate_address_to_name = \
+        block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
     node_status = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
 
     previous_block_hash = ''
@@ -66,8 +67,9 @@ def lbtc_index():
             block_info['tx'] = block['tx']
             block_info['height'] = '{:,}'.format(block['height'])
             block_info['size'] = '{:,}'.format(block['strippedsize'])
-            time_delta = (time_now - datetime.datetime.fromtimestamp(block['time'])).seconds
-            if not best_height_time: best_height_time = block['time'] + 1
+            time_delta = (time_now - datetime.datetime.fromtimestamp(block['time'])).total_seconds()
+            if not best_height_time:
+                best_height_time = block['time'] + 1
             if time_delta < 3:
                 block_info['time'] = str(time_delta) + u'秒钟前'
             else:
@@ -77,7 +79,7 @@ def lbtc_index():
             new_block.append(block_info)
 
         lbtc_info['unconfirmed_tx_num'] = rpc_connection.getmempoolinfo()['size']
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         flash(u'获取区块数据错误', 'error')
         return render_template('index.html', lbtc_info=lbtc_info)
@@ -99,20 +101,16 @@ def lbtc_index():
                     _new_block['miner'] = delegate_address_to_name[_new_block['delegate_address']]
                 break
     lbtc_info['block_info'] = new_block
-    lbtc_info['delegate_count'] = 0
-    lbtc_info['active_delegate_count'] = 0
-    lbtc_info['delegate_area'] = 0
-    lbtc_info['address_count'] = 0
-    lbtc_info['average_tx_speed'] = 0
-    lbtc_info['tx_count'] = 0
-    lbtc_info['average_tx_cost'] = 0
-    lbtc_info['average_block_size'] = 0
 
     lbtc_info['delegate_count'] = node_status['node_num']
     node_distribution = get_node_distribution(7)
     for _distribution in node_distribution:
-        _distribution['node_num'] = str(_distribution['node_num']) + ' ({0:.2f}%)'.format(_distribution['node_persent'])
+        _distribution['node_num'] = str(
+            _distribution['node_num']) + ' ({0:.2f}%)'.format(_distribution['node_persent'])
     lbtc_info['node_distribution'] = node_distribution
+
+    lbtc_info['network_tx_statistics'] = \
+        block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS]
     return render_template('index.html', lbtc_info=lbtc_info)
 
 
@@ -139,7 +137,7 @@ def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_ad
             _tx_detail_info['income'] = Decimal(0)
         if _tx_item['input'][0] == 'coinbase':
             _tx_detail_info['lbtc_input'] = '0'
-            _tx_detail_info['input_tx'] =  [{'address': 'CoinBase', 'amount': ''}]
+            _tx_detail_info['input_tx'] = [{'address': 'CoinBase', 'amount': ''}]
             _tx_detail_info['input_num'] = '0'
         else:
             _tx_detail_info['lbtc_input'] = Decimal(0)
@@ -158,15 +156,17 @@ def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_ad
                 _tx_detail_info['input_tx'] = _tx_detail_info['input_tx'][0:show_address_num]
             else:
                 _tx_detail_info['input_tx_hide'] = None
-        
+
         _tx_detail_info['lbtc_output'] = Decimal(0)
         _tx_detail_info['output_tx'] = []
         _tx_detail_info['output_num'] = 0
         for i in range(0, len(_tx_item['output']) // 3):
-            if _tx_item['output'][3*i + 1] == 'nulldata': continue
+            if _tx_item['output'][3*i + 1] == 'nulldata':
+                continue
             _tx_detail_info['lbtc_output'] += Decimal(_tx_item['output'][3*i + 2])
-            _tx_detail_info['output_tx'].append({'address': _tx_item['output'][3*i + 1],
-                                                 'amount': _tx_item['output'][3*i + 2].rstrip('0').rstrip('.')})
+            _tx_detail_info['output_tx'].append(
+                {'address': _tx_item['output'][3*i + 1],
+                 'amount': _tx_item['output'][3*i + 2].rstrip('0').rstrip('.')})
             _tx_detail_info['output_num'] += 1
             if income_address and income_address == _tx_item['output'][3*i + 1]:
                 _tx_detail_info['income'] += Decimal(_tx_item['output'][3*i + 2])
@@ -183,9 +183,10 @@ def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_ad
         else:
             _tx_detail_info['fee'] = _tx_detail_info['lbtc_input'] - _tx_detail_info['lbtc_output']
         if _tx_detail_info['lbtc_input'] != '0':
-            _tx_detail_info['lbtc_input'] = str(_tx_detail_info['lbtc_input']).rstrip('0').rstrip('.')
+            _tx_detail_info['lbtc_input'] = \
+                str(_tx_detail_info['lbtc_input']).rstrip('0').rstrip('.')
         _tx_detail_info['lbtc_output'] = str(_tx_detail_info['lbtc_output']).rstrip('0').rstrip('.')
-        
+
         tx_info.append(_tx_detail_info)
     return tx_info
 
@@ -207,7 +208,7 @@ def lbtc_block():
             flash(u'区块Hash或高度错误', 'error')
             return redirect(url_for('lbtc_index'))
         _info_block = rpc_connection.getblock(block_hash)
-    except Exception as e:
+    except Exception:
         flash(u'区块Hash或高度错误', 'error')
         return redirect(url_for('lbtc_index'))
     if not _info_block:
@@ -219,15 +220,19 @@ def lbtc_block():
         _tx_id_list.append(_tx_id)
     _tx_list = find_many_tx(_tx_id_list)
     tx_info = []
-    key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
+    key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
+                REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
-    current_height = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
-    tx_info = get_tx_detail_info(_tx_list, current_height=current_height, confirmations=_info_block['confirmations'])
+    current_height = \
+        block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
+    tx_info = get_tx_detail_info(_tx_list, current_height=current_height,
+                                 confirmations=_info_block['confirmations'])
     block_info = {'tx_info': tx_info}
     for key in ['merkleroot', 'nonce', 'previousblockhash', 'hash', 'height', 'confirmations',
                 'time', 'versionHex', 'strippedsize', 'tx']:
         block_info[key] = _info_block[key]
-    block_info['time'] = datetime.datetime.fromtimestamp(block_info['time']).strftime('%Y-%m-%d %H:%M:%S')
+    block_info['time'] = \
+        datetime.datetime.fromtimestamp(block_info['time']).strftime('%Y-%m-%d %H:%M:%S')
     block_info['transaction_num'] = len(_info_block['tx'])
 
     coinbase_tx = query_coinbase_tx(_info_block['tx'])
@@ -244,7 +249,7 @@ def lbtc_block():
 
     try:
         block_info['next_hash'] = rpc_connection.getblockhash(_info_block['height'] + 1)
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         block_info['next_hash'] = ''
     block_info['height'] = '{:,}'.format(block_info['height'])
@@ -253,7 +258,6 @@ def lbtc_block():
 
 @app.route('/lbtc/search', methods=['GET'])
 def lbtc_search():
-    lbtc_info = {}
     param = request.args.get('param', '')
     param = param.strip(' ')
     if not param:
@@ -272,7 +276,7 @@ def lbtc_search():
     _tx_info = find_one_tx(param)
     if _tx_info:
         return redirect(url_for('lbtc_tx', hash=param))
-    key_list = [REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS, \
+    key_list = [REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS,
                 REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
     if param in block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS]:
@@ -283,7 +287,7 @@ def lbtc_search():
         committee_address = \
             block_status_multi_key_value[REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS][param]
         return redirect(url_for('lbtc_address', address=committee_address))
-    
+
     return redirect(url_for('lbtc_bill', id=param))
 
 
@@ -332,7 +336,7 @@ def lbtc_bill():
         else:
             _option['vote_address_hide'] = None
         option_index += 1
-        
+
     return render_template('proposal_detail.html', proposal_info=proposal_info)
 
 
@@ -365,15 +369,17 @@ def lbtc_address():
                 REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME,
                 REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
-    current_height = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
+    current_height = \
+        block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
 
-
-    
-    tx_info = get_tx_detail_info(address_tx_info, current_height=current_height, income_address=address)
+    tx_info = get_tx_detail_info(address_tx_info, current_height=current_height,
+                                 income_address=address)
     address_info = {'address': address,
-                    'balance': "{:.8f}".format(Decimal(_address_info['balance'])).rstrip('0').rstrip('.'),
+                    'balance':
+                    "{:.8f}".format(Decimal(_address_info['balance'])).rstrip('0').rstrip('.'),
                     'transaction_num': _address_info['tx_num'],
-                    'create_time': _address_info['create_time'],
+                    'create_time': _address_info['create_time'].replace('T', ' '),
+                    'update_time': _address_info['update_time'].replace('T', ' '),
                     'receive': str(_address_info['receive']).rstrip('0').rstrip('.'),
                     'send': str(_address_info['send']).rstrip('0').rstrip('.'),
                     'tx_info': tx_info}
@@ -393,7 +399,8 @@ def lbtc_address():
         rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
         try:
             voted_delegates = rpc_connection.listvoteddelegates(address)
-            delegate_address_to_name = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
+            delegate_address_to_name = \
+                block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
             if address in delegate_address_to_name:
                 delegate_name = delegate_address_to_name[address]
                 delegate_received_voter = rpc_connection.listreceivedvotes(delegate_name)
@@ -402,7 +409,8 @@ def lbtc_address():
                 delegate_name = None
 
             voted_committees = rpc_connection.listvotercommittees(address)
-            committee_address_to_name = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME]
+            committee_address_to_name = \
+                block_status_multi_key_value[REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME]
             if address in committee_address_to_name:
                 committee_name = committee_address_to_name[address]
                 committee_received_voter_list = rpc_connection.listcommitteevoters(committee_name)
@@ -422,7 +430,7 @@ def lbtc_address():
             committee_received_voter_num = len(committee_received_voter)
             voted_bills_num = len(voted_bills)
             submit_bills_num = len(submit_bills)
-        except Exception as e:
+        except Exception:
             flash(u'地址错误', 'error')
             return redirect(url_for('lbtc_index'))
     else:
@@ -430,7 +438,7 @@ def lbtc_address():
         delegate_received_voter = None
         delegate_address_to_name = None
         delegate_name = None
-        
+
         voted_committees = None
         committee_received_voter = None
         committee_address_to_name = None
@@ -466,12 +474,12 @@ def lbtc_address():
                            committee_name=committee_name,
                            submit_bills=submit_bills,
                            voted_bills=voted_bills,
-                           voted_delegates_num = voted_delegates_num,
-                           delegate_received_voter_num = delegate_received_voter_num,
-                           voted_committees_num = voted_committees_num,
-                           committee_received_voter_num = committee_received_voter_num,
-                           voted_bills_num = voted_bills_num,
-                           submit_bills_num = submit_bills_num,)
+                           voted_delegates_num=voted_delegates_num,
+                           delegate_received_voter_num=delegate_received_voter_num,
+                           voted_committees_num=voted_committees_num,
+                           committee_received_voter_num=committee_received_voter_num,
+                           voted_bills_num=voted_bills_num,
+                           submit_bills_num=submit_bills_num,)
 
 
 @app.route('/lbtc/tx', methods=['GET'])
@@ -502,6 +510,7 @@ def node_cmp(a, b):
     else:
         return 1
 
+
 @app.route('/lbtc/nodes', methods=['GET'])
 def lbtc_nodes():
     node_distribution = get_node_distribution(10)
@@ -512,22 +521,24 @@ def lbtc_nodes():
 
     country = request.args.get('country', '')
     valid_node = get_all_node(2, country=country)
-    if not country: country = u'所有地区节点列表'
-    else: country += u' 节点列表'
+    if not country:
+        country = u'所有地区节点列表'
+    else:
+        country += u' 节点列表'
     '''
     valid_node = []
     for _node in all_node:
         if _node['ip'].endswith(':9333'):
             valid_node.append(_node)
     '''
-    #valid_node = sorted(all_node, cmp=node_cmp)
+    # valid_node = sorted(all_node, cmp=node_cmp)
     count = 1
     for _node in valid_node:
         _node['id'] = count
         count += 1
     return render_template('node.html', all_node=valid_node, country=country,
                            node_distribution=node_distribution, node_status=node_status)
-        
+
 
 @app.before_request
 def before_request():

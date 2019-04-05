@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS `block_info` (
   `strippedsize` INT NOT NULL DEFAULT '0' COMMENT '',
   `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   PRIMARY KEY (`height`),
-  UNIQUE KEY `lbtcnode_block_info_hash` (`hash`)
+  UNIQUE KEY `lbtcnode_block_info_hash` (`hash`),
+  KEY `lbtcnode_block_info_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `address_info` (
@@ -80,7 +81,9 @@ CREATE TABLE IF NOT EXISTS `address_info` (
   `send` decimal(25,10) NOT NULL DEFAULT '0.0',
   `tx_num` INT NOT NULL DEFAULT '0' COMMENT '',
   `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  `update_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `lbtcnode_address_info_address` (`address`)
+  UNIQUE KEY `lbtcnode_address_info_address` (`address`),
+  KEY `lbtcnode_address_info_create_time` (`create_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
 

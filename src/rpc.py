@@ -2,20 +2,19 @@
 # encoding: utf-8
 
 from v8.config import config, config_online
-from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, get_node_by_ip, \
+from v8.engine.handlers.node_handler import get_node_by_ip, \
     add_not_valid_node
-from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+from bitcoinrpc.authproxy import AuthServiceProxy
 from decorators import singleton
 from crawl import resolve_address
 config.from_object(config_online)
+
 
 @singleton('/tmp/update_rpc_node.pid')
 def update_rpc_node():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
-        #print(rpc_connection.help())
         peerinfo = rpc_connection.getpeerinfo()
-        #print(len(peerinfo))
         for _peer in peerinfo:
             ip = _peer['addr']
             user_agent = _peer['subver'] + ' (' + str(_peer['version']) + ')'
@@ -30,6 +29,8 @@ def update_rpc_node():
                          'services': services,
                          'height': height}
             node_by_ip = get_node_by_ip(ip)
+            if node_by_ip:
+                continue
             if (not node_by_ip or (not node_by_ip['location'] or not node_by_ip['network'])):
                 resolve_result = resolve_address(ip.split(':')[0])
                 if resolve_result:
@@ -37,13 +38,13 @@ def update_rpc_node():
                     node_info['timezone'] = resolve_result[1]
                     node_info['network'] = resolve_result[2]
                     node_info['asn'] = resolve_result[3]
-            #print node_info
 
-            update_or_add_node(ip, node_info) # comment this filter out node that can not connect to
-            #add_not_valid_node(ip)  # use this filter out node that can not connect to
+            # comment this filter out node that can not connect to
+            # update_or_add_node(ip, node_info)
+            add_not_valid_node(ip)  # use this filter out node that can not connect to
     except Exception as e:
         print(unicode(e))
-    
+
 
 if __name__ == '__main__':
     update_rpc_node()

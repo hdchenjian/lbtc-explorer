@@ -9,4 +9,5 @@ class Config(dict):
             if key.isupper():
                 self[key] = getattr(obj, key)
 
+
 config = Config()

@@ -4,7 +4,6 @@
 import contextlib
 import datetime
 import json
-from sqlalchemy.sql import func
 from decimal import Decimal
 import pymongo
 
@@ -70,7 +69,7 @@ def delete_node(ip):
         try:
             count = session.query(LbtcNode).filter(LbtcNode.ip == ip).delete()
             session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
         return count
@@ -89,7 +88,7 @@ def update_or_add_node(ip, node_info):
             pix (float): calculated properties and network metrics every 24 hours
             status (int): 0: offline, 1: online
             deleted (int): 0: normal, 1: deleted
-        
+
     Returns:
         dict of node info or None.
     """
@@ -110,7 +109,7 @@ def update_or_add_node(ip, node_info):
                 _node.pix = 0
                 _node.latitude = 0
                 _node.longitude = 0
-                _node.status = 1
+                _node.status = 0
                 _node.deleted = 0
                 _node.create_time = time_now
                 session.add(_node)
@@ -120,7 +119,7 @@ def update_or_add_node(ip, node_info):
                     setattr(_node, _key, node_info[_key])
             _node.update_time = time_now
             session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
         return model_to_dict(_node)
@@ -144,7 +143,7 @@ def add_not_valid_node(ip):
             session.add(_node)
             session.commit()
             return model_to_dict(_node)
-        except:
+        except Exception:
             session.rollback()
             return None
 
@@ -154,7 +153,7 @@ def add_not_valid_node_connect_try_times(ip):
 
     Args:
         ip (string): ip and port, for example: 120.78.147.9333
-        
+
     Returns:
         dict of node info or None.
     """
@@ -179,10 +178,10 @@ def delete_not_valid_node(node_ip):
         try:
             count = session.query(NodeNotValid).filter(NodeNotValid.ip == node_ip).delete()
             session.commit()
-        except:
+            return count
+        except Exception:
             session.rollback()
-            raise
-        return count
+            return None
 
 
 def get_all_not_valid_node():
@@ -224,21 +223,25 @@ def update_node_distribution(country_info):
     Args:
         country_info (dict):
             country (string): country name
-            rank (int): 
-            node_num (int): 
-            node_persent (float): 
-        
+            rank (int):
+            node_num (int):
+            node_persent (float):
+
     Returns:
         dict of node info or None.
     """
-    if not country_info: return False
+    if not country_info:
+        return False
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
-        for _node in session.query(NodeDistribution).filter(~NodeDistribution.country.in_(country_info.keys())):
+        for _node in session.query(NodeDistribution) \
+                            .filter(~NodeDistribution.country.in_(country_info.keys())):
             _node.deleted = 1
             session.commit()
         try:
             for country_name in country_info:
-                _country = session.query(NodeDistribution).filter(NodeDistribution.country == country_name).first()
+                _country = session.query(NodeDistribution) \
+                                  .filter(NodeDistribution.country == country_name) \
+                                  .first()
                 if _country is None:
                     _country = NodeDistribution()
                     _country.country = country_name
@@ -252,7 +255,7 @@ def update_node_distribution(country_info):
                         setattr(_country, _key, country_info[country_name][_key])
                 _country.deleted = 0
                 session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
         return True
@@ -297,7 +300,7 @@ def update_block_status(key, value):
     Args:
         key (string):
         value (dict):
-        
+
     Returns:
         dict of node info or None.
     """
@@ -314,7 +317,7 @@ def update_block_status(key, value):
             _block_status.value = json.dumps(value)
             session.commit()
             return True
-        except:
+        except Exception:
             session.rollback()
             raise
 
@@ -326,14 +329,13 @@ def add_many_tx(txs):
         txs (list): list of tx
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     result = conn.lbtc.lbtc_tx.insert_many(txs)
     return result.inserted_ids
 
 
-                                      
 def add_one_tx(tx):
     """Add one tx.
 
@@ -341,7 +343,7 @@ def add_one_tx(tx):
         tx (dict): dict of tx
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     result = conn.lbtc.lbtc_tx.insert_one(tx)
@@ -355,11 +357,11 @@ def query_coinbase_tx(txs):
         txs (list): list of tx
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     ret = []
-    for doc in conn.lbtc.lbtc_tx.find({'_id': {'$in': txs}, 'input' : ['coinbase', '']}):
+    for doc in conn.lbtc.lbtc_tx.find({'_id': {'$in': txs}, 'input': ['coinbase', '']}):
         ret.append(doc)
     return ret
 
@@ -368,10 +370,10 @@ def find_one_tx(tx_id):
     """Find one tx.
 
     Args:
-        tx_id (string): 
+        tx_id (string):
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     result = conn.lbtc.lbtc_tx.find_one({'_id': tx_id})
@@ -382,19 +384,30 @@ def find_many_tx(tx_ids, sort=False):
     """Find one tx.
 
     Args:
-        tx_ids (list): 
+        tx_ids (list):
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     result = []
     if sort:
-        for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }).sort("height", pymongo.DESCENDING):
+        for doc in conn.lbtc.lbtc_tx.find(
+                {'_id': {'$in': tx_ids}}).sort("height", pymongo.DESCENDING):
             result.append(doc)
     else:
-        for doc in conn.lbtc.lbtc_tx.find({ '_id': { '$in': tx_ids } }):
-            result.append(doc)
+        doc_limit = 86400
+        if len(tx_ids) > doc_limit:
+            find_times = len(tx_ids) // doc_limit + 1
+            for i in range(0, find_times):
+                print("BSON document too large", len(tx_ids), i, i*doc_limit, (i+1)*doc_limit)
+                for doc in conn.lbtc.lbtc_tx.find(
+                        {'_id': {'$in': tx_ids[i*doc_limit: (i+1)*doc_limit]}}):
+                    result.append(doc)
+        else:
+            for doc in conn.lbtc.lbtc_tx.find(
+                    {'_id': {'$in': tx_ids}}):
+                result.append(doc)
     return result
 
 
@@ -405,10 +418,11 @@ def update_many_delegate_active(delegate_ids):
         tx (dict): dict of delegate
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
-    conn.lbtc.lbtc_delegate.update_many({'_id': { '$in': delegate_ids}}, {'$set': {'active': True}}, upsert=False)
+    conn.lbtc.lbtc_delegate.update_many(
+        {'_id': {'$in': delegate_ids}}, {'$set': {'active': True}}, upsert=False)
 
 
 def update_all_committee(all_committee):
@@ -418,11 +432,12 @@ def update_all_committee(all_committee):
         tx (list): list of committee
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     for _committee in all_committee:
-        conn.lbtc.lbtc_committee.update_one({'_id': _committee['address']}, {'$set': _committee}, upsert=True)
+        conn.lbtc.lbtc_committee.update_one(
+            {'_id': _committee['address']}, {'$set': _committee}, upsert=True)
 
 
 def update_all_proposal(all_proposal):
@@ -432,11 +447,12 @@ def update_all_proposal(all_proposal):
         tx (list): list of proposal
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     for _proposal in all_proposal:
-        conn.lbtc.lbtc_proposal.update_one({'_id': _proposal['id']}, {'$set': _proposal}, upsert=True)
+        conn.lbtc.lbtc_proposal.update_one(
+            {'_id': _proposal['id']}, {'$set': _proposal}, upsert=True)
 
 
 def update_all_delegate(all_delegate):
@@ -446,12 +462,13 @@ def update_all_delegate(all_delegate):
         tx (dict): dict of delegate
 
     Returns:
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     for _delegate in all_delegate:
-        conn.lbtc.lbtc_delegate.update_one({'_id': _delegate['_id']}, {'$set': _delegate}, upsert=True)
-    
+        conn.lbtc.lbtc_delegate.update_one(
+            {'_id': _delegate['_id']}, {'$set': _delegate}, upsert=True)
+
 
 def query_all_committee():
     """Add all committee.
@@ -460,7 +477,7 @@ def query_all_committee():
 
     Returns:
         tx (list): list of committee
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     ret = []
@@ -476,7 +493,7 @@ def query_all_proposal(bill_id=''):
 
     Returns:
         tx (list): list of proposal
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     if bill_id:
@@ -496,7 +513,7 @@ def query_all_delegate():
 
     Returns:
         tx (list): list of delegate
-        
+
     """
     conn = db_conn.gen_mongo_connection('base')
     ret = [{'_id': '166D9UoFdPcDEGFngswE226zigS8uBnm3C',
@@ -524,7 +541,7 @@ def add_block_info(block_info):
             session.add(_block_info)
             session.commit()
             return model_to_dict(_block_info)
-        except:
+        except Exception:
             session.rollback()
             return None
 
@@ -539,7 +556,8 @@ def update_address_info(address, amount, time):
     """
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
         try:
-            _address_info = session.query(AddressInfo).filter(AddressInfo.address == address).first()
+            _address_info = \
+                session.query(AddressInfo).filter(AddressInfo.address == address).first()
             amount = Decimal(amount)
             if _address_info is None:
                 _address_info = AddressInfo()
@@ -551,15 +569,16 @@ def update_address_info(address, amount, time):
                 _address_info.tx_num = 0
                 session.add(_address_info)
             if amount >= 0:
-                 _address_info.balance += amount
-                 _address_info.receive += amount
+                _address_info.balance += amount
+                _address_info.receive += amount
             else:
                 _address_info.balance -= amount
                 _address_info.send += amount
             _address_info.tx_num += 1
+            _address_info.update_time = time
             session.commit()
             return True
-        except:
+        except Exception:
             session.rollback()
             raise
 
@@ -579,7 +598,8 @@ def update_many_address_info(address_list):
                 address = tx_info['address']
                 amount = Decimal(tx_info['amount'])
                 time = tx_info['time']
-                _address_info = session.query(AddressInfo).filter(AddressInfo.address == address).first()
+                _address_info = \
+                    session.query(AddressInfo).filter(AddressInfo.address == address).first()
                 if _address_info is None:
                     _address_info = AddressInfo()
                     _address_info.address = address
@@ -591,12 +611,13 @@ def update_many_address_info(address_list):
                     session.add(_address_info)
                 _address_info_match.append(_address_info)
                 if amount >= 0:
-                     _address_info.balance += amount
-                     _address_info.receive += amount
+                    _address_info.balance += amount
+                    _address_info.receive += amount
                 else:
                     _address_info.balance += amount
                     _address_info.send += (0 - amount)
                 _address_info.tx_num += 1
+                _address_info.update_time = time
 
                 TransactionInfo = gen_address_tx_model(address)
                 _transaction_info = TransactionInfo()
@@ -606,7 +627,7 @@ def update_many_address_info(address_list):
                 session.add(_transaction_info)
             session.commit()
             return True
-        except:
+        except Exception:
             session.rollback()
             raise
 
@@ -634,6 +655,23 @@ def get_address_info(address, page=1, since_id=0, size=10):
         return _address_info
 
 
+def update_network_tx_statistics(key, network_tx_statistics):
+    time_now = datetime.datetime.now()
+    time_yesterday = time_now - datetime.timedelta(days=1)
+    time_14d_ago = time_now - datetime.timedelta(days=14)
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        network_tx_statistics['address_num'] = session.query(AddressInfo).count()
+        network_tx_statistics['address_num_24h'] = \
+            session.query(AddressInfo) \
+                   .filter(AddressInfo.create_time > time_yesterday) \
+                   .count()
+        network_tx_statistics['address_num_14d'] = \
+            session.query(AddressInfo) \
+                   .filter(AddressInfo.create_time > time_14d_ago) \
+                   .count()
+        update_block_status(key, network_tx_statistics)
+
+
 def update_most_rich_address(key, top=100):
     address_ids = []
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
@@ -647,19 +685,23 @@ def update_most_rich_address(key, top=100):
 def query_most_rich_address(key, key_utxo):
     ret = []
     key_value = get_block_status_multi_key([key, key_utxo])
-    if not key_value[key]: return ret
+    if not key_value[key]:
+        return ret
     total_amount = float(key_value[key_utxo]['total_amount'])
     rank = 1
     sum_balance = Decimal(0)
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
         for _address_info in session.query(AddressInfo) \
                                     .filter(AddressInfo.id.in_(key_value[key])) \
-                                    .order_by(AddressInfo.balance.desc()) :
+                                    .order_by(AddressInfo.balance.desc()):
             _address_info_dict = model_to_dict(_address_info)
-            _address_info_dict['persent'] = "{0:.2f} %".format(float(_address_info_dict['balance']) / total_amount * 100)
+            _address_info_dict['persent'] = \
+                "{0:.2f} %".format(float(_address_info_dict['balance']) / total_amount * 100)
             sum_balance += Decimal(_address_info_dict['balance'])
-            _address_info_dict['sum_persent'] = "{0:.2f} %".format(float(sum_balance) / total_amount * 100)
-            _address_info_dict['balance'] = str(_address_info_dict['balance']).rstrip('0').rstrip('.')
+            _address_info_dict['sum_persent'] = \
+                "{0:.2f} %".format(float(sum_balance) / total_amount * 100)
+            _address_info_dict['balance'] = \
+                str(_address_info_dict['balance']).rstrip('0').rstrip('.')
             _address_info_dict['rank'] = rank
             rank += 1
             ret.append(_address_info_dict)
@@ -673,3 +715,37 @@ def query_address_info(address):
             return model_to_dict(_address_info)
         else:
             return None
+
+
+def update_address_info_update_time():
+    address_to_update_time = {}
+    tx_ids = []
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        for _address_info in session.query(AddressInfo):
+            TransactionInfo = gen_address_tx_model(_address_info.address)
+            _transaction_info = session.query(TransactionInfo) \
+                                       .filter(TransactionInfo.address == _address_info.address) \
+                                       .order_by(TransactionInfo.id.desc()).first()
+            tx_ids.append(_transaction_info.hash)
+        _tx_list = find_many_tx(tx_ids)
+        for _tx_item in _tx_list:
+            for i in range(0, len(_tx_item['input']) // 2):
+                if _tx_item['input'][0] == 'coinbase':
+                    continue
+                if _tx_item['input'][2*i] not in address_to_update_time:
+                    address_to_update_time[_tx_item['input'][2*i]] = _tx_item['time']
+                elif _tx_item['time'] > address_to_update_time[_tx_item['input'][2*i]]:
+                    address_to_update_time[_tx_item['input'][2*i]] = _tx_item['time']
+            for i in range(0, len(_tx_item['output']) // 3):
+                if _tx_item['output'][3*i + 1] == 'nulldata':
+                    continue
+                if _tx_item['output'][3*i + 1] not in address_to_update_time:
+                    address_to_update_time[_tx_item['output'][3*i + 1]] = _tx_item['time']
+                elif _tx_item['time'] > address_to_update_time[_tx_item['output'][3*i + 1]]:
+                    address_to_update_time[_tx_item['output'][3*i + 1]] = _tx_item['time']
+
+        for _address in address_to_update_time:
+            _address_info = \
+                session.query(AddressInfo).filter(AddressInfo.address == _address).first()
+            _address_info.update_time = address_to_update_time[_address]
+        session.commit()
