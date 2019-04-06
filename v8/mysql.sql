@@ -87,3 +87,31 @@ CREATE TABLE IF NOT EXISTS `address_info` (
   KEY `lbtcnode_address_info_create_time` (`create_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `address_growth_daily` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `total_address` INT NOT NULL DEFAULT '0' COMMENT '',
+  `increase_address` INT NOT NULL DEFAULT '0' COMMENT '',
+  `time` date NOT NULL DEFAULT '1970-01-01',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `address_growth_daily_time` (`time`),
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `address_growth_daily` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `total_address` INT NOT NULL DEFAULT '0' COMMENT '',
+  `increase_address` INT NOT NULL DEFAULT '0' COMMENT '',
+  `time` date NOT NULL DEFAULT '1970-01-01'
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `address_growth_daily_time` (`time`),
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `transaction_daily` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `avg_block_size` INT NOT NULL DEFAULT '0' COMMENT '',
+  `total_block_count` INT NOT NULL DEFAULT '0' COMMENT '',
+  `tx_num` INT NOT NULL DEFAULT '0' COMMENT '',
+  `tx_num_no_coinbase` INT NOT NULL DEFAULT '0' COMMENT '',
+  `time` date NOT NULL DEFAULT '1970-01-01'
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `address_growth_daily_time` (`time`),
+) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;

@@ -9,7 +9,7 @@ import pymongo
 
 from v8.engine import db_conn
 from v8.model.lbtc_node import LbtcNode, NodeNotValid, NodeDistribution, BlockStatus, BlockInfo, \
-    AddressInfo, gen_address_tx_model
+    AddressInfo, gen_address_tx_model, AddressGrowthDaily, TransactionDaily
 from v8.engine.util import model_to_dict
 
 
@@ -749,3 +749,72 @@ def update_address_info_update_time():
                 session.query(AddressInfo).filter(AddressInfo.address == _address).first()
             _address_info.update_time = address_to_update_time[_address]
         session.commit()
+
+
+def update_address_growth_daily_info(start_time, end_time):
+    # end_time = datetime.datetime.strptime('2019-03-31 00:00:00', '%Y-%m-%d %H:%M:%S')
+    # start_time = datetime.datetime.strptime('2018-10-11 00:00:00', '%Y-%m-%d %H:%M:%S')
+    all_address_growth_daily = []
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        while(start_time <= end_time):
+            address_total = session.query(AddressInfo) \
+                                   .filter(AddressInfo.create_time < start_time).count()
+            address_count = session.query(AddressInfo) \
+                                   .filter(AddressInfo.create_time < start_time,
+                                           AddressInfo.create_time >=
+                                           (start_time - datetime.timedelta(days=1))).count()
+            _address_growth_daily = AddressGrowthDaily()
+            all_address_growth_daily.append(_address_growth_daily)
+            session.add(_address_growth_daily)
+            _address_growth_daily.total_address = address_total
+            _address_growth_daily.increase_address = address_count
+            _address_growth_daily.time = (start_time - datetime.timedelta(days=1)).date()
+            start_time += datetime.timedelta(days=1)
+        try:
+            session.commit()
+            return len(all_address_growth_daily)
+        except Exception:
+            session.rollback()
+            return None
+
+
+def update_transaction_daily_info(start_time, end_time):
+    # end_time = datetime.datetime.strptime('2019-03-31 00:00:00', '%Y-%m-%d %H:%M:%S')
+    # start_time = datetime.datetime.strptime('2018-10-11 00:00:00', '%Y-%m-%d %H:%M:%S')
+    all_transaction_daily = []
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        while(start_time <= end_time):
+            total_block_count = 0
+            total_block_size = 0
+            tx_num = 0
+            for _block_info in session.query(BlockInfo) \
+                                      .filter(BlockInfo.create_time < start_time,
+                                              BlockInfo.create_time >=
+                                              (start_time - datetime.timedelta(days=1))):
+                total_block_count += 1
+                total_block_size += _block_info.strippedsize
+                tx_num += _block_info.tx_num
+            _transaction_daily = TransactionDaily()
+            session.add(_transaction_daily)
+            all_transaction_daily.append(_transaction_daily)
+            _transaction_daily.total_block_count = total_block_count
+            _transaction_daily.tx_num = tx_num
+            _transaction_daily.tx_num_no_coinbase = tx_num - total_block_count
+            _transaction_daily.avg_block_size = float(total_block_size) / float(total_block_count)
+            _transaction_daily.time = (start_time - datetime.timedelta(days=1)).date()
+            start_time += datetime.timedelta(days=1)
+            print(start_time)
+        try:
+            session.commit()
+            return len(all_transaction_daily)
+        except Exception:
+            session.rollback()
+            return None
+
+
+def query_transaction_daily_info():
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        ret = []
+        for _transaction_daily in session.query(TransactionDaily).order_by(TransactionDaily.id):
+            ret.append(model_to_dict(_transaction_daily))
+        return ret

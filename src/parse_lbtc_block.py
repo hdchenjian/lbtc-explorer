@@ -9,7 +9,8 @@ from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
     get_block_status, add_block_info, update_many_address_info, add_many_tx, \
     update_all_delegate, update_all_committee, update_all_proposal, \
-    update_most_rich_address, update_network_tx_statistics
+    update_most_rich_address, update_network_tx_statistics, update_address_growth_daily_info, \
+    update_transaction_daily_info
 from bitcoinrpc.authproxy import AuthServiceProxy
 
 from decorators import singleton
@@ -331,9 +332,18 @@ def update_network_tx_statistics_function():
 def parse_lbtc_block():
     update_most_rich_address_time = None
     update_network_tx_statistics_time = None
+    update_address_growth_daily_info_time = None
     while(True):
-        query_all_committee_proposal()
         time_now = datetime.datetime.now()
+
+        if update_address_growth_daily_info_time is None or \
+           (time_now - update_address_growth_daily_info_time).total_seconds() > 3000:
+            end_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            start_time = end_time - datetime.timedelta(days=1)
+            update_address_growth_daily_info(start_time, end_time)
+            update_transaction_daily_info(start_time, end_time)
+    
+        query_all_committee_proposal()
         if update_most_rich_address_time is None or \
            (time_now - update_most_rich_address_time).total_seconds() > 100:
             update_most_rich_address(REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, top=100)

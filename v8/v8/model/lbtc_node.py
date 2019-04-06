@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from sqlalchemy import Column, Integer, String, DateTime, Float, Numeric
+from sqlalchemy import Column, Integer, String, DateTime, Float, Numeric, Date
 from sqlalchemy.ext.declarative import declarative_base
 
 import hashlib
@@ -103,3 +103,23 @@ def gen_address_tx_model(address):
         }
         address_tx[table_name] = type(cls_name, (BaseModel, ), cls_dict)
     return address_tx[table_name]
+
+
+class AddressGrowthDaily(BaseModel):
+    __tablename__ = 'address_growth_daily'
+
+    id = Column(Integer, primary_key=True)
+    total_address = Column(Integer)
+    increase_address = Column(Integer)
+    time = Column(Date)
+
+
+class TransactionDaily(BaseModel):
+    __tablename__ = 'transaction_daily'
+
+    id = Column(Integer, primary_key=True)
+    avg_block_size = Column(Integer)
+    total_block_count = Column(Integer)
+    tx_num = Column(Integer)
+    tx_num_no_coinbase = Column(Integer)
+    time = Column(Date)

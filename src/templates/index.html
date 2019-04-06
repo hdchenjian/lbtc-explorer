@@ -54,6 +54,13 @@
     </div>
 
 
+    <div class="row">
+      <div class="wrapper col-6"  style="width:600px; height: 300px;">
+        <canvas id="myChart"></canvas>
+      </div>
+    </div>
+    
+
     
     <div class="row">
       <div class="col-xs-6" style="padding-left: 0; padding-right: 10px;">
@@ -192,4 +199,66 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+    var ctx = document.getElementById("myChart");
+var myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ lbtc_info['tx_daily']['time']|tojson }},
+        datasets: [{
+            label: 'LBTC Transaction Chart',
+            data: {{ lbtc_info['tx_daily']['tx_num']|tojson }},
+
+            fill: 'start',
+            borderColor: "rgba(100,149,237,1)",
+            backgroundColor: "rgba(176,196,222,0.5)",
+        }]
+    },
+    options: {
+/*
+        tooltips: {
+            enabled: true,
+            mode: 'single',
+            callbacks: {
+                label: function(tooltipItems, data) {
+                    var multistringText = ['transaction number: ' + tooltipItems.yLabel]
+                    multistringText.push(['exclude coinbase transaction: ' + {{ lbtc_info['tx_daily']['tx_num_no_coinbase']|tojson }}[tooltipItems.index]]);
+                    multistringText.push(['block count: ' + {{ lbtc_info['tx_daily']['total_block_count']|tojson }}[tooltipItems.index]]);
+                    multistringText.push(['average block size: ' + {{ lbtc_info['tx_daily']['avg_block_size']|tojson }}[tooltipItems.index]]);
+                    return multistringText;
+                }
+            }
+        },
+*/
+        scales: {
+            yAxes: [{
+                ticks: {
+                    //beginAtZero:true
+                },
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Transactions per day'
+                },
+            }],
+            xAxes: [{
+                type: 'time',
+                autoSkip: false,
+                time: {
+                    unit: 'second',
+                    unitStepSize: 360000
+                },
+                
+                display: true,
+                scaleLabel: {
+                    display: true,
+                }
+            }],
+        }
+    }
+});
+
+</script>
 {% endblock %}
