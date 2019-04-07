@@ -818,3 +818,11 @@ def query_transaction_daily_info():
         for _transaction_daily in session.query(TransactionDaily).order_by(TransactionDaily.id):
             ret.append(model_to_dict(_transaction_daily))
         return ret
+
+
+def query_address_daily_info():
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        ret = []
+        for _address_daily in session.query(AddressGrowthDaily).order_by(AddressGrowthDaily.id):
+            ret.append(model_to_dict(_address_daily))
+        return ret

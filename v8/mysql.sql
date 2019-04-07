@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `block_info` (
   `create_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   PRIMARY KEY (`height`),
   UNIQUE KEY `lbtcnode_block_info_hash` (`hash`),
-  KEY `lbtcnode_block_info_create_time` (`create_time`)
+  UNIQUE KEY `lbtcnode_block_info_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `address_info` (

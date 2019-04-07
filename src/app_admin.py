@@ -15,7 +15,8 @@ import rest_log
 from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
     get_block_status, get_block_status_multi_key, query_all_committee, query_all_delegate, \
     query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info, \
-    query_most_rich_address, query_address_info, query_transaction_daily_info
+    query_most_rich_address, query_address_info, query_transaction_daily_info, \
+    query_address_daily_info
 from v8.config import config, config_online
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, \
@@ -32,6 +33,10 @@ app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
 
+
+address_daily_info_global = None
+transaction_daily_info_global = None
+transaction_daily_info_global_update_time = None
 
 @app.route('/lbtc/explorer', methods=['GET'])
 def lbtc_index():
@@ -112,17 +117,32 @@ def lbtc_index():
     lbtc_info['network_tx_statistics'] = \
         block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS]
 
+    global address_daily_info_global
+    global transaction_daily_info_global
+    global transaction_daily_info_global_update_time
+    time_now = datetime.datetime.now()
+    if address_daily_info_global is None or \
+       (time_now - transaction_daily_info_global_update_time).total_seconds() > 3000:
+        transaction_daily_info_global = query_transaction_daily_info()
+        address_daily_info_global = query_address_daily_info()
+        transaction_daily_info_global_update_time = time_now
+        
     tx_daily = {'time': [], 'tx_num': [], 'avg_block_size': [],
                 'total_block_count': [], 'tx_num_no_coinbase': []}
-    transaction_daily_info = query_transaction_daily_info()
-    for _daily_info in transaction_daily_info:
-        tx_daily['time'].append(int(datetime.datetime.strptime(_daily_info['time'], '%Y-%m-%d').timestamp()) * 1000)
+    for _daily_info in transaction_daily_info_global:
+        tx_daily['time'].append(datetime.datetime.strptime(_daily_info['time'], '%Y-%m-%d'))
         tx_daily['tx_num'].append(_daily_info['tx_num'])
         tx_daily['tx_num_no_coinbase'].append(_daily_info['tx_num_no_coinbase'])
         tx_daily['total_block_count'].append(_daily_info['total_block_count'])
         tx_daily['avg_block_size'].append(str(_daily_info['avg_block_size']))
-    print(tx_daily['time'])
+
+    address_daily = {'time': [], 'total_address': [], 'increase_address': []}
+    for _daily_info in address_daily_info_global:
+        address_daily['time'].append(datetime.datetime.strptime(_daily_info['time'], '%Y-%m-%d'))
+        address_daily['total_address'].append(_daily_info['total_address'])
+        address_daily['increase_address'].append(_daily_info['increase_address'])
     lbtc_info['tx_daily'] = tx_daily
+    lbtc_info['address_daily'] = address_daily
     return render_template('index.html', lbtc_info=lbtc_info)
 
 

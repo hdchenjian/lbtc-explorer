@@ -55,8 +55,11 @@
 
 
     <div class="row">
-      <div class="wrapper col-6"  style="width:600px; height: 300px;">
-        <canvas id="myChart"></canvas>
+      <div class="wrapper col-6" style="width:500px; height: 250px; float:left;">
+        <canvas id="transaction_count" ></canvas>
+      </div>
+      <div class="wrapper col-6"  style="width:500px; height: 250px; float:right;">
+        <canvas id="address_count"></canvas>
       </div>
     </div>
     
@@ -203,22 +206,24 @@
 
 {% block js %}
 <script type="text/javascript">
-    var ctx = document.getElementById("myChart");
-var myChart = new Chart(ctx, {
+var ctx = document.getElementById("transaction_count");
+var transaction_count = new Chart(ctx, {
     type: 'line',
     data: {
         labels: {{ lbtc_info['tx_daily']['time']|tojson }},
         datasets: [{
-            label: 'LBTC Transaction Chart',
+            label: 'LBTC Transaction Count',
             data: {{ lbtc_info['tx_daily']['tx_num']|tojson }},
 
             fill: 'start',
             borderColor: "rgba(100,149,237,1)",
             backgroundColor: "rgba(176,196,222,0.5)",
+            borderWidth: 1,
+            pointStyle: 'circle',
+            pointRadius:1,
         }]
     },
     options: {
-/*
         tooltips: {
             enabled: true,
             mode: 'single',
@@ -232,12 +237,9 @@ var myChart = new Chart(ctx, {
                 }
             }
         },
-*/
+
         scales: {
             yAxes: [{
-                ticks: {
-                    //beginAtZero:true
-                },
                 scaleLabel: {
                     display: true,
                     labelString: 'Transactions per day'
@@ -246,10 +248,63 @@ var myChart = new Chart(ctx, {
             xAxes: [{
                 type: 'time',
                 autoSkip: false,
-                time: {
-                    unit: 'second',
-                    unitStepSize: 360000
+                
+                display: true,
+                scaleLabel: {
+                    display: true,
+                }
+            }],
+        }
+    }
+});
+
+var ctx_address = document.getElementById("address_count");
+var address_count = new Chart(ctx_address, {
+    type: 'line',
+    data: {
+        labels: {{ lbtc_info['address_daily']['time']|tojson }},
+        datasets: [{
+            label: 'LBTC Address Count',
+            data: {{ lbtc_info['address_daily']['total_address']|tojson }},
+
+            fill: 'start',
+            borderColor: "rgba(100,149,237,1)",
+            backgroundColor: "rgba(176,196,222,0.5)",
+            borderWidth: 1,
+            pointStyle: 'circle',
+            pointRadius: 1,
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        spanGaps: false,
+        elements: {
+            line: {
+                tension: 0.000001,
+            }
+        },
+        tooltips: {
+            enabled: true,
+            mode: 'single',
+            callbacks: {
+                label: function(tooltipItems, data) {
+                    var multistringText = ['address number: ' + tooltipItems.yLabel]
+                    multistringText.push(['Daily increase: ' + {{ lbtc_info['address_daily']['increase_address']|tojson }}[tooltipItems.index]]);
+                    return multistringText;
+                }
+            }
+        },
+
+        scales: {
+            yAxes: [{
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Total address count'
                 },
+            }],
+            xAxes: [{
+                type: 'time',
+                autoSkip: false,
                 
                 display: true,
                 scaleLabel: {
