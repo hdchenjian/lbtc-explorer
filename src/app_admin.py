@@ -9,7 +9,7 @@ from decimal import Decimal
 from bitcoinrpc.authproxy import AuthServiceProxy
 
 from flask import Flask, g, request, jsonify, render_template, \
-    flash, redirect, url_for
+    flash, redirect, url_for, session
 import rest_log
 
 from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
@@ -38,6 +38,7 @@ address_daily_info_global = None
 transaction_daily_info_global = None
 transaction_daily_info_global_update_time = None
 
+
 @app.route('/lbtc/explorer', methods=['GET'])
 def lbtc_index():
     lbtc_info = {}
@@ -65,7 +66,7 @@ def lbtc_index():
             block = rpc_connection.getblock(previous_block_hash)
             if not block:
                 flash(u'区块高度错误', 'error')
-                return render_template('index.html', lbtc_info=lbtc_info)
+                return u'区块高度错误'
             previous_block_hash = block['previousblockhash']
             for _tx_id in block['tx']:
                 _tx_id_list.append(_tx_id)
@@ -87,7 +88,7 @@ def lbtc_index():
     except Exception:
         traceback.print_exc()
         flash(u'获取区块数据错误', 'error')
-        return render_template('index.html', lbtc_info=lbtc_info)
+        return u'区块高度错误'
     _tx_list = query_coinbase_tx(_tx_id_list)
     _tx_id_to_tx = {}
     for _tx_item in _tx_list:
@@ -126,11 +127,11 @@ def lbtc_index():
         transaction_daily_info_global = query_transaction_daily_info()
         address_daily_info_global = query_address_daily_info()
         transaction_daily_info_global_update_time = time_now
-        
+
     tx_daily = {'time': [], 'tx_num': [], 'avg_block_size': [],
                 'total_block_count': [], 'tx_num_no_coinbase': []}
     for _daily_info in transaction_daily_info_global:
-        tx_daily['time'].append(datetime.datetime.strptime(_daily_info['time'], '%Y-%m-%d'))
+        tx_daily['time'].append(_daily_info['time'])
         tx_daily['tx_num'].append(_daily_info['tx_num'])
         tx_daily['tx_num_no_coinbase'].append(_daily_info['tx_num_no_coinbase'])
         tx_daily['total_block_count'].append(_daily_info['total_block_count'])
@@ -138,12 +139,15 @@ def lbtc_index():
 
     address_daily = {'time': [], 'total_address': [], 'increase_address': []}
     for _daily_info in address_daily_info_global:
-        address_daily['time'].append(datetime.datetime.strptime(_daily_info['time'], '%Y-%m-%d'))
+        address_daily['time'].append(_daily_info['time'])
         address_daily['total_address'].append(_daily_info['total_address'])
         address_daily['increase_address'].append(_daily_info['increase_address'])
     lbtc_info['tx_daily'] = tx_daily
     lbtc_info['address_daily'] = address_daily
-    return render_template('index.html', lbtc_info=lbtc_info)
+    if 'language' in session and session['language'] == 'cn':
+        return render_template('cn/index.html', lbtc_info=lbtc_info)
+    else:
+        return render_template('en/index.html', lbtc_info=lbtc_info)
 
 
 def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_address=''):
@@ -285,7 +289,11 @@ def lbtc_block():
         traceback.print_exc()
         block_info['next_hash'] = ''
     block_info['height'] = '{:,}'.format(block_info['height'])
-    return render_template('block.html', block_info=block_info, show_tx_hash=True, float=float)
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/block.html'
+    else:
+        template_name = 'en/block.html'
+    return render_template(template_name, block_info=block_info, show_tx_hash=True, float=float)
 
 
 @app.route('/lbtc/search', methods=['GET'])
@@ -327,21 +335,31 @@ def lbtc_search():
 def lbtc_balance():
     balance_info = query_most_rich_address(REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST,
                                            REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO)
-    print(balance_info)
-    return render_template('balance.html', balance_info=balance_info)
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/balance.html'
+    else:
+        template_name = 'en/balance.html'
+    return render_template(template_name, balance_info=balance_info)
 
 
 @app.route('/lbtc/committee', methods=['GET'])
 def lbtc_committee():
     committee_info = query_all_committee()
-    return render_template('committee.html', committee_info=committee_info)
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/committee.html'
+    else:
+        template_name = 'en/committee.html'
+    return render_template(template_name, committee_info=committee_info)
 
 
 @app.route('/lbtc/proposal', methods=['GET'])
 def lbtc_proposal():
     proposal_info = query_all_proposal()
-    print('proposal_info', proposal_info[1])
-    return render_template('proposal.html', proposal_info=proposal_info)
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/proposal.html'
+    else:
+        template_name = 'en/proposal.html'
+    return render_template(template_name, proposal_info=proposal_info)
 
 
 @app.route('/lbtc/bill', methods=['GET'])
@@ -355,7 +373,6 @@ def lbtc_bill():
     if not proposal_info:
         flash(u'没有搜索到您查找的结果,请检查输入是否正确', 'error')
         return redirect(url_for('lbtc_index'))
-    print('proposal_info', proposal_info)
     show_address_num = 5
     option_index = 1
     for _option in proposal_info["options"]:
@@ -369,14 +386,21 @@ def lbtc_bill():
             _option['vote_address_hide'] = None
         option_index += 1
 
-    return render_template('proposal_detail.html', proposal_info=proposal_info)
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/proposal_detail.html'
+    else:
+        template_name = 'en/proposal_detail.html'
+    return render_template(template_name, proposal_info=proposal_info)
 
 
 @app.route('/lbtc/delegate', methods=['GET'])
 def lbtc_delegate():
     delegate_info = query_all_delegate()
-    print('proposal_info', delegate_info[0])
-    return render_template('delegate.html', delegate_info=delegate_info)
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/delegate.html'
+    else:
+        template_name = 'en/delegate.html'
+    return render_template(template_name, delegate_info=delegate_info)
 
 
 @app.route('/lbtc/address', methods=['GET'])
@@ -485,8 +509,11 @@ def lbtc_address():
         committee_received_voter_num = 0
         voted_bills_num = 0
         submit_bills_num = 0
-    print('voted_bills', voted_bills)
-    return render_template('address.html', address_info=address_info, not_href_address=address,
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/address.html'
+    else:
+        template_name = 'en/address.html'
+    return render_template(template_name, address_info=address_info, not_href_address=address,
                            show_income=True, show_tx_hash=True, show_tx_height=True,
                            show_tx_time=True, float=float,
                            address=address,
@@ -524,7 +551,11 @@ def lbtc_tx():
     _tx_list = find_one_tx(tx_hash)
     _tx_list = [_tx_list]
     tx_info = get_tx_detail_info(_tx_list, current_height=current_height)
-    return render_template('tx.html', tx_info=tx_info[0], show_income=False, show_tx_height=True)
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/tx.html'
+    else:
+        template_name = 'en/tx.html'
+    return render_template(template_name, tx_info=tx_info[0], show_income=False, show_tx_height=True)
 
 
 def node_cmp(a, b):
@@ -552,24 +583,78 @@ def lbtc_nodes():
     node_status = get_block_status(REST_BLOCK_STATUS_KYE_NODE_IP_TYPE)
 
     country = request.args.get('country', '')
-    valid_node = get_all_node(2, country=country)
+    node_type = int(request.args.get('type', '0'))
+    all_node = get_all_node(2, country=country)
     if not country:
-        country = u'所有地区节点列表'
+        if node_type == 1:
+            country = u'所有地区可连接节点列表'
+        elif node_type == 2:
+            country = u'所有地区不可连接节点列表'
+        elif node_type == 4:
+            country = u'所有地区IPV4节点列表'
+        elif node_type == 6:
+            country = u'所有地区IPV6节点列表'
+        elif node_type == 5:
+            country = u'所有地区onion节点列表'
+        else:
+            country = u'所有地区节点列表'
     else:
-        country += u' 节点列表'
-    '''
+        if node_type == 1:
+            country += u' 可连接节点列表'
+        elif node_type == 2:
+            country += u' 不可连接节点列表'
+        elif node_type == 4:
+            country += u' IPV4节点列表'
+        elif node_type == 6:
+            country += u' IPV6节点列表'
+        elif node_type == 5:
+            country += u' onion节点列表'
+        else:
+            country += u' 节点列表'
     valid_node = []
-    for _node in all_node:
-        if _node['ip'].endswith(':9333'):
-            valid_node.append(_node)
-    '''
+    if node_type == 4:
+        for _node in all_node:
+            if not _node['ip'].endswith(".onion") and len(_node['ip'].split(':')) == 2:
+                valid_node.append(_node)
+    elif node_type == 6:
+        for _node in all_node:
+            if not _node['ip'].endswith(".onion") and len(_node['ip'].split(':')) > 2:
+                valid_node.append(_node)
+    elif node_type == 5:
+        for _node in all_node:
+            if _node['ip'].endswith(".onion"):
+                valid_node.append(_node)
+    elif node_type == 1:
+        for _node in all_node:
+            if '(not connected' not in _node['user_agent']:
+                valid_node.append(_node)
+    elif node_type == 2:
+        for _node in all_node:
+            if '(not connected' in _node['user_agent']:
+                valid_node.append(_node)
+    else:
+        valid_node = all_node
     # valid_node = sorted(all_node, cmp=node_cmp)
     count = 1
     for _node in valid_node:
         _node['id'] = count
         count += 1
-    return render_template('node.html', all_node=valid_node, country=country,
+    if 'language' in session and session['language'] == 'cn':
+        template_name = 'cn/node.html'
+    else:
+        template_name = 'en/node.html'
+    return render_template(template_name, all_node=valid_node, country=country,
                            node_distribution=node_distribution, node_status=node_status)
+
+
+@app.route('/change_device_type')
+def lbtc_change_language():
+    if request.args.get('language', '') in ['cn', 'en']:
+        session["language"] = request.args['language']
+        return redirect(url_for('lbtc_index'))
+    else:
+        flash(u"参数错误", 'error')
+        return redirect(url_for('lbtc_index'))
 
 
 @app.before_request
@@ -603,7 +688,8 @@ def after_request(response):
     if 400 <= response.status_code < 500:
         rest_log.logger.warning(g.log_info)
     else:
-        rest_log.logger.info(g.log_info)
+        if '/static' not in request.url:
+            rest_log.logger.info(g.log_info)
 
     response.headers['Date'] = \
         datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')

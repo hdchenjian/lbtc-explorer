@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-cn">
+  <head>
+    <title>闪电比特币区块浏览器</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main_df449dfef3c0.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap_deadc0b.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lbtc_theme_nav.css') }}"/>
+
+    <script src="{{ url_for('static', filename='js/qrcode.min_1dc0697.js') }}"></script>
+    <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <script src="{{ url_for('static', filename='js/Chart.bundle.js') }}"></script>
+  </head>
+
+  <body>
+    <header class="header">
+      <div class="container">
+        <div class="row">
+          <nav class="nav">
+            <ul>
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_index') }}" target="_blank">首页</a>
+              </li>
+
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_balance') }}" target="_blank">余额排行榜</a>
+              </li>
+
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_committee') }}" target="_blank">委员会</a>
+              </li>
+
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_proposal') }}" target="_blank">提案</a>
+              </li>
+
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_delegate') }}" target="_blank">代理</a>
+              </li>
+            
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_nodes') }}" target="_blank">节点</a>
+              </li>
+
+              
+            </ul>
+            
+          </nav>
+
+          <div class="searchbar">
+            <div class="searchbar-inner">
+              <form action="{{ url_for('lbtc_search') }}" method="GET" class="searchbar-form clearfix"
+                    onsubmit="this.q.value = this.q.value.trim()">
+                <button class="searchbar-submit" type="submit">
+                  <span class="glyphicon glyphicon-search"></span>
+                </button>
+                <div class="searchbar-input-container">
+                  <input type="search" class="searchbar-input" name="param"
+                         placeholder="地址、高度或哈希..."
+                         autocomplete="off"
+                         onfocus="$(this).addClass('active')"
+                         onblur="this.value.length > 1 || $(this).removeClass('active')"/>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <ul class="nav navbar-nav navbar-right" style="padding-left: 0; padding-right: 35px;">
+            <li class="dropdown">
+              <a style="color:yellow" href="#" class="dropdown-toggle" data-toggle="dropdown">
+                {% if "language" in session and "cn" == session["language"] %}
+                中文
+                {% else %}
+                ENGLISH
+                {% endif %}
+                <b class="caret"></b>
+              </a>
+
+              <div class="dropdown-menu">
+                <ul>
+                  {% if "language" in session and "cn" == session["language"] %}
+                  <li ><a href="{{ url_for('lbtc_change_language', language='en') }}">ENGLISH</a></li>
+                  {% else %}
+                  <li ><a href="{{ url_for('lbtc_change_language', language='cn') }}">中文</a></li>
+                  {% endif %}
+                </ul>
+              </div>
+            </li>
+          </ul>
+
+        </div>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages(category_filter=['success']) %}
+    {% if messages %}
+    <div class="alert alert-success alert-dismissible " role="alert">
+      <ul>
+        {% for message in messages %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <li style="text-align: center;font-size:17px">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      
+    </div>
+    {% endif %}
+    {% endwith %}
+
+
+    {% with messages = get_flashed_messages(category_filter=['error']) %}
+    {% if messages %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <ul>
+        {% for message in messages %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <li style="text-align: center;font-size:17px">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block body %}
+    {% endblock %}
+
+
+    {% block js %}
+    {% endblock %}
+  </body>
+</html>

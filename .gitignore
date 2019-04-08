@@ -4,6 +4,7 @@ src/geoip/GeoLite2-City.mmdb
 src/geoip/GeoLite2-Country.mmdb
 src/geoip/LICENSE.txt
 src/geoip/README.txt
+src/logs/crawl_log.log
 
 *.py[cod]
 

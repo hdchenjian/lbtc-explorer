@@ -1,0 +1,118 @@
+{% extends "cn/base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
+      <li>节点分布 </li> 
+    </ol>
+  </div>
+  
+  <div class="row">
+    <div class="big col-md-4 text-center">
+      <h4>
+        <a href="{{ url_for('lbtc_nodes') }}">
+          {{ node_status["node_num"] }}
+        </a>
+      </h4> <p class="text-muted">节点</p>
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=1) }}">
+          {{ node_status["node_connected"] }}
+        </a>
+      </h4> <p class="text-muted">可连接节点</p>
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=2) }}">
+          {{ node_status["node_not_connected"] }}
+        </a>
+      </h4> <p class="text-muted">不可连接节点</p>
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=4) }}">
+          {{ node_status["ipv4"] }}
+      </a></h4> <p class="text-muted">IPv4</p>
+      {% if node_status["ipv6"] %}
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=6) }}">
+          {{ node_status["ipv6"] }}
+      </a></h4><p class="text-muted">IPv6</p>
+      {% endif %}
+      {% if node_status["onion"] %}
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=5) }}">
+          {{ node_status["onion"] }}
+      </a></h4><p class="text-muted">Tor网络</p>
+      {% endif %}
+    </div>
+    
+    <div class="col-xs-7" style="padding-left: 20; padding-right: 0px;">
+      <div class="panel-heading">
+      </div>
+      <div class="panel-body">
+        <table class="table">
+          <tr>
+            <th class="text-left">排名</th>
+            <th class="text-left">地区</th>
+            <th class="text-left">节点数</th>
+          </tr>
+          {% for distribution_info in node_distribution %}
+          <tr>
+            <td class="text-left" >
+              {{ distribution_info["rank"] }}
+            </td>
+            <td class="text-left">
+              <a href="{{ url_for('lbtc_nodes', country=distribution_info['country']) }}"> {{ distribution_info["country"] }} </a>
+            </td>
+            <td class="text-left">
+              {{ distribution_info["node_num"] }}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-heading">
+    <div class="panel-heading-title">{{ country }}</div>
+  </div>
+  <div class="panel-body">
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered table-condensed" id="update_rule_table" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>IP地址</th>
+            <th>客户端版本</th>
+            <th>高度</th>
+            <th>位置</th>
+            <th>主机网络</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for _node in all_node %}
+          <tr>
+            <td>{{ _node["id"] }}</td>
+            <td>{{ _node["ip"] }}</td>
+	    <td>{{ _node["user_agent"] }}
+              <br>
+              <span class="text-muted">{{ _node["services"] }}</span>
+            </td>
+	    <td>{{ _node["height"] }}</td>
+            <td>{{ _node["location"] }}
+              <br>
+              <span class="text-muted">{{ _node["timezone"] }}</span>
+            </td>
+	    <td>{{ _node["network"] }}
+              <br>
+              <span class="text-muted">{{ _node["asn"] }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

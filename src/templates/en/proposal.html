@@ -1,0 +1,73 @@
+{% extends "en/base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
+      <li>Proposals</li> 
+    </ol>
+  </div>
+
+
+  <div class="row">
+    <div class="panel panel-bm indexBlockList">
+      <div class="panel-heading">
+      </div>
+      <div class="panel-body">
+
+        <table class="table">
+          <tr id="append">
+            
+            <th class="text-left">Index</th>
+            <th class="text-center">ID</th>
+            <th class="text-center">Title</th>
+            <th class="text-center">Proponent</th>
+            <th class="text-center">Start Time</th>
+            <th class="text-center">End Time</th>
+            <th class="text-center">Status</th>
+          </tr>
+          {% for _info in proposal_info %}
+          <tr>
+            <td class="text-left" >
+              {{ _info["index"] }}
+            </td>
+            <td class="text-left">
+              <a href="{{ url_for('lbtc_bill', id=_info['_id']) }}"> {{ _info["_id"] }} </a>
+            </td>
+            <td class="text-right" >
+              <div class="cell-poolname">
+                {{ _info["title"] }}
+              </div>
+            </td>
+            <td class="text-center">
+              <a href="{{ url_for('lbtc_address', address=_info['committee']) }}"> {{ _info["committee_name"] }} </a>
+            </td>
+            <td class="text-center" >
+              {{ _info["start_time"] }}
+            </td>
+            <td class="text-center" >
+              {{ _info["end_time"] }}
+            </td>
+            <td class="text-center" >
+              {% if _info["state"]["isfinished"] %}
+              {% if _info["state"]["ispassed"] %}
+              <span class="label label-success">Pass</span>
+              {% else %}
+              <span class="label label-danger">Rejected</span>
+              {% endif %}
+              {% else %}
+              <span class="label label-warning">Voting</span>
+              {% endif %}
+            </td>
+            
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

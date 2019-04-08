@@ -8,6 +8,7 @@ from geoip2.errors import AddressNotFoundError
 # from decimal import Decimal
 import threading
 import time
+import datetime
 import socket
 
 from decorators import singleton
@@ -15,8 +16,9 @@ from connection import Connection
 
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, delete_node, \
-    add_not_valid_node_connect_try_times, add_not_valid_node, \
-    delete_not_valid_node, get_all_not_valid_node, update_node_distribution, update_block_status
+    add_not_valid_node_connect_try_times, \
+    delete_not_valid_node, update_node_distribution, update_block_status, \
+    get_node_by_ip
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE
 config.from_object(config_online)
@@ -114,11 +116,14 @@ def find_node(node, max_height, ip_to_node):
            and 'Network is unreachable' not in exception_str:
             print(node['ip'], e)
         if node['height'] != -1:
-            if max_height - node['height'] > 24 * 3600 or \
-               (max_height - node['height'] > 8 * 3600 and not node['ip'].endswith(':9333')):
-                # print(node['ip'], 'long time offline, delete it')
-                delete_node(node['ip'])
-                # pass
+            if (datetime.datetime.now() -
+                datetime.datetime.strptime(node['create_time'], '%Y-%m-%dT%H:%M:%S')) \
+                    .total_seconds > 3600:
+                if max_height - node['height'] > 24 * 3600 or \
+                   (max_height - node['height'] > 8 * 3600 and not node['ip'].endswith(':9333')):
+                    # print(node['ip'], 'long time offline, delete it')
+                    delete_node(node['ip'])
+                    # pass
         else:
             if node['count'] > 100:
                 delete_not_valid_node(node['ip'])
@@ -142,7 +147,28 @@ def find_node(node, max_height, ip_to_node):
                 continue
             if ip in ip_to_node:
                 continue
-            add_not_valid_node(ip)
+            # add_not_valid_node(ip)
+
+            node_info = {}
+            if item['services'] == 13:
+                node_info['services'] = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN'
+            elif item['services'] == 1:
+                node_info['services'] = 'NODE_NETWORK'
+            else:
+                node_info['services'] = str(services) + 'todo'
+            node_info['services'] = \
+                node_info['services'] + '(' + str(version_msg['services']) + ')'
+            node_info['user_agent'] = '(not connected)'
+            node_by_ip = get_node_by_ip(ip)
+            if not node_by_ip or not node_by_ip['status']:
+                resolve_result = resolve_address(node['ip'].split(':')[0])
+                if resolve_result:
+                    node_info['location'] = resolve_result[0]
+                    node_info['timezone'] = resolve_result[1]
+                    node_info['network'] = resolve_result[2]
+                    node_info['asn'] = resolve_result[3]
+                    node_info['status'] = 1
+            update_or_add_node(ip, node_info)
 
 
 def get_node_NodeDistribution():
@@ -150,16 +176,22 @@ def get_node_NodeDistribution():
     country_map = {}
     country_info = {}
     ip_type = {'node_num': len(all_node),
+               'node_connected': 0,
+               'node_not_connected': 0,
                'ipv4': 0,
                'ipv6': 0,
                'onion': 0}
     for _node in all_node:
         if _node['ip'].endswith(".onion"):
             ip_type['onion'] += 1
-        elif ":" in _node['ip'].split(':')[0]:
+        elif len(_node['ip'].split(':')) > 2:
             ip_type['ipv6'] += 1
         else:
             ip_type['ipv4'] += 1
+        if '(not connected' not in _node['user_agent']:
+            ip_type['node_connected'] += 1
+        else:
+            ip_type['node_not_connected'] += 1
 
         country = _node['location']
         if ', ' in country:
@@ -213,6 +245,7 @@ def crawl_all_node():
         t.join()
     get_node_NodeDistribution()
 
+    '''
     tasks_not_valid = []
     all_not_valid_node = get_all_not_valid_node()
     for _node in all_not_valid_node:
@@ -225,6 +258,7 @@ def crawl_all_node():
         time.sleep(0.05)
     for t in tasks_not_valid:
         t.join()
+    '''
 
 
 if __name__ == '__main__':

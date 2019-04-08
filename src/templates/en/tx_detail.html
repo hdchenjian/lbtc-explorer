@@ -1,0 +1,190 @@
+<!-- same for tx.html address.html block.html -->
+<div class="panel panel-bm txDetail">
+  <div class="panel-heading">
+    <div class="row">
+      
+      {% if show_tx_hash %}
+      <div class="col-xs-5">
+        <div class="panel-heading-title" style="text-align: left;font-size:10px">
+          <a href="{{ url_for('lbtc_tx', hash=tx_info["hash"]) }}">
+            {{ tx_info["hash"] }}
+          </a>
+        </div>
+      </div>
+      <div class="col-xs-3">
+        <div class="panel-heading-title">
+          Input ({{ tx_info["input_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_input"] }}</span>
+        </div>
+      </div>
+      <div class="col-xs-2">
+        <div class="panel-heading-title">
+          Output ({{ tx_info["output_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_output"] }}</span>
+        </div>
+      </div>
+      <div class="col-xs-2">
+        <div class="panel-heading-title" style="text-align: center">
+          <a href="{{ url_for('lbtc_block', height=tx_info['height']) }}" class="txio-address" ga-type="address">
+            Height {{ tx_info["height"] }}
+          </a>
+        </div>
+      </div>
+      {% else %}
+
+      <div class="col-xs-6">
+        <div class="panel-heading-title">
+          Input ({{ tx_info["input_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_input"] }} LBTC</span>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="panel-heading-title">
+          Output ({{ tx_info["output_num"] }})
+          <span class="txDetail-heading-amount">{{ tx_info["lbtc_output"] }} LBTC</span>
+        </div>
+      </div>
+      <div class="col-xs-2">
+        <div class="panel-heading-title" style="text-align: center">
+          <a href="{{ url_for('lbtc_block', height=tx_info['height']) }}" class="txio-address" ga-type="address">
+            Height {{ tx_info["height"] }}
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% if show_tx_time %}
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="panel-heading-title" style="text-align: right">
+          Time: {{ tx_info["time"] }}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  
+  <div class="panel-body">
+    <div class="tx-item">
+      <table class="table">
+        <tr class="txio">
+          <td>
+            <ul>
+              {% for tx_input in tx_info["input_tx"] %}
+              <li>
+                {% if not_href_address and not_href_address == tx_input['address'] %}
+                {{ tx_input['address'] }}
+                {% else %}
+                {% if tx_input['address'] != 'CoinBase' %}
+                <a href="{{ url_for('lbtc_address', address=tx_input['address']) }}" class="txio-address" ga-type="address">
+                  {{ tx_input['address'] }}
+                </a>
+                {% else %}
+                {{ tx_input['address'] }}
+                {% endif %}
+                {% endif %}
+                <span class="txio-amount">
+                  {{ tx_input['amount'] }}
+                </span>
+              </li>
+              {% endfor %}
+
+              {% if tx_info["input_tx_hide"] %}
+              <a class="btn btn-primary" data-toggle="collapse" href={{ tx_info["input_collapse_href"] }} role="button" aria-expanded="false">
+                Show Hide Input({{ tx_info["input_tx_hide_num"] }})
+              </a>
+              <div class="collapse" id={{ tx_info["input_collapse_id"] }}>
+                {% for tx_input in tx_info["input_tx_hide"] %}
+                <li>
+                  {% if not_href_address and not_href_address == tx_input['address'] %}
+                  {{ tx_input['address'] }}
+                  {% else %}
+                  {% if tx_input['address'] != 'CoinBase' %}
+                  <a href="{{ url_for('lbtc_address', address=tx_input['address']) }}" class="txio-address" ga-type="address">
+                    {{ tx_input['address'] }}
+                  </a>
+                  {% else %}
+                  {{ tx_input['address'] }}
+                  {% endif %}
+                  {% endif %}
+                  <span class="txio-amount">
+                    {{ tx_input['amount'] }}
+                  </span>
+                </li>
+                {% endfor %}
+              </div>
+              {% endif %}
+              
+            </ul>
+          </td>
+
+          <td width="30px">
+            <span class="glyphicon glyphicon-arrow-right"></span>
+          </td>
+          
+          <td>
+            <ul>
+              {% for tx_output in tx_info["output_tx"] %}
+              <li>
+                {% if not_href_address and not_href_address == tx_output['address'] %}
+                {{ tx_output['address'] }}
+                {% else %}
+                <a href="{{ url_for('lbtc_address', address=tx_output['address']) }}" class="txio-address" ga-type="address">
+                  {{ tx_output['address'] }}
+                </a>
+                {% endif %}
+                <span class="txio-amount">
+                  {{ tx_output['amount'] }}
+                </span>
+              </li>
+              {% endfor %}
+
+              {% if tx_info["output_tx_hide"] %}
+              <a class="btn btn-primary" data-toggle="collapse" href={{ tx_info["output_collapse_href"] }} role="button" aria-expanded="false">
+                Show Hide Output({{ tx_info["output_tx_hide_num"] }})
+              </a>
+              <div class="collapse" id={{ tx_info["output_collapse_id"] }}>
+                {% for tx_output in tx_info["output_tx_hide"] %}
+                <li>
+                  {% if not_href_address and not_href_address == tx_output['address'] %}
+                  {{ tx_output['address'] }}
+                  {% else %}
+                  <a href="{{ url_for('lbtc_address', address=tx_output['address']) }}" class="txio-address" ga-type="address">
+                    {{ tx_output['address'] }}
+                  </a>
+                  {% endif %}
+                  
+                  <span class="txio-amount">
+                    {{ tx_output['amount'] }}
+                  </span>
+                </li>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </ul>
+          </td>
+        </tr>
+
+        <tr class="tx-item-footer">
+          <td class="tx-item-footer-note"></td>
+          <td class="tx-item-footer-note"></td>
+          <td class="tx-item-footer-additional">
+            <span class="tx-item-footer-additional-box">Confirmations {{ tx_info["confirm_num"] }} </span>
+            {% if show_income %}
+            {% if float(tx_info["income"]) >= 0 %}
+            <span class="tx-item-footer-additional-box txio-address-income">
+              + {{ tx_info["income"] }}
+            </span>
+            {% else %}
+            <span class="tx-item-footer-additional-box txio-address-outcome">
+              {{ tx_info["income"] }}
+            </span>
+            {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>

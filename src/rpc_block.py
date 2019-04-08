@@ -17,14 +17,14 @@ def update_rpc_node():
         # blockhash = rpc_connection.getblockhash(2050113)
         # print(blockhash)
         best_block = rpc_connection.getblock(best_block_hash)
-        print(best_block_hash, best_block)
+        #print(best_block_hash, best_block)
         tx_id = '163d33738e9f2fc4b3cdb860fe8fe3d16fcae6a9d3a8c805e8c8b6607fe14c53'
         # print(rpc_connection.gettxout(tx_id, 0))
 
         # print(rpc_connection.gettxoutproof([tx_id]))
         # print(rpc_connection.gettxoutsetinfo())
 
-        print(rpc_connection.gettransactionnew(tx_id))
+        print(rpc_connection.gettransactionnew('45581dcfe9324bdee8bfed7a3cd20000839cfd836792fb116d9c2bfe187df67f'))
 
         # print(rpc_connection.getchaintips())
         # print(rpc_connection.getmempoolinfo())
@@ -35,8 +35,14 @@ def update_rpc_node():
         # print(rpc_connection.listcommitteevoters('TestCommitteesName'))
         # print(rpc_connection.listvoteddelegates('1LAMDkarMYfZXcRQX5ZKhSafQBJqcRf91v'))
 
-        print(rpc_connection.listcommitteebills('TestCommitteesName'))
-        print(rpc_connection.listvoterbills('1CKbTd4ThjmRFhaGbGVfqa5B1ivLuxYHQD'))
+        # print(rpc_connection.listcommitteebills('TestCommitteesName'))
+        # print(rpc_connection.listvoterbills('1CKbTd4ThjmRFhaGbGVfqa5B1ivLuxYHQD'))
+
+        '''
+        print(rpc_connection.getmininginfo())
+        print(rpc_connection.getblocktemplate())
+        print(rpc_connection.getnetworkhashps(5031939))
+        '''
     except Exception as e:
         print(e)
         raise

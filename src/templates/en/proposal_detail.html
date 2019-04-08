@@ -1,0 +1,132 @@
+{% extends "en/base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
+      <li>Proposal Summary</li> 
+    </ol>
+  </div>
+
+
+  <div class="row">
+    <div class="panel">
+      <div class="col-xs-11" style="padding-left: 20; padding-right: 0px;">
+        <div class="panel-body">
+
+          <div>
+            <table class="table">
+              <tr>
+                <td class="text-left">ID:</td>
+                <td class="text-left">{{ proposal_info["_id"] }}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="text-left">Proponent:</td>
+                <td class="text-left">
+                  <a href="{{ url_for('lbtc_address', address=proposal_info['committee']) }}"> {{ proposal_info["committee_name"] }} </a>
+                </td>
+                <td></td>
+              <tr>
+                
+              <tr>
+                <td class="text-left">Title:</td>
+                <td class="text-left">{{ proposal_info["title"] }}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="text-left">Detail:</td>
+                <td class="text-left">{{ proposal_info["detail"] }}</td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td class="text-left">Starttime:</td>
+                <td class="text-left">{{ proposal_info["start_time"] }}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="text-left">Endtime:</td>
+                <td class="text-left">{{ proposal_info["end_time"] }}</td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td class="text-left">URL:</td>
+                <td class="text-left">
+                  <a href="{{ proposal_info["url"] }}"> {{ proposal_info["url"] }} </a>
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="text-left">State:</td>
+                <td class="text-left" >
+                  {% if proposal_info["state"]["isfinished"] %}
+                  {% if proposal_info["state"]["ispassed"] %}
+                  <span class="label label-success">Pass</span>
+                  {% else %}
+                  <span class="label label-danger">Rejected</span>
+                  {% endif %}
+                  {% else %}
+                  <span class="label label-warning">Voting</span>
+                  {% endif %}
+                </td>
+                <td></td>
+              </tr>
+            </table>
+          </div>
+
+          </br></br></br></br>
+          <table class="table">
+            <tr>
+              <th class="text-center">Options</th>
+              <th class="text-center">votes</th>
+              <th class="text-center">Address</th>
+            </tr>
+
+            {% for _option in proposal_info["options"] %}
+            <tr>
+              <td class="text-center" >
+                {{ _option["option"] }}
+              </td>
+              <td class="text-center" >
+                {{ _option["votes"] }}
+              </td>
+              <td class="text-center">
+                {% if _option["vote_address"] %}
+                <ul>
+                  {% for _address in _option["vote_address"] %}
+                  <li>
+                    <a href="{{ url_for('lbtc_address', address=_address) }}"> {{ _address }} </a>
+                  </li>
+                  {% endfor %}
+
+                  {% if _option["vote_address_hide"] %}
+                  <a class="btn btn-primary" data-toggle="collapse" href={{ _option["vote_collapse_href"] }} role="button" aria-expanded="false">
+                    Show Hide Address({{ _option["vote_address_hide_num"] }})
+                  </a>
+                  <div class="collapse" id={{ _option["vote_collapse_id"] }}>
+                    {% for _address in _option["vote_address_hide"] %}
+                    <li>
+                      <a href="{{ url_for('lbtc_address', address=_address) }}" class="txio-address" ga-type="address">
+                        {{ _address }}
+                      </a>
+                    </li>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </ul>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

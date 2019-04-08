@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "en/base.html" %}
 
 {% block body %}
 
@@ -6,59 +6,59 @@
   <br>
   <div class="row">
     <ol class="breadcrumb bm">
-      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
       <li>
         <a href="{{ url_for('lbtc_block', height=tx_info['height']) }}" ga-type="block">
-          块 - {{ tx_info["height"] }}
+          Block - {{ tx_info["height"] }}
         </a>
       </li>
-      <li>交易 {{ tx_info["hash"] }} </li> 
+      <li>Transaction {{ tx_info["hash"] }} </li> 
     </ol>
   </div>
 
   <div class="row">
     <div class="panel panel-bm txAbstract">
       <div class="panel-heading">
-        <div class="panel-heading-title">概要</div>
+        <div class="panel-heading-title">Summary</div>
       </div>
       <div class="panel-body text-center">
         <div class="abstract-inner txAbstract-inner">
           <div class="abstract-section">
             <dl>
-              <dt>块高度</dt>
+              <dt>Height</dt>
               <dd>
                 <a href="{{ url_for('lbtc_block', height=tx_info['height']) }}" ga-type="block">{{ tx_info["height"] }}</a>
               </dd>
             </dl>
             <dl>
-              <dt>确认数 </dt>
+              <dt>Confirmations </dt>
               <dd>
                 {{ tx_info["confirm_num"] }}
               </dd>
             </dl>
             <dl>
-              <dt>出块时间</dt>
+              <dt>Time</dt>
               <dd class="-btc-time-localization">
                 {{ tx_info["time"] }}
               </dd>
             </dl>
             <dl>
-              <dt> 大小 </dt>
+              <dt> Size </dt>
               <dd> {{ tx_info["size"] }}<span class="text-muted"> Bytes</span></dd>
             </dl>
           </div>
           
           <div class="abstract-section">
             <dl>
-              <dt>输入</dt>
+              <dt>Input</dt>
               <dd> {{ tx_info["lbtc_input"] }} LBTC </dd>
             </dl>
             <dl>
-              <dt>输出</dt>
+              <dt>Output</dt>
               <dd> {{ tx_info["lbtc_output"] }} LBTC </dd>
             </dl>
             <dl>
-              <dt>矿工费</dt>
+              <dt>Fees</dt>
               <dd> {{ tx_info["fee"] }} LBTC </dd>
             </dl>
           </div>
@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    {% include "tx_detail.html" %}
+    {% include "en/tx_detail.html" %}
     
   </div>
 </div>

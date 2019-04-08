@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "en/base.html" %}
 
 {% block body %}
 
@@ -9,18 +9,18 @@
     <div class="row">
       <div class="panel panel-bm indexBlockList">
         <div class="panel-heading">
-          <div class="panel-heading-title">最近出块</div>
+          <div class="panel-heading-title">Latest Blocks</div>
         </div>
         <div class="panel-body">
 
           <table class="table">
             <tr id="append">
-              <th class="text-right">高度</th>
-              <th class="text-center">播报方</th>
-              <th class="text-right">大小(B)</th>
-              <th class="text-center">块收益</th>
-              <th class="text-right">时间</th>
-              <th class="text-center">块哈希</th>
+              <th class="text-right">Height</th>
+              <th class="text-center">Relayed By</th>
+              <th class="text-right">Size(B)</th>
+              <th class="text-center">Reward</th>
+              <th class="text-right">Time</th>
+              <th class="text-center">Block Hash</th>
             </tr>
             {% for block_info in lbtc_info['block_info'] %}
             <tr>
@@ -71,7 +71,7 @@
           <div class="panel-heading">
             <div class="panel-heading-corner">
             </div>
-            <div class="panel-heading-title"> 节点状态 </div>
+            <div class="panel-heading-title"> Nodes Status </div>
           </div>
 
           <div class="panel-body">
@@ -79,7 +79,7 @@
               <ul data-toggle="tooltip" class="unconfirmed-txs-popover">
                 <li>
                   <dl>
-                    <dt> 节点数 </dt>
+                    <dt> Nodes </dt>
                     <dd>
                       <a href="{{ url_for('lbtc_nodes') }}">{{ lbtc_info["delegate_count"] }}</a>
                     </dd>
@@ -88,14 +88,14 @@
               </ul>
             
               <div class="panel-heading">
-                <div class="panel-heading-title">节点分布(TOP7)</div>
+                <div class="panel-heading-title">Nodes Distribution</div>
               </div>
               <div class="panel-body">
                 <table class="table">
                   <tr>
-                    <th class="text-left">排名</th>
-                    <th class="text-center">地区</th>
-                    <th class="text-right">节点数</th>
+                    <th class="text-left">Rank</th>
+                    <th class="text-center">Location</th>
+                    <th class="text-right">Nodes</th>
                   </tr>
                   {% for distribution_info in lbtc_info['node_distribution'] %}
                   <tr>
@@ -124,7 +124,7 @@
           <div class="panel-heading">
             <div class="panel-heading-corner">
             </div>
-            <div class="panel-heading-title"> 网络状态 </div>
+            <div class="panel-heading-title"> Network Status </div>
           </div>
 
           <div class="panel-body">
@@ -133,7 +133,7 @@
               <ul data-toggle="tooltip" class="unconfirmed-txs-popover">
                 <li>
                   <dl>
-                    <dt> 未确认交易数 </dt>
+                    <dt> Unconfirmed Txs Count</dt>
                     <dd class="unconfirmed-tx">
                       <div class="unconfirmed-tx-item">
                         <span class="tx-count">{{ lbtc_info["unconfirmed_tx_num"] }}</span>
@@ -144,19 +144,19 @@
 
                 <li>
                   <dl>
-                    <dt>总账户数</dt>
+                    <dt>Address Count</dt>
                     <dd>{{ lbtc_info["network_tx_statistics"]["address_num"] }} </dd>
                   </dl>
                 </li>
                 <li>
                   <dl>
-                    <dt>近24h新增账户数</dt>
+                    <dt>Address Growth past 24h</dt>
                     <dd>{{ lbtc_info["network_tx_statistics"]["address_num_24h"] }} </dd>
                   </dl>
                 </li>
                 <li>
                   <dl>
-                    <dt>近两周新增账户数</dt>
+                    <dt>Address Growth past 2 weeks</dt>
                     <dd>{{ lbtc_info["network_tx_statistics"]["address_num_14d"] }} </dd>
                   </dl>
                 </li>
@@ -165,27 +165,27 @@
               <ul>
                 <li>
                   <dl>
-                    <dt>24 小时交易速率</dt>
-                    <dd>{{ '{0:.2f}'.format(lbtc_info["network_tx_statistics"]["tx_speed_24h"]) }} 交易/秒</dd>
+                    <dt>24h Tx Rate </dt>
+                    <dd>{{ '{0:.2f}'.format(lbtc_info["network_tx_statistics"]["tx_speed_24h"]) }} TPS</dd>
                   </dl>
                 </li>
                 
                 <li>
                   <dl>
-                    <dt>24 小时交易数(不含coinbase)</dt>
-                    <dd>{{ lbtc_info["network_tx_statistics"]["tx_num_no_coinbase_24h"] }} 个</dd>
+                    <dt>24h Tx Count(exclude coinbase)</dt>
+                    <dd>{{ lbtc_info["network_tx_statistics"]["tx_num_no_coinbase_24h"] }} </dd>
                   </dl>
                 </li>
                 <li>
                   <dl>
-                    <dt>近两周平均手续费</dt>
+                    <dt>Average transaction fees past 2 weeks</dt>
                     <dd>{{ '{0:.5f}'.format(lbtc_info["network_tx_statistics"]["avg_fee_14d"]) }} LBTC</dd>
                   </dl>
                 </li>
               
                 <li>
                   <dl>
-                    <dt> 近两周平均区块体积 </dt>
+                    <dt>Average block size past 2 weeks </dt>
                     <dd>{{ '{0:.2f}'.format(lbtc_info["network_tx_statistics"]["block_size_avg_14d"]) }} Bytes</dd>
                   </dl>
                 </li>
@@ -212,7 +212,7 @@ var transaction_count = new Chart(ctx, {
     data: {
         labels: {{ lbtc_info['tx_daily']['time']|tojson }},
         datasets: [{
-            label: 'LBTC Transaction Count',
+            label: 'LBTC Transaction Chart',
             data: {{ lbtc_info['tx_daily']['tx_num']|tojson }},
 
             fill: 'start',
@@ -248,6 +248,11 @@ var transaction_count = new Chart(ctx, {
             xAxes: [{
                 type: 'time',
                 autoSkip: false,
+                time: {
+                    //parser: 'YYYY-MM-DD HH:mm:ss',
+                    unit: 'month',
+                    displayFormats: { month: 'YYYY-MM' },
+                },
                 
                 display: true,
                 scaleLabel: {
@@ -264,7 +269,7 @@ var address_count = new Chart(ctx_address, {
     data: {
         labels: {{ lbtc_info['address_daily']['time']|tojson }},
         datasets: [{
-            label: 'LBTC Address Count',
+            label: 'LBTC Address Growth Chart',
             data: {{ lbtc_info['address_daily']['total_address']|tojson }},
 
             fill: 'start',
@@ -288,7 +293,7 @@ var address_count = new Chart(ctx_address, {
             mode: 'single',
             callbacks: {
                 label: function(tooltipItems, data) {
-                    var multistringText = ['address number: ' + tooltipItems.yLabel]
+                    var multistringText = ['total address number: ' + tooltipItems.yLabel]
                     multistringText.push(['Daily increase: ' + {{ lbtc_info['address_daily']['increase_address']|tojson }}[tooltipItems.index]]);
                     return multistringText;
                 }
@@ -305,6 +310,11 @@ var address_count = new Chart(ctx_address, {
             xAxes: [{
                 type: 'time',
                 autoSkip: false,
+                time: {
+                    //parser: 'YYYY-MM-DD HH:mm:ss',
+                    unit: 'month',
+                    displayFormats: { month: 'YYYY-MM' },
+                },
                 
                 display: true,
                 scaleLabel: {

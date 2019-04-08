@@ -1,0 +1,456 @@
+{% extends "en/base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
+      <li>Address- {{ address_info["address"] }} </li> 
+    </ol>
+  </div>
+
+  <div class="row">
+    {% if current_page == 1 %}
+    <div class="panel panel-bm txAbstract">
+      <div class="panel-heading">
+        <div class="panel-heading-title">Summary</div>
+      </div>
+      <div class="panel-body text-center">
+        <div class="abstract-inner txAbstract-inner">
+          <div class="abstract-section">
+            <dl>
+              <dt>Address</dt>
+              <dd>
+                {{ address_info["address"] }}
+                <a href="javascript:" class="icon-address-qr" style="margin-left: 10px;"></a>
+              </dd>
+            </dl>
+            <dl>
+              <dt>Balance </dt>
+              <dd>
+                {{ address_info["balance"] }} LBTC
+              </dd>
+            </dl>
+            <dl>
+              <dt>Total Received</dt>
+              <dd>
+                {{ address_info["receive"] }} LBTC
+              </dd>
+            </dl>
+            <dl>
+              <dt>Total Send</dt>
+              <dd>
+                {{ address_info["send"] }} LBTC
+              </dd>
+            </dl>
+          </div>
+          
+          <div class="abstract-section">
+            <dl>
+              <dt>Tx Count</dt>
+              <dd> {{ address_info["transaction_num"] }} </dd>
+            </dl>
+            <dl>
+              <dt>First Tx Time</dt>
+              <dd> {{ address_info["create_time"] }} </dd>
+            </dl>
+            <dl>
+              <dt>Latest Tx Time</dt>
+              <dd> {{ address_info["update_time"] }} </dd>
+            </dl>
+            <dl>
+              <dt></dt>
+              <dd>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            {% if delegate_name %}
+            Forging({{ delegate_name }})
+            {% else %}
+            Forging
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel-body">
+        <div class="row">
+          <table class="table">
+            <tr>
+              <td>
+                <button id="delegate_votes_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseDelegateVotes">
+                  <span class="glyphicon glyphicon-triangle-right"></span> votes({{ voted_delegates_num }})
+                </button>
+
+                <div id="collapseDelegateVotes" class="collapse">
+                  <div>
+                    {% for _delegates in voted_delegates %}
+                    <a href="{{ url_for('lbtc_address', address=_delegates['delegate']) }}">
+                      {{ _delegates["name"] }}
+                    </a>
+                    <span class="point">·</span>
+                    {% endfor %}
+                    
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <button id="delegate_voters_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseDelegateVoters">
+                  <span class="glyphicon glyphicon-triangle-right"></span> voters({{ delegate_received_voter_num }})
+                </button>
+
+                <div id="collapseDelegateVoters" class="collapse">
+                  <div>
+                    {% for _address in delegate_received_voter %}
+                    <a href="{{ url_for('lbtc_address', address=_address) }}">
+                      {% if _address in delegate_address_to_name %}
+                      {{ delegate_address_to_name[_address] }}
+                      {% else %}
+                      {{ _address }}
+                      {% endif %}
+                    </a>
+                    <span class="point">·</span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </td>
+            <tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            {% if committee_name %}
+            Committee({{ committee_name }})
+            {% else %}
+            Committee
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel-body">
+        <div class="row">
+          <table class="table">
+            <tr>
+              <td>
+                <button id="committee_votes_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseCommitteeVotes">
+                  <span class="glyphicon glyphicon-triangle-right"></span> votes({{ voted_committees_num }})
+                </button>
+
+                <div id="collapseCommitteeVotes" class="collapse">
+                  <div>
+                    {% for _committees in voted_committees %}
+                    {% if _committees["name"] == committee_name %}
+                    {{ _committees["name"] }}
+                    {% else %}
+                    <a href="{{ url_for('lbtc_address', address=_committees['committee']) }}">
+                      {{ _committees["name"] }}
+                    </a>
+                    <span class="point">·</span>
+                    {% endif %}
+                    {% endfor %}
+                    
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <button id="committee_voters_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseCommitteeVoters">
+                  <span class="glyphicon glyphicon-triangle-right"></span> voters({{ committee_received_voter_num }})
+                </button>
+
+                <div id="collapseCommitteeVoters" class="collapse">
+                  <div>
+                    {% for _address in committee_received_voter %}
+                    {% if _address in committee_address_to_name %}
+                    {% if committee_address_to_name[_address] == committee_name %}
+                    {{ committee_address_to_name[_address] }}
+                    {% else %}
+                    <a href="{{ url_for('lbtc_address', address=_address) }}">
+                      {{ committee_address_to_name[_address] }}
+                    </a>
+                    {% endif %}
+                    {% else %}
+                    <a href="{{ url_for('lbtc_address', address=_address) }}">
+                      {{ _address }}
+                    </a>
+                    {% endif %}
+                    <span class="point">·</span>
+                    {% endfor %}
+
+                  </div>
+                </div>
+              </td>
+            <tr>
+          </table>
+        </div>
+      </div>
+      
+    </div>
+
+    
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            提案
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel-body">
+        <div class="row">
+          <table class="table">
+            <tr>
+              <td>
+                <button id="proposal_votes_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseProposalVotes">
+                <span class="glyphicon glyphicon-triangle-right"></span> votes({{ voted_bills_num }})
+              </button>
+
+              <div id="collapseProposalVotes" class="collapse">
+                <div>
+                  {% for _bills in voted_bills %}
+                  <a href="{{ url_for('lbtc_bill', id=_bills['id']) }}">
+                    {{ _bills["id"] }}
+                  </a>
+                  <span class="point">·</span>
+                  {% endfor %}
+                </div>
+              </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <button id="proposal_voters_button" style="text-align: left; color: #666" class="btn btn-block"
+                        data-toggle="collapse" data-target="#collapseProposalVoters">
+                <span class="glyphicon glyphicon-triangle-right"></span> Submit({{ submit_bills_num }})
+              </button>
+
+              <div id="collapseProposalVoters" class="collapse">
+                <div>
+                  {% for bill in submit_bills %}
+                  <a href="{{ url_for('lbtc_bill', id=bill['billid']) }}">
+                    {{ bill['billid'] }}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+              </td>
+            <tr>
+          </table>
+        </div>
+      </div>
+      
+    </div>
+
+        
+
+    {% endif %}
+
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            Transaction
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="row">
+          
+          {% for tx_info in address_info["tx_info"] %}
+          {% include "en/tx_detail.html" %}
+          {% endfor %}
+
+          <div class="text-center">
+            <div class="col-md-5">
+              <ul class="pagination">
+                {% if min_page - 2 <= 1 %}
+                                      {% set min_page = 1 %}
+                                      {% endif %}
+                                      {% if max_page + 2 >= total_page %}
+                  {% set max_page = total_page %}
+                  {% endif %}
+
+                  {% if min_page != 1 %}
+	          <li class=""><a href="{{ url_for('lbtc_address', address=address, page=1) }}"><span>1</span></a></li>
+	          <li><span>...</span></li>
+	          {% endif %}
+	          {% for i in range(min_page, max_page + 1) %}
+                  {% if i == current_page %}
+                  <li class="active"><a href="{{ url_for('lbtc_address', address=address, page=current_page) }}"><span>{{ i }}</span></a></li>
+                  {% else %}
+	          <li><a href="{{ url_for('lbtc_address', address=address, page=i) }}"><span>{{ i }}</span></a></li>
+                  {% endif %}
+	          {% endfor %}
+
+                  {% if max_page != total_page %}
+	          <li><span>...</span></li>
+	          <li class=""><a href="{{ url_for('lbtc_address', address=address, page=total_page) }}"><span>{{ total_page }}</span></a></li>
+	          {% endif %}
+              </ul>
+            </div>
+
+            <div class="col-md-2" style="margin-top: 20px" >
+              <form method="GET" action="{{ url_for('lbtc_address', address=address, page=current_page-1) }}">
+	        <div class="form-group">
+                  <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_up }}" />
+                  <input type="hidden" id='jump_page_next_address' name="address" value="{{ address }}" />
+	          <button class="btn btn-primary" id="current_page_up_button" {% if current_page_up == 0 %} disabled="disabled" {% endif %} >Previous Page</button>
+	        </div>
+              </form>
+            </div>
+            <div class="col-md-2" style="margin-top: 20px" >
+              <form method="GET" action="{{ url_for('lbtc_address', address=address, page=current_page+1) }}">
+	        <div class="form-group">
+                  <input type="hidden" id='jump_page_next' name="page" value="{{ current_page_next }}" />
+                  <input type="hidden" id='jump_page_next_address' name="address" value="{{ address }}" />
+	          <button class="btn btn-primary" id="current_page_next_button" {% if current_page_next == 0 %} disabled="disabled" {% endif %} >Next Page</button>
+	        </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  
+
+    
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+
+$(function () {
+    $('#collapseProposalVotes').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('proposal_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> votes(' + {{ voted_bills_num|tojson }} + ')';
+    });
+
+    $('#collapseProposalVotes').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('proposal_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> votes(' + {{ voted_bills_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseProposalVoters').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('proposal_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> Submit(' + {{ submit_bills_num|tojson }} + ')';
+    });
+
+    $('#collapseProposalVoters').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('proposal_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> Submit(' + {{ submit_bills_num|tojson }} + ')';
+    });
+});
+
+
+$(function () {
+    $('#collapseCommitteeVotes').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('committee_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> votes(' + {{ voted_committees_num|tojson }} + ')';
+    });
+
+    $('#collapseCommitteeVotes').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('committee_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> votes(' + {{ voted_committees_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseCommitteeVoters').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('committee_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> voters(' + {{ committee_received_voter_num|tojson }} + ')';
+    });
+
+    $('#collapseCommitteeVoters').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('committee_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> voters(' + {{ committee_received_voter_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseDelegateVotes').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('delegate_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> votes(' + {{ voted_delegates_num|tojson }} + ')';
+    });
+
+    $('#collapseDelegateVotes').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('delegate_votes_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> votes(' + {{ voted_delegates_num|tojson }} + ')';
+    });
+});
+
+$(function () {
+    $('#collapseDelegateVoters').on('show.bs.collapse', function () {
+         var btnVal = document.getElementById('delegate_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-bottom"></span> voters(' + {{ delegate_received_voter_num|tojson }} + ')';
+    });
+
+    $('#collapseDelegateVoters').on('hide.bs.collapse', function () {
+        var btnVal = document.getElementById('delegate_voters_button');
+        btnVal.innerHTML = '<span class="glyphicon glyphicon-triangle-right"></span> voters(' + {{ delegate_received_voter_num|tojson }} + ')';
+    });
+});
+
+
+$(function(){
+    $(".icon-address-qr").popover(
+        {container:"body",
+         content:'<div id="address_qr" style="width: 155px; height: 155px;"></div>',
+         html:!0,
+         placement:"bottom",
+         trigger:"hover",
+         template:'<div class="popover" role="tooltip"> \
+                     <div class="arrow"> \
+                     </div> \
+                     <h3 class="popover-title"></h3> \
+                     <div class="popover-content"> \
+                     </div> \
+                   </div>'}),
+    $(".icon-address-qr").on("shown.bs.popover",
+                             function(){
+                                 new QRCode(document.getElementById("address_qr"),
+                                            {text: {{ address|tojson }},
+                                             width:155,
+                                             height:155,
+                                             colorDark:"#000000",
+                                             colorLight:"#ffffff",
+                                             correctLevel:QRCode.CorrectLevel.M})})
+});
+</script>
+{% endblock %}

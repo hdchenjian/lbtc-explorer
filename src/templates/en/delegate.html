@@ -1,0 +1,45 @@
+{% extends "en/base.html" %}
+
+{% block body %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <ol class="breadcrumb bm">
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
+      <li>Delegate Monitor </li> 
+    </ol>
+  </div>
+
+  
+  <div class="row">
+    <div class="col-xs-12" style="padding-left: 10; padding-right: 0px;">
+      <div class="panel-body">
+        <table class="table">
+          <tr>
+            <th class="text-center">Rank</th>
+            <th class="text-center">Name</th>
+            <th class="text-center">Address</th>
+            <th class="text-center">Votes</th>
+          </tr>
+          {% for _info in delegate_info %}
+          <tr>
+            <td class="text-center" >
+              {{ _info["index"] }}
+            </td>
+            <td class="text-center" >
+              {{ _info["name"] }}
+            </td><td class="text-center">
+              <a href="{{ url_for('lbtc_address', address=_info['_id']) }}"> {{ _info["_id"] }} </a>
+            </td>
+            <td class="text-center">
+              {{ _info["votes"] }}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

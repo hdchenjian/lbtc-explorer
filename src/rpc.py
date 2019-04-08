@@ -2,8 +2,7 @@
 # encoding: utf-8
 
 from v8.config import config, config_online
-from v8.engine.handlers.node_handler import get_node_by_ip, \
-    add_not_valid_node
+from v8.engine.handlers.node_handler import get_node_by_ip, update_or_add_node
 from bitcoinrpc.authproxy import AuthServiceProxy
 from decorators import singleton
 from crawl import resolve_address
@@ -17,10 +16,10 @@ def update_rpc_node():
         peerinfo = rpc_connection.getpeerinfo()
         for _peer in peerinfo:
             ip = _peer['addr']
-            user_agent = _peer['subver'] + ' (' + str(_peer['version']) + ')'
+            user_agent = _peer['subver'] + ' (not connected ' + str(_peer['version']) + ')'
             services = _peer['services']
             if services == '000000000000000d':
-                services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN ( 13)'
+                services = 'NODE_NETWORK NODE_BLOOM NODE_XTHIN (13)'
             else:
                 services = str(services) + 'todo'
             user_agent = user_agent
@@ -31,17 +30,16 @@ def update_rpc_node():
             node_by_ip = get_node_by_ip(ip)
             if node_by_ip:
                 continue
-            if (not node_by_ip or (not node_by_ip['location'] or not node_by_ip['network'])):
-                resolve_result = resolve_address(ip.split(':')[0])
-                if resolve_result:
-                    node_info['location'] = resolve_result[0]
-                    node_info['timezone'] = resolve_result[1]
-                    node_info['network'] = resolve_result[2]
-                    node_info['asn'] = resolve_result[3]
-
             # comment this filter out node that can not connect to
-            # update_or_add_node(ip, node_info)
-            add_not_valid_node(ip)  # use this filter out node that can not connect to
+            resolve_result = resolve_address(ip.split(':')[0])
+            if resolve_result:
+                node_info['location'] = resolve_result[0]
+                node_info['timezone'] = resolve_result[1]
+                node_info['network'] = resolve_result[2]
+                node_info['asn'] = resolve_result[3]
+                node_info['status'] = 1
+            update_or_add_node(ip, node_info)
+            # add_not_valid_node(ip)  # use this filter out node that can not connect to
     except Exception as e:
         print(unicode(e))
 

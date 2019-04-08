@@ -342,7 +342,7 @@ def parse_lbtc_block():
             start_time = end_time - datetime.timedelta(days=1)
             update_address_growth_daily_info(start_time, end_time)
             update_transaction_daily_info(start_time, end_time)
-    
+
         query_all_committee_proposal()
         if update_most_rich_address_time is None or \
            (time_now - update_most_rich_address_time).total_seconds() > 100:

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "en/base.html" %}
 
 {% block body %}
 
@@ -6,7 +6,7 @@
   <br>
   <div class="row">
     <ol class="breadcrumb bm">
-      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
       <li>Committee Members </li> 
     </ol>
   </div>
@@ -17,11 +17,11 @@
       <div class="panel-body">
         <table class="table">
           <tr>
-            <th class="text-center">序号</th>
-            <th class="text-center">名字</th>
-            <th class="text-center">地址</th>
-            <th class="text-center">网址</th>
-            <th class="text-center">获得票数</th>
+            <th class="text-center">Index</th>
+            <th class="text-center">Name</th>
+            <th class="text-center">Address</th>
+            <th class="text-center">Url</th>
+            <th class="text-center">Votes</th>
           </tr>
           {% for _info in committee_info %}
           <tr>

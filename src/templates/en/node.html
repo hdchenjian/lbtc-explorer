@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "en/base.html" %}
 
 {% block body %}
 
@@ -6,18 +6,44 @@
   <br>
   <div class="row">
     <ol class="breadcrumb bm">
-      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
-      <li>节点分布 </li> 
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
+      <li>Nodes </li> 
     </ol>
   </div>
   
   <div class="row">
-    <div class="big col-md-3 text-center">
-      <br><br><br>
-      <h4>{{ node_status["node_num"] }}</h4> <p class="text-muted">Nodes</p>
-      <h4>{{ node_status["ipv4"] }}</h4> <p class="text-muted">IPv4</p>
-      <h4>{{ node_status["ipv6"] }}</h4><p class="text-muted">IPv6</p>
-      <h4>{{ node_status["onion"] }}</h4><p class="text-muted">.onion</p>
+    <div class="big col-md-4 text-center">
+      <h4>
+        <a href="{{ url_for('lbtc_nodes') }}">
+          {{ node_status["node_num"] }}
+        </a>
+      </h4> <p class="text-muted">Nodes</p>
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=1) }}">
+          {{ node_status["node_connected"] }}
+        </a>
+      </h4> <p class="text-muted">Nodes Connected</p>
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=2) }}">
+          {{ node_status["node_not_connected"] }}
+        </a>
+      </h4> <p class="text-muted">Nodes Not Connected</p>
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=4) }}">
+          {{ node_status["ipv4"] }}
+      </a></h4> <p class="text-muted">IPv4</p>
+      {% if node_status["ipv6"] %}
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=6) }}">
+          {{ node_status["ipv6"] }}
+      </a></h4><p class="text-muted">IPv6</p>
+      {% endif %}
+      {% if node_status["onion"] %}
+      <h4>
+        <a href="{{ url_for('lbtc_nodes', type=5) }}">
+          {{ node_status["onion"] }}
+      </a></h4><p class="text-muted">.onion</p>
+      {% endif %}
     </div>
     
     <div class="col-xs-7" style="padding-left: 20; padding-right: 0px;">
@@ -26,9 +52,9 @@
       <div class="panel-body">
         <table class="table">
           <tr>
-            <th class="text-left">排名</th>
-            <th class="text-left">地区</th>
-            <th class="text-left">节点数</th>
+            <th class="text-left">Rank</th>
+            <th class="text-left">Location</th>
+            <th class="text-left">Nodes</th>
           </tr>
           {% for distribution_info in node_distribution %}
           <tr>
@@ -36,7 +62,7 @@
               {{ distribution_info["rank"] }}
             </td>
             <td class="text-left">
-              <a href="{{ url_for('lbtc_nodes', type=3, country=distribution_info['country']) }}"> {{ distribution_info["country"] }} </a>
+              <a href="{{ url_for('lbtc_nodes', country=distribution_info['country']) }}"> {{ distribution_info["country"] }} </a>
             </td>
             <td class="text-left">
               {{ distribution_info["node_num"] }}

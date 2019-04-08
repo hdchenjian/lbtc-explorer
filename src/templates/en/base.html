@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-cn">
   <head>
-    <title>闪电比特币区块浏览器</title>
+    <title>LBTC explorer</title>
 
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -29,7 +29,7 @@
               </li>
 
               <li class="nav-item">
-                <a href="{{ url_for('lbtc_balance') }}" target="_blank">余额排行榜</a>
+                <a href="{{ url_for('lbtc_balance') }}" target="_blank">Balance Rank</a>
               </li>
 
               <li class="nav-item">
@@ -44,6 +44,10 @@
                 <a href="{{ url_for('lbtc_delegate') }}" target="_blank">Delegates</a>
               </li>
 
+              <li class="nav-item">
+                <a href="{{ url_for('lbtc_nodes') }}" target="_blank">Nodes</a>
+              </li>
+
             </ul>
           </nav>
 
@@ -56,7 +60,7 @@
                 </button>
                 <div class="searchbar-input-container">
                   <input type="search" class="searchbar-input" name="param"
-                         placeholder="地址、高度或哈希..."
+                         placeholder="Address/Height/Hash..."
                          autocomplete="off"
                          onfocus="$(this).addClass('active')"
                          onblur="this.value.length > 1 || $(this).removeClass('active')"/>
@@ -64,7 +68,30 @@
               </form>
             </div>
           </div>
-          
+
+          <ul class="nav navbar-nav navbar-right" style="padding-left: 0; padding-right: 25px;">
+            <li class="dropdown">
+              <a style="color:yellow" href="#" class="dropdown-toggle" data-toggle="dropdown">
+                {% if "language" in session and "cn" == session["language"] %}
+                中文
+                {% else %}
+                ENGLISH
+                {% endif %}
+                <b class="caret"></b>
+              </a>
+
+              <div class="dropdown-menu">
+                <ul>
+                  {% if "language" in session and "cn" == session["language"] %}
+                  <li ><a href="{{ url_for('lbtc_change_language', language='en') }}">ENGLISH</a></li>
+                  {% else %}
+                  <li ><a href="{{ url_for('lbtc_change_language', language='cn') }}">中文</a></li>
+                  {% endif %}
+                </ul>
+              </div>
+            </li>
+          </ul>
+
         </div>
       </div>
     </header>

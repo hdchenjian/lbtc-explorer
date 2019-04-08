@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "en/base.html" %}
 
 {% block body %}
 
@@ -6,33 +6,33 @@
   <br>
   <div class="row">
     <ol class="breadcrumb bm">
-      <li><a href="{{ url_for('lbtc_index') }}">首页</a></li>
-      <li>块 - {{ block_info["address"] }} </li> 
+      <li><a href="{{ url_for('lbtc_index') }}">Home</a></li>
+      <li>Block - {{ block_info["address"] }} </li> 
     </ol>
   </div>
 
   <div class="row">
     <div class="panel panel-bm txAbstract">
       <div class="panel-heading">
-        <div class="panel-heading-title">概要</div>
+        <div class="panel-heading-title">Summary</div>
       </div>
       <div class="panel-body text-center">
         <div class="abstract-inner txAbstract-inner">
           <div class="blockAbstract-section">
             <dl>
-              <dt>高度</dt>
+              <dt>Height</dt>
               <dd> {{ block_info["height"] }} </dd>
             </dl>
             <dl>
-              <dt>确认数</dt>
+              <dt>Confirmations</dt>
               <dd> {{ block_info["confirmations"] }} </dd>
             </dl>
             <dl>
-              <dt>大小</dt>
+              <dt>Size</dt>
               <dd> {{ block_info["strippedsize"] }} Bytes </dd>
             </dl>
             <dl>
-              <dt>交易数</dt>
+              <dt>Tx Count</dt>
               <dd> {{ block_info["transaction_num"] }} </dd>
             </dl>
             
@@ -40,11 +40,11 @@
           
           <div class="blockAbstract-section">
             <dl>
-              <dt>时间</dt>
+              <dt>Time</dt>
               <dd> {{ block_info["time"] }} </dd>
             </dl>
             <dl>
-              <dt>版本</dt>
+              <dt>Version</dt>
               <dd>{{ block_info["versionHex"] }}</dd>
             </dl>
             <dl>
@@ -52,7 +52,7 @@
               <dd> {{ block_info["nonce"] }} </dd>
             </dl>
             <dl>
-              <dt>播报方</dt>
+              <dt>Relayed By</dt>
               <dd>
                 <a href="{{ url_for('lbtc_address', name=block_info['delegate_address']) }}" > {{ block_info["miner_name"] }}</a>
               </dd>
@@ -61,11 +61,11 @@
 
           <div class="blockAbstract-section blockAbstract-section-smallsize">
             <dl>
-              <dt>块哈希</dt>
+              <dt>Block Hash</dt>
               <dd>{{ block_info["hash"] }}</dd>
             </dl>
             <dl>
-              <dt>前一个块</dt>
+              <dt>Prev Block</dt>
               <dd>
                 <a href="{{ url_for('lbtc_block', hash=block_info['previousblockhash']) }}">
                   {{ block_info["previousblockhash"] }}
@@ -73,7 +73,7 @@
               </dd>
             </dl>
             <dl>
-              <dt>后一个块</dt>
+              <dt>Next Block</dt>
               <dd>
                 <a href="{{ url_for('lbtc_block', hash=block_info['next_hash']) }}">
                   {{ block_info["next_hash"] }}
@@ -91,7 +91,7 @@
 
 
     {% for tx_info in block_info["tx_info"] %}
-    {% include "tx_detail.html" %}
+    {% include "en/tx_detail.html" %}
     {% endfor %}
     
   </div>
