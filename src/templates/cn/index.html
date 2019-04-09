@@ -133,6 +133,19 @@
               <ul data-toggle="tooltip" class="unconfirmed-txs-popover">
                 <li>
                   <dl>
+                    <dt>总流通量</dt>
+                    <dd>
+                      <div>
+                        <a href="{{ url_for('lbtc_balance') }}" target="_blank">
+                          <span class="tx-count">{{ lbtc_info["total_amount"] }} LBTC</span>
+                        </a>
+                      </div>
+                    </dd>
+                  </dl>
+                </li>
+
+                <li>
+                  <dl>
                     <dt> 未确认交易数 </dt>
                     <dd class="unconfirmed-tx">
                       <div class="unconfirmed-tx-item">

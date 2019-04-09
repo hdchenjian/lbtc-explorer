@@ -336,6 +336,20 @@ def add_many_tx(txs):
     return result.inserted_ids
 
 
+def delete_many_tx(tx_ids):
+    """Delete many tx.
+
+    Args:
+        txs (list): list of tx
+
+    Returns:
+
+    """
+    conn = db_conn.gen_mongo_connection('base')
+    result = conn.lbtc.lbtc_tx.delete_many({'_id': {'$in': tx_ids}})
+    return result.deleted_count
+
+
 def add_one_tx(tx):
     """Add one tx.
 
@@ -543,7 +557,26 @@ def add_block_info(block_info):
             return model_to_dict(_block_info)
         except Exception:
             session.rollback()
-            return None
+            raise
+
+
+def delete_block_info(height):
+    """Delete a node.
+
+    Args:
+
+    Returns:
+        dict of node info or None.
+    """
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        count = 0
+        try:
+            count = session.query(BlockInfo).filter(BlockInfo.height == height).delete()
+            session.commit()
+            return count
+        except Exception:
+            session.rollback()
+            raise
 
 
 def update_address_info(address, amount, time):
@@ -583,7 +616,7 @@ def update_address_info(address, amount, time):
             raise
 
 
-def update_many_address_info(address_list):
+def update_many_address_info(address_list, key, current_height_info):
     """Add a node.
 
     Args:
@@ -625,6 +658,15 @@ def update_many_address_info(address_list):
                 _transaction_info.hash = tx_info['hash']
                 _transaction_info.address = address
                 session.add(_transaction_info)
+            time_now = datetime.datetime.now()
+            _block_status = session.query(BlockStatus).filter(BlockStatus.key == key).first()
+            if _block_status is None:
+                _block_status = BlockStatus()
+                _block_status.key = key
+                _block_status.create_time = time_now
+                session.add(_block_status)
+            _block_status.update_time = time_now
+            _block_status.value = json.dumps(current_height_info)
             session.commit()
             return True
         except Exception:
@@ -751,12 +793,24 @@ def update_address_info_update_time():
         session.commit()
 
 
-def update_address_growth_daily_info(start_time, end_time):
-    # end_time = datetime.datetime.strptime('2019-03-31 00:00:00', '%Y-%m-%d %H:%M:%S')
-    # start_time = datetime.datetime.strptime('2018-10-11 00:00:00', '%Y-%m-%d %H:%M:%S')
+def update_address_growth_daily_info():
     all_address_growth_daily = []
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
-        while(start_time <= end_time):
+        address_latest = session.query(AddressInfo) \
+                                .order_by(AddressInfo.id.desc()).first()
+        if not address_latest:
+            return
+        end_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        address_growth_daily_latest = session.query(AddressGrowthDaily) \
+                                             .order_by(AddressGrowthDaily.time.desc()).first()
+        if not address_growth_daily_latest:
+            start_time = datetime.datetime.strptime('2018-10-11 00:00:00', '%Y-%m-%d %H:%M:%S')
+        else:
+            start_time = address_growth_daily_latest.time
+            start_time = datetime.datetime(start_time.year, start_time.month, start_time.day) + \
+                         datetime.timedelta(days=1)
+        print('update_address_growth_daily_info', start_time, end_time)
+        while(start_time < end_time):
             address_total = session.query(AddressInfo) \
                                    .filter(AddressInfo.create_time < start_time).count()
             address_count = session.query(AddressInfo) \
@@ -778,12 +832,25 @@ def update_address_growth_daily_info(start_time, end_time):
             return None
 
 
-def update_transaction_daily_info(start_time, end_time):
-    # end_time = datetime.datetime.strptime('2019-03-31 00:00:00', '%Y-%m-%d %H:%M:%S')
-    # start_time = datetime.datetime.strptime('2018-10-11 00:00:00', '%Y-%m-%d %H:%M:%S')
+def update_transaction_daily_info():
     all_transaction_daily = []
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
-        while(start_time <= end_time):
+        block_info_latest = session.query(BlockInfo) \
+                                   .order_by(BlockInfo.height.desc()).first()
+        if not block_info_latest:
+            return
+        end_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        transaction_daily_latest = session.query(TransactionDaily) \
+                                          .order_by(TransactionDaily.time.desc()).first()
+        if not transaction_daily_latest:
+            start_time = datetime.datetime.strptime('2018-10-11 00:00:00', '%Y-%m-%d %H:%M:%S')
+        else:
+            start_time = transaction_daily_latest.time
+            start_time = datetime.datetime(start_time.year, start_time.month, start_time.day) + \
+                         datetime.timedelta(days=1)
+        print('update_transaction_daily_info', start_time, end_time)
+
+        while(start_time < end_time):
             total_block_count = 0
             total_block_size = 0
             tx_num = 0

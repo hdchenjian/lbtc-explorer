@@ -10,7 +10,7 @@ from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
     get_block_status, add_block_info, update_many_address_info, add_many_tx, \
     update_all_delegate, update_all_committee, update_all_proposal, \
     update_most_rich_address, update_network_tx_statistics, update_address_growth_daily_info, \
-    update_transaction_daily_info
+    update_transaction_daily_info, delete_many_tx, delete_block_info
 from bitcoinrpc.authproxy import AuthServiceProxy
 
 from decorators import singleton
@@ -29,6 +29,7 @@ def parse_lbtc_block_main():
         best_block_hash = rpc_connection.getbestblockhash()
         best_block = rpc_connection.getblock(best_block_hash)
         best_height = best_block['height']
+        # best_height = 14
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
         if not block_status:
             block_status = {"height": 1}
@@ -37,10 +38,10 @@ def parse_lbtc_block_main():
         print('start from height ', current_height)
         next_block_hash = ''
         while current_height <= best_height:
+            current_mongo_add_tx_ids = []
             if not next_block_hash:
                 next_block_hash = rpc_connection.getblockhash(current_height)
             current_block_info = rpc_connection.getblock(next_block_hash)
-            # print(current_block_info)
             if not current_block_info:
                 break
             next_block_hash = current_block_info['nextblockhash']
@@ -56,7 +57,6 @@ def parse_lbtc_block_main():
                             'height': current_height,
                             'input': [],
                             'output': []}
-                # print(tx_info)
                 tx_id_to_raw_tx_info[_tx_id] = tx_info
                 for _vin in tx_info['vin']:
                     if 'coinbase' in _vin:
@@ -78,9 +78,8 @@ def parse_lbtc_block_main():
                     else:
                         raise(ValueError('vout type unknow'))
                     vout_index += 1
-                # print(tx_mongo)
-                # tx_mongo['output'].sort(key=lambda x: x[0])
                 tx_mongos.append(tx_mongo)
+                current_mongo_add_tx_ids.append(tx_mongo['_id'])
             old_mongo_tx_info_map = {}
             if vin_tx_id:
                 old_mongo_tx_info = find_many_tx(vin_tx_id)
@@ -98,14 +97,15 @@ def parse_lbtc_block_main():
                             [old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 1],
                              old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 2]]
 
-            # print(current_block_info)
-            add_many_tx(tx_mongos)
-
-            current_block_info['tx_num'] = len(current_block_info['tx'])
-            add_block_info_result = add_block_info(current_block_info)
-            if not add_block_info_result:
-                print('add_block_info failed, current_height ', current_height)
-                break
+            try:
+                add_many_tx(tx_mongos)
+                current_block_info['tx_num'] = len(current_block_info['tx'])
+                add_block_info(current_block_info)
+            except Exception as e:
+                print('add_many_tx add_block_info failed, current_height ', current_height, e)
+                delete_many_tx(current_mongo_add_tx_ids)
+                delete_block_info(current_block_info['height'])
+                raise
 
             need_update = []
             for item in tx_mongos:
@@ -145,18 +145,9 @@ def parse_lbtc_block_main():
                                             'time': tx_time,
                                             'hash': _hash
                                             })
-            update_many_address_info(need_update)
-
             print('current_height ', current_height)
             current_height += 1
-            # exit()
-
-            for item in tx_mongos:
-                for i in range(0, len(item['input']) // 2):
-                    if item['input'][2*i] == 'coinbase':
-                        pass
-                        # coinbase_address.append(item['output'][1])
-        update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {'height': current_height})
+            update_many_address_info(need_update, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {'height': current_height})
         # update_many_delegate_active(coinbase_address)
     except Exception as e:
         print(e)
@@ -255,7 +246,6 @@ def query_all_committee_proposal():
 def get_timedelta_network_tx_statistics(days):
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     best_block_hash = rpc_connection.getbestblockhash()
-    # best_block_hash = '2c0cacfacbe2081767230f16a403ec88d78173163187a8e0296eba744916077f ' #  todo
     current_block_info = rpc_connection.getblock(best_block_hash)
     end_time = datetime.datetime.fromtimestamp(current_block_info['time'])
     start_time = int((end_time - datetime.timedelta(days=days)).timestamp())
@@ -334,16 +324,15 @@ def parse_lbtc_block():
     update_network_tx_statistics_time = None
     update_address_growth_daily_info_time = None
     while(True):
+        parse_lbtc_block_main()
+
         time_now = datetime.datetime.now()
-
         if update_address_growth_daily_info_time is None or \
-           (time_now - update_address_growth_daily_info_time).total_seconds() > 3000:
-            end_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            start_time = end_time - datetime.timedelta(days=1)
-            update_address_growth_daily_info(start_time, end_time)
-            update_transaction_daily_info(start_time, end_time)
+           (time_now - update_address_growth_daily_info_time).total_seconds() > 300:
+            #update_address_growth_daily_info()
+            #update_transaction_daily_info()
+            update_address_growth_daily_info_time = time_now
 
-        query_all_committee_proposal()
         if update_most_rich_address_time is None or \
            (time_now - update_most_rich_address_time).total_seconds() > 100:
             update_most_rich_address(REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, top=100)
@@ -351,25 +340,21 @@ def parse_lbtc_block():
 
         rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
         tx_out_set_info = rpc_connection.gettxoutsetinfo()
-        for key in ['bestblock', 'hash_serialized', 'txouts', 'bytes_serialized']:
+        for key in ['bestblock', 'hash_serialized', 'bytes_serialized']:
             tx_out_set_info.pop(key)
         tx_out_set_info['total_amount'] = str(tx_out_set_info['total_amount'])
         update_block_status(REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, tx_out_set_info)
 
-        # if random.random() > 0.1:
         query_all_delegate()
+        query_all_committee_proposal()
 
         if update_network_tx_statistics_time is None or \
-           (time_now - update_network_tx_statistics_time).total_seconds() > 3600:
-            update_network_tx_statistics_function()
+           (time_now - update_network_tx_statistics_time).total_seconds() > 3600 * 6:
+            #update_network_tx_statistics_function()
             update_network_tx_statistics_time = time_now
 
-        break
-        parse_lbtc_block_main()
-        break
         time.sleep(2)
 
 
 if __name__ == '__main__':
-    update_network_tx_statistics_function()
-    # parse_lbtc_block()
+    parse_lbtc_block()

@@ -46,7 +46,7 @@ def lbtc_index():
     time_now = datetime.datetime.now()
     key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
                 REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_NODE_IP_TYPE,
-                REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS]
+                REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
     block_status = block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]
     delegate_address_to_name = \
@@ -117,6 +117,9 @@ def lbtc_index():
 
     lbtc_info['network_tx_statistics'] = \
         block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS]
+    total_amount = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO]['total_amount']
+    lbtc_info['total_amount'] = total_amount.rstrip('0').rstrip('.')
+    print(lbtc_info['total_amount'])
 
     global address_daily_info_global
     global transaction_daily_info_global
@@ -555,7 +558,8 @@ def lbtc_tx():
         template_name = 'cn/tx.html'
     else:
         template_name = 'en/tx.html'
-    return render_template(template_name, tx_info=tx_info[0], show_income=False, show_tx_height=True)
+    return render_template(template_name, tx_info=tx_info[0],
+                           show_income=False, show_tx_height=True)
 
 
 def node_cmp(a, b):
