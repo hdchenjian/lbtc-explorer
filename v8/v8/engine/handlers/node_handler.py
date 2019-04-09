@@ -808,9 +808,8 @@ def update_address_growth_daily_info():
         else:
             start_time = address_growth_daily_latest.time
             start_time = datetime.datetime(start_time.year, start_time.month, start_time.day) + \
-                         datetime.timedelta(days=1)
-        print('update_address_growth_daily_info', start_time, end_time)
-        while(start_time < end_time):
+                datetime.timedelta(days=2)
+        while(start_time <= end_time):
             address_total = session.query(AddressInfo) \
                                    .filter(AddressInfo.create_time < start_time).count()
             address_count = session.query(AddressInfo) \
@@ -847,10 +846,9 @@ def update_transaction_daily_info():
         else:
             start_time = transaction_daily_latest.time
             start_time = datetime.datetime(start_time.year, start_time.month, start_time.day) + \
-                         datetime.timedelta(days=1)
-        print('update_transaction_daily_info', start_time, end_time)
+                datetime.timedelta(days=2)
 
-        while(start_time < end_time):
+        while(start_time <= end_time):
             total_block_count = 0
             total_block_size = 0
             tx_num = 0
@@ -870,7 +868,6 @@ def update_transaction_daily_info():
             _transaction_daily.avg_block_size = float(total_block_size) / float(total_block_count)
             _transaction_daily.time = (start_time - datetime.timedelta(days=1)).date()
             start_time += datetime.timedelta(days=1)
-            print(start_time)
         try:
             session.commit()
             return len(all_transaction_daily)

@@ -22,7 +22,7 @@ def update_rpc_node():
         # print(rpc_connection.gettxout(tx_id, 0))
 
         # print(rpc_connection.gettxoutproof([tx_id]))
-        # print(rpc_connection.gettxoutsetinfo())
+        print(rpc_connection.gettxoutsetinfo())
 
         # print(rpc_connection.gettransactionnew('45581dcfe9324bdee8bfed7a3cd20000839cfd836792fb116d9c2bfe187df67f'))
 

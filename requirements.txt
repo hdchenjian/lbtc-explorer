@@ -12,3 +12,4 @@ geoip2
 PySocks
 pymongo
 python-bitcoinrpc
+flask_limiter

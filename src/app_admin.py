@@ -10,6 +10,9 @@ from bitcoinrpc.authproxy import AuthServiceProxy
 
 from flask import Flask, g, request, jsonify, render_template, \
     flash, redirect, url_for, session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 import rest_log
 
 from v8.engine.handlers.node_handler import get_all_node, get_node_distribution, \
@@ -32,6 +35,7 @@ config.from_object(config_online)
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000/day, 10/minute"])
 
 
 address_daily_info_global = None
@@ -58,6 +62,10 @@ def lbtc_index():
     best_height_time = 0
     _tx_id_list = []
     rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
+    if 'language' in session and session['language'] == 'cn':
+        second_suffix = u' 秒钟前'
+    else:
+        second_suffix = u' seconds ago'
     try:
         for i in range(0, 10):
             block_info = {}
@@ -73,13 +81,14 @@ def lbtc_index():
             block_info['tx'] = block['tx']
             block_info['height'] = '{:,}'.format(block['height'])
             block_info['size'] = '{:,}'.format(block['strippedsize'])
-            time_delta = (time_now - datetime.datetime.fromtimestamp(block['time'])).total_seconds()
+            time_delta = \
+                int((time_now - datetime.datetime.fromtimestamp(block['time'])).total_seconds())
             if not best_height_time:
                 best_height_time = block['time'] + 1
             if time_delta < 3:
-                block_info['time'] = str(time_delta) + u'秒钟前'
+                block_info['time'] = str(time_delta) + second_suffix
             else:
-                block_info['time'] = str(best_height_time - block['time']) + u'秒钟前'
+                block_info['time'] = str(best_height_time - block['time']) + second_suffix
             for key in ['previousblockhash', 'hash']:
                 block_info[key] = block[key]
             new_block.append(block_info)
@@ -117,7 +126,8 @@ def lbtc_index():
 
     lbtc_info['network_tx_statistics'] = \
         block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS]
-    total_amount = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO]['total_amount']
+    total_amount = \
+        block_status_multi_key_value[REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO]['total_amount']
     lbtc_info['total_amount'] = total_amount.rstrip('0').rstrip('.')
     print(lbtc_info['total_amount'])
 
@@ -237,21 +247,33 @@ def lbtc_block():
     if not block_hash:
         height = int(request.args.get('height', '0').replace(',', ''))
         if not height:
-            flash(u'区块Hash或高度错误', 'error')
+            if 'language' in session and session['language'] == 'cn':
+                flash(u'区块Hash或高度错误', 'error')
+            else:
+                flash(u'Block Hash or Height error', 'error')
             return redirect(url_for('lbtc_index'))
     rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
     try:
         if height:
             block_hash = rpc_connection.getblockhash(height)
         if not block_hash:
-            flash(u'区块Hash或高度错误', 'error')
+            if 'language' in session and session['language'] == 'cn':
+                flash(u'区块Hash或高度错误', 'error')
+            else:
+                flash(u'Block Hash or Height error', 'error')
             return redirect(url_for('lbtc_index'))
         _info_block = rpc_connection.getblock(block_hash)
     except Exception:
-        flash(u'区块Hash或高度错误', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'区块Hash或高度错误', 'error')
+        else:
+            flash(u'Block Hash or Height error', 'error')
         return redirect(url_for('lbtc_index'))
     if not _info_block:
-        flash(u'区块Hash或高度错误', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'区块Hash或高度错误', 'error')
+        else:
+            flash(u'Block Hash or Height error', 'error')
         return redirect(url_for('lbtc_index'))
 
     _tx_id_list = []
@@ -276,7 +298,10 @@ def lbtc_block():
 
     coinbase_tx = query_coinbase_tx(_info_block['tx'])
     if len(coinbase_tx) != 1:
-        flash(u'区块数据未同步', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'区块数据未同步', 'error')
+        else:
+            flash(u'Block Hash or Height error', 'error')
         return redirect(url_for('lbtc_index'))
     block_info['delegate_address'] = coinbase_tx[0]['output'][1]
     delegate_address_to_name = \
@@ -304,7 +329,10 @@ def lbtc_search():
     param = request.args.get('param', '')
     param = param.strip(' ')
     if not param:
-        flash(u'没有搜索到您查找的结果,请检查输入是否正确', 'success')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'没有搜索到您查找的结果,请检查输入是否正确', 'error')
+        else:
+            flash(u'Sorry: Not Found', 'error')
         return redirect(url_for('lbtc_index'))
     height = None
     try:
@@ -370,11 +398,17 @@ def lbtc_bill():
     bill_id = request.args.get('id', '')
     bill_id = bill_id.strip(' ')
     if not bill_id:
-        flash(u'提案ID错误', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'提案ID错误', 'error')
+        else:
+            flash(u'Proposal ID error', 'error')
         return redirect(url_for('lbtc_index'))
     proposal_info = query_all_proposal(bill_id=bill_id)
     if not proposal_info:
-        flash(u'没有搜索到您查找的结果,请检查输入是否正确', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'没有搜索到您查找的结果,请检查输入是否正确', 'error')
+        else:
+            flash(u'Sorry: Not Found', 'error')
         return redirect(url_for('lbtc_index'))
     show_address_num = 5
     option_index = 1
@@ -413,11 +447,17 @@ def lbtc_address():
     tx_per_page = 10
     current_page = int(request.args.get('page', 1))
     if not address or current_page < 1:
-        flash(u'钱包地址或页码错误', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'钱包地址或页码错误', 'error')
+        else:
+            flash(u'Address Or Page error', 'error')
         return redirect(url_for('lbtc_index'))
     _address_info = get_address_info(address, page=current_page, size=tx_per_page)
     if not _address_info:
-        flash(u'钱包地址错误', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'钱包地址错误', 'error')
+        else:
+            flash(u'Address error', 'error')
         return redirect(url_for('lbtc_index'))
     address_tx_hash = []
     for _tx_item in _address_info['tx']:
@@ -490,7 +530,10 @@ def lbtc_address():
             voted_bills_num = len(voted_bills)
             submit_bills_num = len(submit_bills)
         except Exception:
-            flash(u'地址错误', 'error')
+            if 'language' in session and session['language'] == 'cn':
+                flash(u'钱包地址错误', 'error')
+            else:
+                flash(u'Address error', 'error')
             return redirect(url_for('lbtc_index'))
     else:
         voted_delegates = None
@@ -548,7 +591,10 @@ def lbtc_address():
 def lbtc_tx():
     tx_hash = request.args.get('hash', '')
     if not tx_hash:
-        flash(u'交易hash错误', 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u'交易hash错误', 'error')
+        else:
+            flash(u'Tx Hash error', 'error')
         return redirect(url_for('lbtc_index'))
     current_height = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)['height']
     _tx_list = find_one_tx(tx_hash)
@@ -589,32 +635,61 @@ def lbtc_nodes():
     country = request.args.get('country', '')
     node_type = int(request.args.get('type', '0'))
     all_node = get_all_node(2, country=country)
-    if not country:
-        if node_type == 1:
-            country = u'所有地区可连接节点列表'
-        elif node_type == 2:
-            country = u'所有地区不可连接节点列表'
-        elif node_type == 4:
-            country = u'所有地区IPV4节点列表'
-        elif node_type == 6:
-            country = u'所有地区IPV6节点列表'
-        elif node_type == 5:
-            country = u'所有地区onion节点列表'
+
+    if 'language' in session and session['language'] == 'cn':
+        if not country:
+            if node_type == 1:
+                country = u'所有地区可连接节点列表'
+            elif node_type == 2:
+                country = u'所有地区不可连接节点列表'
+            elif node_type == 4:
+                country = u'所有地区IPV4节点列表'
+            elif node_type == 6:
+                country = u'所有地区IPV6节点列表'
+            elif node_type == 5:
+                country = u'所有地区onion节点列表'
+            else:
+                country = u'所有地区节点列表'
         else:
-            country = u'所有地区节点列表'
+            if node_type == 1:
+                country += u' 可连接节点列表'
+            elif node_type == 2:
+                country += u' 不可连接节点列表'
+            elif node_type == 4:
+                country += u' IPV4节点列表'
+            elif node_type == 6:
+                country += u' IPV6节点列表'
+            elif node_type == 5:
+                country += u' onion节点列表'
+            else:
+                country += u' 节点列表'
     else:
-        if node_type == 1:
-            country += u' 可连接节点列表'
-        elif node_type == 2:
-            country += u' 不可连接节点列表'
-        elif node_type == 4:
-            country += u' IPV4节点列表'
-        elif node_type == 6:
-            country += u' IPV6节点列表'
-        elif node_type == 5:
-            country += u' onion节点列表'
+        if not country:
+            if node_type == 1:
+                country = u'All Connected Nodes'
+            elif node_type == 2:
+                country = u'All Not Connected Nodes'
+            elif node_type == 4:
+                country = u'All IPV4 Nodes'
+            elif node_type == 6:
+                country = u'All IPV6 Nodes'
+            elif node_type == 5:
+                country = u'All onion Nodes'
+            else:
+                country = u'All Nodes'
         else:
-            country += u' 节点列表'
+            if node_type == 1:
+                country += u' Connected Nodes'
+            elif node_type == 2:
+                country += u' Not Connected Nodes'
+            elif node_type == 4:
+                country += u' IPV4 Nodes'
+            elif node_type == 6:
+                country += u' IPV6 Nodes'
+            elif node_type == 5:
+                country += u' onion Nodes'
+            else:
+                country += u' All Nodes'
     valid_node = []
     if node_type == 4:
         for _node in all_node:
@@ -657,7 +732,10 @@ def lbtc_change_language():
         session["language"] = request.args['language']
         return redirect(url_for('lbtc_index'))
     else:
-        flash(u"参数错误", 'error')
+        if 'language' in session and session['language'] == 'cn':
+            flash(u"参数错误", 'error')
+        else:
+            flash(u'parameter error', 'error')
         return redirect(url_for('lbtc_index'))
 
 
@@ -682,6 +760,10 @@ def before_request():
 
 @app.after_request
 def after_request(response):
+    if not getattr(g, 'log_info', None):
+        response.headers['Date'] = \
+            datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        return response
     g.log_info['end_time'] = time.time()
     g.log_info['process_time'] = \
         g.log_info['end_time'] - g.log_info['start_time']
@@ -732,5 +814,5 @@ def teardown_request(exception):
 
 
 if __name__ == '__main__':
-    app.config['DEBUG'] = True
+    app.config['DEBUG'] = False
     app.run(host='0.0.0.0', port=5025)

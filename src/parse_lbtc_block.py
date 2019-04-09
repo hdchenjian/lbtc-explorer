@@ -35,7 +35,7 @@ def parse_lbtc_block_main():
             block_status = {"height": 1}
             update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, block_status)
         current_height = block_status['height']
-        print('start from height ', current_height)
+        # print('start from height ', current_height)
         next_block_hash = ''
         while current_height <= best_height:
             current_mongo_add_tx_ids = []
@@ -44,7 +44,6 @@ def parse_lbtc_block_main():
             current_block_info = rpc_connection.getblock(next_block_hash)
             if not current_block_info:
                 break
-            next_block_hash = current_block_info['nextblockhash']
 
             vin_tx_id = []
             tx_id_to_raw_tx_info = {}
@@ -147,8 +146,13 @@ def parse_lbtc_block_main():
                                             })
             print('current_height ', current_height)
             current_height += 1
-            update_many_address_info(need_update, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, {'height': current_height})
+            update_many_address_info(need_update, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
+                                     {'height': current_height})
+            if 'nextblockhash' not in current_block_info:
+                break
+            next_block_hash = current_block_info['nextblockhash']
         # update_many_delegate_active(coinbase_address)
+
     except Exception as e:
         print(e)
         raise
@@ -321,16 +325,17 @@ def update_network_tx_statistics_function():
 @singleton('/tmp/parse_lbtc_block.pid')
 def parse_lbtc_block():
     update_most_rich_address_time = None
-    update_network_tx_statistics_time = None
+    update_network_tx_statistics_time = datetime.datetime.now()
     update_address_growth_daily_info_time = None
+    query_all_delegate_time = None
     while(True):
         parse_lbtc_block_main()
 
         time_now = datetime.datetime.now()
         if update_address_growth_daily_info_time is None or \
            (time_now - update_address_growth_daily_info_time).total_seconds() > 300:
-            #update_address_growth_daily_info()
-            #update_transaction_daily_info()
+            update_address_growth_daily_info()
+            update_transaction_daily_info()
             update_address_growth_daily_info_time = time_now
 
         if update_most_rich_address_time is None or \
@@ -338,22 +343,23 @@ def parse_lbtc_block():
             update_most_rich_address(REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, top=100)
             update_most_rich_address_time = time_now
 
-        rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
-        tx_out_set_info = rpc_connection.gettxoutsetinfo()
-        for key in ['bestblock', 'hash_serialized', 'bytes_serialized']:
-            tx_out_set_info.pop(key)
-        tx_out_set_info['total_amount'] = str(tx_out_set_info['total_amount'])
-        update_block_status(REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, tx_out_set_info)
-
-        query_all_delegate()
-        query_all_committee_proposal()
+        if query_all_delegate_time is None or \
+           (time_now - query_all_delegate_time).total_seconds() > 60:
+            query_all_delegate()
+            query_all_committee_proposal()
+            rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+            tx_out_set_info = rpc_connection.gettxoutsetinfo()
+            for key in ['bestblock', 'hash_serialized', 'bytes_serialized']:
+                tx_out_set_info.pop(key)
+            tx_out_set_info['total_amount'] = str(tx_out_set_info['total_amount'])
+            update_block_status(REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, tx_out_set_info)
+            query_all_delegate_time = time_now
 
         if update_network_tx_statistics_time is None or \
            (time_now - update_network_tx_statistics_time).total_seconds() > 3600 * 6:
-            #update_network_tx_statistics_function()
+            update_network_tx_statistics_function()
             update_network_tx_statistics_time = time_now
-
-        time.sleep(2)
+        time.sleep(1)
 
 
 if __name__ == '__main__':
