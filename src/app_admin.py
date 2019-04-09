@@ -555,7 +555,8 @@ def lbtc_tx():
         template_name = 'cn/tx.html'
     else:
         template_name = 'en/tx.html'
-    return render_template(template_name, tx_info=tx_info[0], show_income=False, show_tx_height=True)
+    return render_template(template_name, tx_info=tx_info[0],
+                           show_income=False, show_tx_height=True)
 
 
 def node_cmp(a, b):

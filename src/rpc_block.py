@@ -13,18 +13,18 @@ def update_rpc_node():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
         # print(rpc_connection.help())
-        best_block_hash = rpc_connection.getbestblockhash()
+        # best_block_hash = rpc_connection.getbestblockhash()
         # blockhash = rpc_connection.getblockhash(2050113)
         # print(blockhash)
-        best_block = rpc_connection.getblock(best_block_hash)
-        #print(best_block_hash, best_block)
-        tx_id = '163d33738e9f2fc4b3cdb860fe8fe3d16fcae6a9d3a8c805e8c8b6607fe14c53'
+        # best_block = rpc_connection.getblock(best_block_hash)
+        # print(best_block_hash, best_block)
+        # tx_id = '163d33738e9f2fc4b3cdb860fe8fe3d16fcae6a9d3a8c805e8c8b6607fe14c53'
         # print(rpc_connection.gettxout(tx_id, 0))
 
         # print(rpc_connection.gettxoutproof([tx_id]))
         # print(rpc_connection.gettxoutsetinfo())
 
-        print(rpc_connection.gettransactionnew('45581dcfe9324bdee8bfed7a3cd20000839cfd836792fb116d9c2bfe187df67f'))
+        # print(rpc_connection.gettransactionnew('45581dcfe9324bdee8bfed7a3cd20000839cfd836792fb116d9c2bfe187df67f'))
 
         # print(rpc_connection.getchaintips())
         # print(rpc_connection.getmempoolinfo())
