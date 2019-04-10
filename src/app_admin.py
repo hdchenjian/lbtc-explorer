@@ -35,7 +35,7 @@ config.from_object(config_online)
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000/day, 10/minute"])
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000/day, 20/minute"])
 
 
 address_daily_info_global = None
@@ -479,8 +479,8 @@ def lbtc_address():
                     'transaction_num': _address_info['tx_num'],
                     'create_time': _address_info['create_time'].replace('T', ' '),
                     'update_time': _address_info['update_time'].replace('T', ' '),
-                    'receive': str(_address_info['receive']).rstrip('0').rstrip('.'),
-                    'send': str(_address_info['send']).rstrip('0').rstrip('.'),
+                    'receive': _address_info['receive'].rstrip('0').rstrip('.'),
+                    'send': "{:.8f}".format(float(_address_info['send'])).rstrip('0').rstrip('.'),
                     'tx_info': tx_info}
     tx_count = _address_info['tx_num']
     total_page = (tx_count + (tx_per_page - 1)) // tx_per_page
@@ -643,9 +643,9 @@ def lbtc_nodes():
             elif node_type == 2:
                 country = u'所有地区不可连接节点列表'
             elif node_type == 4:
-                country = u'所有地区IPV4节点列表'
+                country = u'所有地区IPv4节点列表'
             elif node_type == 6:
-                country = u'所有地区IPV6节点列表'
+                country = u'所有地区IPv6节点列表'
             elif node_type == 5:
                 country = u'所有地区onion节点列表'
             else:
@@ -656,9 +656,9 @@ def lbtc_nodes():
             elif node_type == 2:
                 country += u' 不可连接节点列表'
             elif node_type == 4:
-                country += u' IPV4节点列表'
+                country += u' IPv4节点列表'
             elif node_type == 6:
-                country += u' IPV6节点列表'
+                country += u' IPv6节点列表'
             elif node_type == 5:
                 country += u' onion节点列表'
             else:
@@ -670,9 +670,9 @@ def lbtc_nodes():
             elif node_type == 2:
                 country = u'All Not Connected Nodes'
             elif node_type == 4:
-                country = u'All IPV4 Nodes'
+                country = u'All IPv4 Nodes'
             elif node_type == 6:
-                country = u'All IPV6 Nodes'
+                country = u'All IPv6 Nodes'
             elif node_type == 5:
                 country = u'All onion Nodes'
             else:
@@ -683,9 +683,9 @@ def lbtc_nodes():
             elif node_type == 2:
                 country += u' Not Connected Nodes'
             elif node_type == 4:
-                country += u' IPV4 Nodes'
+                country += u' IPv4 Nodes'
             elif node_type == 6:
-                country += u' IPV6 Nodes'
+                country += u' IPv6 Nodes'
             elif node_type == 5:
                 country += u' onion Nodes'
             else:

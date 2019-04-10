@@ -42,7 +42,7 @@
                 {{ block_info["time"] }}
               </td>
               <td class="text-center indexBlockList-blockhash">
-                <a href="{{ url_for('lbtc_block', block_hash=block_info['hash']) }}">
+                <a href="{{ url_for('lbtc_block', hash=block_info['hash']) }}">
                   {{ block_info["hash"] }}
                 </a>
               </td>

@@ -12,7 +12,7 @@
   </div>
 
   <div class="row">
-    <div class="panel panel-bm txAbstract">
+    <div class="panel panel-primary">
       <div class="panel-heading">
         <div class="panel-heading-title">概要</div>
       </div>
@@ -90,9 +90,24 @@
     </div>
 
 
-    {% for tx_info in block_info["tx_info"] %}
-    {% include "cn/tx_detail.html" %}
-    {% endfor %}
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            交易
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="row">
+          
+          {% for tx_info in block_info["tx_info"] %}
+          {% include "cn/tx_detail.html" %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
     
   </div>
 </div>

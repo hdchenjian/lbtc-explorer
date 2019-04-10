@@ -13,7 +13,7 @@
 
   <div class="row">
     {% if current_page == 1 %}
-    <div class="panel panel-bm txAbstract">
+    <div class="panel panel-primary">
       <div class="panel-heading">
         <div class="panel-heading-title">概要</div>
       </div>
@@ -260,6 +260,7 @@
                   <a href="{{ url_for('lbtc_bill', id=bill['billid']) }}">
                     {{ bill['billid'] }}
                   </a>
+                  <span class="point">·</span>
                   {% endfor %}
                 </div>
               </div>

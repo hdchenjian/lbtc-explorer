@@ -4,7 +4,7 @@
     <div class="row">
       
       {% if show_tx_hash %}
-      <div class="col-xs-5">
+      <div class="col-xs-4">
         <div class="panel-heading-title" style="text-align: left;font-size:10px">
           <a href="{{ url_for('lbtc_tx', hash=tx_info["hash"]) }}">
             {{ tx_info["hash"] }}
@@ -17,7 +17,7 @@
           <span class="txDetail-heading-amount">{{ tx_info["lbtc_input"] }}</span>
         </div>
       </div>
-      <div class="col-xs-2">
+      <div class="col-xs-3">
         <div class="panel-heading-title">
           Output ({{ tx_info["output_num"] }})
           <span class="txDetail-heading-amount">{{ tx_info["lbtc_output"] }}</span>
@@ -91,7 +91,7 @@
 
               {% if tx_info["input_tx_hide"] %}
               <a class="btn btn-primary" data-toggle="collapse" href={{ tx_info["input_collapse_href"] }} role="button" aria-expanded="false">
-                Show Hide Input({{ tx_info["input_tx_hide_num"] }})
+                Show Hided Input({{ tx_info["input_tx_hide_num"] }})
               </a>
               <div class="collapse" id={{ tx_info["input_collapse_id"] }}>
                 {% for tx_input in tx_info["input_tx_hide"] %}
@@ -141,7 +141,7 @@
 
               {% if tx_info["output_tx_hide"] %}
               <a class="btn btn-primary" data-toggle="collapse" href={{ tx_info["output_collapse_href"] }} role="button" aria-expanded="false">
-                Show Hide Output({{ tx_info["output_tx_hide_num"] }})
+                Show Hided Output({{ tx_info["output_tx_hide_num"] }})
               </a>
               <div class="collapse" id={{ tx_info["output_collapse_id"] }}>
                 {% for tx_output in tx_info["output_tx_hide"] %}

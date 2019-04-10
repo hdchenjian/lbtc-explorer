@@ -12,7 +12,7 @@
   </div>
 
   <div class="row">
-    <div class="panel panel-bm txAbstract">
+    <div class="panel panel-primary">
       <div class="panel-heading">
         <div class="panel-heading-title">Summary</div>
       </div>
@@ -90,10 +90,25 @@
     </div>
 
 
-    {% for tx_info in block_info["tx_info"] %}
-    {% include "en/tx_detail.html" %}
-    {% endfor %}
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="panel-heading-title">
+            Transaction
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="row">
     
+          {% for tx_info in block_info["tx_info"] %}
+          {% include "en/tx_detail.html" %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}

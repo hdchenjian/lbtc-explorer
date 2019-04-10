@@ -22,12 +22,12 @@
         <a href="{{ url_for('lbtc_nodes', type=1) }}">
           {{ node_status["node_connected"] }}
         </a>
-      </h4> <p class="text-muted">Nodes Connected</p>
+      </h4> <p class="text-muted">Connected Nodes</p>
       <h4>
         <a href="{{ url_for('lbtc_nodes', type=2) }}">
           {{ node_status["node_not_connected"] }}
         </a>
-      </h4> <p class="text-muted">Nodes Not Connected</p>
+      </h4> <p class="text-muted">Not Connected Nodes</p>
       <h4>
         <a href="{{ url_for('lbtc_nodes', type=4) }}">
           {{ node_status["ipv4"] }}
