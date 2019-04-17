@@ -5,6 +5,8 @@ import datetime
 import time
 from decimal import Decimal
 
+import multiprocessing
+
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
     get_block_status, add_block_info, update_many_address_info, add_many_tx, \
@@ -304,28 +306,37 @@ def get_timedelta_network_tx_statistics(days):
     return block_size_avg, tx_speed, tx_num_no_coinbase, avg_fee
 
 
-def update_network_tx_statistics_function():
-    block_size_avg_24h, tx_speed_24h, tx_num_no_coinbase_24h, avg_fee_24h = \
-        get_timedelta_network_tx_statistics(1)
-    block_size_avg_14d, tx_speed_14d, tx_num_no_coinbase_14d, avg_fee_14d = \
-        get_timedelta_network_tx_statistics(14)
-    network_tx_statistics = {
-        'block_size_avg_24h': block_size_avg_24h,
-        'tx_speed_24h': tx_speed_24h,
-        'tx_num_no_coinbase_24h': tx_num_no_coinbase_24h,
-        'avg_fee_24h': avg_fee_24h,
-        'block_size_avg_14d': block_size_avg_14d,
-        'tx_speed_14d': tx_speed_14d,
-        'tx_num_no_coinbase_14d': tx_num_no_coinbase_14d,
-        'avg_fee_14d': avg_fee_14d,
-    }
-    update_network_tx_statistics(REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS, network_tx_statistics)
+def update_network_tx_statistics_function(days):
+    if days == 1:
+        block_size_avg_24h, tx_speed_24h, tx_num_no_coinbase_24h, avg_fee_24h = \
+            get_timedelta_network_tx_statistics(1)
+        network_tx_statistics = {
+            'block_size_avg_24h': block_size_avg_24h,
+            'tx_speed_24h': tx_speed_24h,
+            'tx_num_no_coinbase_24h': tx_num_no_coinbase_24h,
+            'avg_fee_24h': avg_fee_24h,
+        }
+        update_network_tx_statistics(REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS,
+                                     network_tx_statistics)
+
+    else:
+        block_size_avg_14d, tx_speed_14d, tx_num_no_coinbase_14d, avg_fee_14d = \
+            get_timedelta_network_tx_statistics(14)
+        network_tx_statistics = {
+            'block_size_avg_14d': block_size_avg_14d,
+            'tx_speed_14d': tx_speed_14d,
+            'tx_num_no_coinbase_14d': tx_num_no_coinbase_14d,
+            'avg_fee_14d': avg_fee_14d,
+        }
+        update_network_tx_statistics(REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS,
+                                     network_tx_statistics)
 
 
 @singleton('/tmp/parse_lbtc_block.pid')
 def parse_lbtc_block():
     update_most_rich_address_time = None
-    update_network_tx_statistics_time = datetime.datetime.now()
+    update_network_tx_statistics_time_1_day = datetime.datetime.now()
+    update_network_tx_statistics_time_14_day = datetime.datetime.now()
     update_address_growth_daily_info_time = None
     query_all_delegate_time = None
     while(True):
@@ -355,10 +366,16 @@ def parse_lbtc_block():
             update_block_status(REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, tx_out_set_info)
             query_all_delegate_time = time_now
 
-        if update_network_tx_statistics_time is None or \
-           (time_now - update_network_tx_statistics_time).total_seconds() > 3600 * 6:
-            update_network_tx_statistics_function()
-            update_network_tx_statistics_time = time_now
+        if update_network_tx_statistics_time_1_day is None or \
+           (time_now - update_network_tx_statistics_time_1_day).total_seconds() > 300:
+            t1 = multiprocessing.Process(target=update_network_tx_statistics_function, args=(1,))
+            t1.start()
+            update_network_tx_statistics_time_1_day = time_now
+        if update_network_tx_statistics_time_14_day is None or \
+           (time_now - update_network_tx_statistics_time_14_day).total_seconds() > 3600 * 6:
+            t14 = multiprocessing.Process(target=update_network_tx_statistics_function, args=(14,))
+            t14.start()
+            update_network_tx_statistics_time_14_day = time_now
         time.sleep(1)
 
 

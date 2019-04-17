@@ -136,7 +136,7 @@ def lbtc_index():
     global transaction_daily_info_global_update_time
     time_now = datetime.datetime.now()
     if address_daily_info_global is None or \
-       (time_now - transaction_daily_info_global_update_time).total_seconds() > 3000:
+       (time_now - transaction_daily_info_global_update_time).total_seconds() > 300:
         transaction_daily_info_global = query_transaction_daily_info()
         address_daily_info_global = query_address_daily_info()
         transaction_daily_info_global_update_time = time_now
