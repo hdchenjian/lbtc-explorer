@@ -31,11 +31,11 @@
               <dt>大小</dt>
               <dd> {{ block_info["strippedsize"] }} Bytes </dd>
             </dl>
+
             <dl>
-              <dt>交易数</dt>
-              <dd> {{ block_info["transaction_num"] }} </dd>
+              <dt></dt>
+              <dd>&nbsp</dd>
             </dl>
-            
           </div>
           
           <div class="blockAbstract-section">
@@ -43,19 +43,33 @@
               <dt>时间</dt>
               <dd> {{ block_info["time"] }} </dd>
             </dl>
+
+            <dl>
+              <dt>交易数</dt>
+              <dd> {{ block_info["transaction_num"] }} </dd>
+            </dl>
+            <!--
             <dl>
               <dt>版本</dt>
               <dd>{{ block_info["versionHex"] }}</dd>
             </dl>
+            
             <dl>
               <dt>Nonce</dt>
               <dd> {{ block_info["nonce"] }} </dd>
             </dl>
+            -->
+            
             <dl>
               <dt>播报方</dt>
               <dd>
                 <a href="{{ url_for('lbtc_address', name=block_info['delegate_address']) }}" > {{ block_info["miner_name"] }}</a>
               </dd>
+            </dl>
+
+            <dl>
+              <dt></dt>
+              <dd>&nbsp</dd>
             </dl>
           </div>
 

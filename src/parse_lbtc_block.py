@@ -146,7 +146,8 @@ def parse_lbtc_block_main():
                                             'time': tx_time,
                                             'hash': _hash
                                             })
-            print('current_height ', current_height)
+            if current_height % 1000 == 0:
+                print('current_height ', current_height)
             current_height += 1
             update_many_address_info(need_update, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
                                      {'height': current_height})

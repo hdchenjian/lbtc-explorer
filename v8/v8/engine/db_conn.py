@@ -34,6 +34,6 @@ mongo_connections = dict()
 def gen_mongo_connection(conn_name):
     if conn_name not in mongo_connections:
         from v8.config import config
-        mongo_connection = MongoClient(config['MONGO'][conn_name]['host'])
+        mongo_connection = MongoClient(host='localhost', port=27017, connect=False)
         mongo_connections[conn_name] = mongo_connection
     return mongo_connections[conn_name]

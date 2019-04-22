@@ -3,7 +3,7 @@
 
 from v8.config import config, config_online
 # from v8.engine.handlers.node_handler import update_all_committee, update_all_proposal
-from bitcoinrpc.authproxy import AuthServiceProxy
+from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from decorators import singleton
 config.from_object(config_online)
 
@@ -11,6 +11,10 @@ config.from_object(config_online)
 @singleton('/tmp/update_rpc_node.pid')
 def update_rpc_node():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+    try:
+        print(rpc_connection.getblock('8c45c1b3ef9821a481acff0a932d081867bc65dd111'))
+    except JSONRPCException:
+        pass
     try:
         # print(rpc_connection.help())
         # best_block_hash = rpc_connection.getbestblockhash()

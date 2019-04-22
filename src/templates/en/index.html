@@ -136,9 +136,12 @@
                     <dt> Total LBTC Amount</dt>
                     <dd>
                       <div>
-                        <a href="{{ url_for('lbtc_balance') }}" target="_blank">
+                        <!--
+                        <a href="{{ url_for('lbtc_balance') }}" >
                           <span class="tx-count">{{ lbtc_info["total_amount"] }} LBTC</span>
                         </a>
+                        -->
+                        {{ lbtc_info["total_amount"] }} LBTC
                       </div>
                     </dd>
                   </dl>

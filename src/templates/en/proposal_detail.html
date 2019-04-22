@@ -80,50 +80,60 @@
           </div>
 
           </br></br></br></br>
-          <table class="table">
-            <tr>
-              <th class="text-center">Options</th>
-              <th class="text-center">votes</th>
-              <th class="text-center">Address</th>
-            </tr>
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <div class="panel-heading-title">Proposal Vote</div>
+            </div>
+            <div class="panel-body">
+              <div class="row">
+                <table class="table">
+                  <tr>
+                    <th class="text-center">Options</th>
+                    <th class="text-center">votes</th>
+                    <th class="text-center">Address</th>
+                  </tr>
 
-            {% for _option in proposal_info["options"] %}
-            <tr>
-              <td class="text-center" >
-                {{ _option["option"] }}
-              </td>
-              <td class="text-center" >
-                {{ _option["votes"] }}
-              </td>
-              <td class="text-center">
-                {% if _option["vote_address"] %}
-                <ul>
-                  {% for _address in _option["vote_address"] %}
-                  <li>
-                    <a href="{{ url_for('lbtc_address', address=_address) }}"> {{ _address }} </a>
-                  </li>
+                  {% for _option in proposal_info["options"] %}
+                  <tr>
+                    <td class="text-center" >
+                      {{ _option["option"] }}
+                    </td>
+                    <td class="text-center" >
+                      {{ _option["votes"] }}
+                    </td>
+                    <td class="text-center">
+                      {% if _option["vote_address"] %}
+                      <ul>
+                        {% for _address in _option["vote_address"] %}
+                        <li style="list-style:none">
+                          <a href="{{ url_for('lbtc_address', address=_address) }}"> {{ _address }} </a>
+                        </li>
+                        {% endfor %}
+
+                        {% if _option["vote_address_hide"] %}
+                        <a class="btn btn-primary" data-toggle="collapse" href={{ _option["vote_collapse_href"] }} role="button" aria-expanded="false">
+                          Show Hide Address({{ _option["vote_address_hide_num"] }})
+                        </a>
+                        <div class="collapse" id={{ _option["vote_collapse_id"] }}>
+                          {% for _address in _option["vote_address_hide"] %}
+                          <li style="list-style:none">
+                            <a href="{{ url_for('lbtc_address', address=_address) }}" class="txio-address" ga-type="address">
+                              {{ _address }}
+                            </a>
+                          </li>
+                          {% endfor %}
+                        </div>
+                        {% endif %}
+                      </ul>
+                      {% endif %}
+                    </td>
+                  </tr>
                   {% endfor %}
+                </table>
+              </div>
+            </div>
+          </div>
 
-                  {% if _option["vote_address_hide"] %}
-                  <a class="btn btn-primary" data-toggle="collapse" href={{ _option["vote_collapse_href"] }} role="button" aria-expanded="false">
-                    Show Hide Address({{ _option["vote_address_hide_num"] }})
-                  </a>
-                  <div class="collapse" id={{ _option["vote_collapse_id"] }}>
-                    {% for _address in _option["vote_address_hide"] %}
-                    <li>
-                      <a href="{{ url_for('lbtc_address', address=_address) }}" class="txio-address" ga-type="address">
-                        {{ _address }}
-                      </a>
-                    </li>
-                    {% endfor %}
-                  </div>
-                  {% endif %}
-                </ul>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </table>
         </div>
       </div>
     </div>

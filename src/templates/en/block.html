@@ -31,11 +31,11 @@
               <dt>Size</dt>
               <dd> {{ block_info["strippedsize"] }} Bytes </dd>
             </dl>
-            <dl>
-              <dt>Tx Count</dt>
-              <dd> {{ block_info["transaction_num"] }} </dd>
-            </dl>
             
+            <dl>
+              <dt></dt>
+              <dd>&nbsp</dd>
+            </dl>
           </div>
           
           <div class="blockAbstract-section">
@@ -44,6 +44,12 @@
               <dd> {{ block_info["time"] }} </dd>
             </dl>
             <dl>
+              <dt>Tx Count</dt>
+              <dd> {{ block_info["transaction_num"] }} </dd>
+            </dl>
+
+            <!--
+            <dl>
               <dt>Version</dt>
               <dd>{{ block_info["versionHex"] }}</dd>
             </dl>
@@ -51,11 +57,17 @@
               <dt>Nonce</dt>
               <dd> {{ block_info["nonce"] }} </dd>
             </dl>
+            -->
+            
             <dl>
               <dt>Relayed By</dt>
               <dd>
                 <a href="{{ url_for('lbtc_address', name=block_info['delegate_address']) }}" > {{ block_info["miner_name"] }}</a>
               </dd>
+            </dl>
+            <dl>
+              <dt></dt>
+              <dd>&nbsp</dd>
             </dl>
           </div>
 
