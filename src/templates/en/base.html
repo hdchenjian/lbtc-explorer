@@ -72,23 +72,16 @@
           </div>
 
           <ul class="nav navbar-nav navbar-right" style="padding-right: 30px;">
-            <li>
-              <a class="dropdown-toggle" data-toggle="dropdown">
-                {% if "language" in session and "cn" == session["language"] %}
-                中文
-                {% else %}
-                EN
-                {% endif %}
-                <b class="caret"></b>
+            <li >
+            {% if "language" in session and "cn" == session["language"] %}
+              <a style="background-color: #FFA500;" href="{{ url_for('lbtc_change_language', language='en') }}">
+                <img style="width: 20px;" src="{{ url_for('static', filename='image/en.png') }}" alt="">
               </a>
-
-              <ul class="dropdown-menu" style="left:0px;min-width: 50px;padding-left: 0px;background-color:#FFA500">
-                {% if "language" in session and "cn" == session["language"] %}
-                <li><a href="{{ url_for('lbtc_change_language', language='en') }}">EN</a></li>
-                {% else %}
-                <li><a href="{{ url_for('lbtc_change_language', language='cn') }}">中文</a></li>
-                {% endif %}
-              </ul>
+            {% else %}
+              <a style="background-color: #FFA500;" href="{{ url_for('lbtc_change_language', language='cn') }}">
+                <img style="width: 20px;" src="{{ url_for('static', filename='image/cn.png') }}" alt="">
+              </a>
+            {% endif %}
             </li>
           </ul>
 

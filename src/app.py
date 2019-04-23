@@ -732,7 +732,7 @@ def lbtc_nodes():
                            node_distribution=node_distribution, node_status=node_status)
 
 
-@app.route('/change_device_type')
+@app.route('/lbtc_change_language')
 def lbtc_change_language():
     if request.args.get('language', '') in ['cn', 'en']:
         session["language"] = request.args['language']
@@ -820,5 +820,5 @@ def teardown_request(exception):
 
 
 if __name__ == '__main__':
-    app.config['DEBUG'] = True
+    app.config['DEBUG'] = False
     app.run(host='0.0.0.0', port=5025)
