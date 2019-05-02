@@ -110,10 +110,7 @@ def lbtc_index():
             if _tx_id in _tx_id_to_tx:
                 _new_block['delegate_address'] = _tx_id_to_tx[_tx_id]['output'][1]
                 _new_block['award'] = _tx_id_to_tx[_tx_id]['output'][2].rstrip('0').rstrip('.')
-                if _new_block['delegate_address'] == '166D9UoFdPcDEGFngswE226zigS8uBnm3C':
-                    _new_block['miner'] = 'LBTCSuperNode'
-                else:
-                    _new_block['miner'] = delegate_address_to_name[_new_block['delegate_address']]
+                _new_block['miner'] = delegate_address_to_name[_new_block['delegate_address']]
                 break
     lbtc_info['block_info'] = new_block
 
@@ -129,7 +126,6 @@ def lbtc_index():
     total_amount = \
         block_status_multi_key_value[REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO]['total_amount']
     lbtc_info['total_amount'] = total_amount.rstrip('0').rstrip('.')
-    print(lbtc_info['total_amount'])
 
     global address_daily_info_global
     global transaction_daily_info_global
@@ -306,10 +302,7 @@ def lbtc_block():
     block_info['delegate_address'] = coinbase_tx[0]['output'][1]
     delegate_address_to_name = \
         block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
-    if block_info['delegate_address'] == '166D9UoFdPcDEGFngswE226zigS8uBnm3C':
-        block_info['miner_name'] = 'LBTCSuperNode'
-    else:
-        block_info['miner_name'] = delegate_address_to_name[block_info['delegate_address']]
+    block_info['miner_name'] = delegate_address_to_name[block_info['delegate_address']]
 
     try:
         block_info['next_hash'] = rpc_connection.getblockhash(_info_block['height'] + 1)
@@ -508,7 +501,10 @@ def lbtc_address():
                 block_status_multi_key_value[REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
             if address in delegate_address_to_name:
                 delegate_name = delegate_address_to_name[address]
-                delegate_received_voter = rpc_connection.listreceivedvotes(delegate_name)
+                if delegate_name == 'LBTCSuperNode':
+                    delegate_received_voter = []
+                else:
+                    delegate_received_voter = rpc_connection.listreceivedvotes(delegate_name)
             else:
                 delegate_received_voter = []
                 delegate_name = None
@@ -535,7 +531,8 @@ def lbtc_address():
             committee_received_voter_num = len(committee_received_voter)
             voted_bills_num = len(voted_bills)
             submit_bills_num = len(submit_bills)
-        except Exception:
+        except Exception as e:
+            print(e)
             if 'language' in session and session['language'] == 'cn':
                 flash(u'钱包地址错误', 'error')
             else:
@@ -820,5 +817,5 @@ def teardown_request(exception):
 
 
 if __name__ == '__main__':
-    app.config['DEBUG'] = False
+    app.config['DEBUG'] = True
     app.run(host='0.0.0.0', port=5025)

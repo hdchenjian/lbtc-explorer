@@ -12,7 +12,7 @@ from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
     get_block_status, add_block_info, update_many_address_info, add_many_tx, \
     update_all_delegate, update_all_committee, update_all_proposal, \
     update_most_rich_address, update_network_tx_statistics, update_address_growth_daily_info, \
-    update_transaction_daily_info, delete_many_tx, delete_block_info
+    update_transaction_daily_info, delete_many_tx, delete_block_info, query_all_delegate
 from bitcoinrpc.authproxy import AuthServiceProxy
 
 from decorators import singleton
@@ -20,9 +20,89 @@ from config import PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT, \
     REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME, REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO, \
     REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST, REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME, \
     REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS, \
-    REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS, REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS
+    REST_BLOCK_STATUS_KYE_COMMITTEE_NAME_TO_ADDRESS, REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS, \
+    REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE
 
 config.from_object(config_online)
+
+
+def parse_lbtc_delegate():
+    rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+    try:
+        best_block_hash = rpc_connection.getbestblockhash()
+        best_block = rpc_connection.getblock(best_block_hash)
+        best_height = best_block['height']
+        block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
+        best_height = block_status['height'] - 1
+        #best_height = 7006 + 3
+        current_height = 7005
+        print('start from height ', current_height)
+        next_block_hash = ''
+        address_to_delegate_info = {}
+        for _delegate_info in query_all_delegate():
+            address_to_delegate_info[_delegate_info['_id']] = _delegate_info
+        current_delegate_address = None
+        current_index = 0
+        delegate_rate = {}
+        current_delegate = []
+        while current_height <= best_height:
+            if not next_block_hash:
+                next_block_hash = rpc_connection.getblockhash(current_height)
+            current_block_info = rpc_connection.getblock(next_block_hash)
+            if not current_block_info:
+                break
+
+            _tx_id = current_block_info['tx'][0]
+            tx_info = rpc_connection.gettransactionnew(_tx_id)
+            if 'coinbase' in tx_info['vin'][0]:
+                for _vout in tx_info['vout']:
+                    if 'delegates' in _vout:
+                        current_delegate = []
+                        for _delegate in _vout['delegates']:
+                            if _delegate in address_to_delegate_info:
+                                current_delegate.append(_delegate)
+                                if _delegate not in delegate_rate:
+                                    delegate_rate[_delegate] = {'block_vote': 1, 'block_product': 0, 'status': False}
+                                else:
+                                    delegate_rate[_delegate]['block_vote'] += 1
+                        #print('current_delegate', current_delegate, len(current_delegate))
+                        #print(len(current_delegate))
+                if tx_info['vout'][0]['scriptPubKey']['type'] == 'pubkeyhash' or \
+                   tx_info['vout'][0]['scriptPubKey']['type'] == 'scripthash':
+                    if len(tx_info['vout'][0]['scriptPubKey']['addresses']) != 1:
+                        raise ValueError('vout multi addresses')
+                    current_delegate_address = tx_info['vout'][0]['scriptPubKey']['addresses'][0]
+                    delegate_rate[current_delegate_address]['block_product'] += 1
+                    delegate_rate[current_delegate_address]['status'] = True
+                    current_index = current_delegate.index(current_delegate_address)
+            else:
+                print("error: index 0 not coinbase")
+                raise ValueError()
+
+            print('current_height ', current_height)
+            current_height += 1
+            if 'nextblockhash' not in current_block_info:
+                break
+            next_block_hash = current_block_info['nextblockhash']
+
+        print(current_delegate_address, current_index)
+        print(current_delegate)
+        print(delegate_rate)
+        update_delegate_list = []
+        for _delegate in delegate_rate:
+            delegate_rate[_delegate]['status'] = 1  # 0: not working, 1: normal
+            delegate_rate[_delegate]['active'] = 0  # 0: waiting, 1: block producting
+            delegate_rate[_delegate]['_id'] = _delegate
+            update_delegate_list.append(delegate_rate[_delegate])
+        #print(len(update_delegate_list))
+        #print(update_delegate_list[0])
+        update_all_delegate(update_delegate_list)
+        current_delegate_info = {'current_delegate': current_delegate, 'index': current_index}
+        update_block_status(REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE, current_delegate_info)
+
+    except Exception as e:
+        print(e)
+        raise
 
 
 def parse_lbtc_block_main():
@@ -46,6 +126,48 @@ def parse_lbtc_block_main():
             current_block_info = rpc_connection.getblock(next_block_hash)
             if not current_block_info:
                 break
+
+            current_delegate_mysql = get_block_status(REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)
+            current_delegate_address = None
+            current_delegate = []
+            not_working_delegate = []
+            current_index = ''
+            tx_info = rpc_connection.gettransactionnew(current_block_info['tx'][0])
+            if 'coinbase' in tx_info['vin'][0]:
+                for _vout in tx_info['vout']:
+                    if 'delegates' in _vout:
+                        current_delegate = _vout['delegates']
+                    else:
+                        pass
+                if tx_info['vout'][0]['scriptPubKey']['type'] == 'pubkeyhash' or \
+                   tx_info['vout'][0]['scriptPubKey']['type'] == 'scripthash':
+                    if len(tx_info['vout'][0]['scriptPubKey']['addresses']) != 1:
+                        raise ValueError('vout multi addresses')
+                    current_delegate_address = tx_info['vout'][0]['scriptPubKey']['addresses'][0]
+                    if current_delegate:
+                        current_index = current_delegate.index(current_delegate_address)
+                    else:
+                        current_index = current_delegate_mysql['current_delegate'].index(current_delegate_address)
+                    if current_index > current_delegate_mysql['index']:
+                        if current_index - current_delegate_mysql['index'] == 1:
+                            not_working_delegate = []
+                        else:
+                            for _index in range(current_delegate_mysql['index'] + 1, current_index):
+                                not_working_delegate.append(current_delegate_mysql['current_delegate'][_index])
+                    else:
+                        for _index in range(current_delegate_mysql['index'] + 1, 101):
+                            not_working_delegate.append(current_delegate_mysql['current_delegate'][_index])
+                        if current_delegate:
+                            for _index in range(0, current_index):
+                                not_working_delegate.append(current_delegate[_index])
+                        else:
+                            pass
+                else:
+                    raise ValueError()
+            else:
+                print("error: index 0 not coinbase")
+                raise ValueError()
+            # print(current_delegate_address, current_delegate, current_index, not_working_delegate)
 
             vin_tx_id = []
             tx_id_to_raw_tx_info = {}
@@ -150,24 +272,26 @@ def parse_lbtc_block_main():
                 print('current_height ', current_height)
             current_height += 1
             update_many_address_info(need_update, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
-                                     {'height': current_height})
+                                     {'height': current_height},
+                                     current_delegate_address, current_delegate,
+                                     current_index, not_working_delegate, current_delegate_mysql,
+                                     REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)
             if 'nextblockhash' not in current_block_info:
                 break
             next_block_hash = current_block_info['nextblockhash']
-        # update_many_delegate_active(coinbase_address)
-
     except Exception as e:
-        print(e)
+        print('get Exception: ', e)
         raise
 
 
-def query_all_delegate():
+def query_all_delegate_local():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
 
     list_delegate = rpc_connection.listdelegates()
-    delegate_address_to_name = {}
-    delegate_name_to_address = {}
-    all_delegate = []
+    delegate_address_to_name = {'166D9UoFdPcDEGFngswE226zigS8uBnm3C': 'LBTCSuperNode'}
+    delegate_name_to_address = {'LBTCSuperNode': '166D9UoFdPcDEGFngswE226zigS8uBnm3C'}
+    all_delegate = [{'_id': '166D9UoFdPcDEGFngswE226zigS8uBnm3C',
+                     'funds': '0', 'votes': '21000000', 'name': 'LBTCSuperNode'}]
     for _delegate in list_delegate:
         _delegate_info = {}
         _delegate_info['_id'] = _delegate['address']
@@ -178,11 +302,10 @@ def query_all_delegate():
             str(Decimal(rpc_connection.getdelegatefunds(_delegate['name'])) / 100000000)
         _delegate_info['votes'] = \
             str(Decimal(rpc_connection.getdelegatevotes(_delegate['name'])) / 100000000)
-        _delegate_info['active'] = False
         all_delegate.append(_delegate_info)
         # _delegate['votes_address'] = rpc_connection.listreceivedvotes(_delegate['name'])
     all_delegate.sort(key=lambda x: Decimal(x['votes']), reverse=True)
-    index = 2
+    index = 1
     for _delegate in all_delegate:
         _delegate['index'] = index
         index += 1
@@ -357,7 +480,7 @@ def parse_lbtc_block():
 
         if query_all_delegate_time is None or \
            (time_now - query_all_delegate_time).total_seconds() > 60:
-            query_all_delegate()
+            query_all_delegate_local()
             query_all_committee_proposal()
             rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
             tx_out_set_info = rpc_connection.gettxoutsetinfo()
@@ -381,4 +504,6 @@ def parse_lbtc_block():
 
 
 if __name__ == '__main__':
+    #query_all_delegate_local()
+    #parse_lbtc_delegate()
     parse_lbtc_block()

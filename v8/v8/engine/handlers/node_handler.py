@@ -425,20 +425,6 @@ def find_many_tx(tx_ids, sort=False):
     return result
 
 
-def update_many_delegate_active(delegate_ids):
-    """Add one delegate.
-
-    Args:
-        tx (dict): dict of delegate
-
-    Returns:
-
-    """
-    conn = db_conn.gen_mongo_connection('base')
-    conn.lbtc.lbtc_delegate.update_many(
-        {'_id': {'$in': delegate_ids}}, {'$set': {'active': True}}, upsert=False)
-
-
 def update_all_committee(all_committee):
     """Add all committee.
 
@@ -530,9 +516,7 @@ def query_all_delegate():
 
     """
     conn = db_conn.gen_mongo_connection('base')
-    ret = [{'_id': '166D9UoFdPcDEGFngswE226zigS8uBnm3C',
-            'index': 1,
-            'funds': '0', 'votes': '21000000', 'name': 'LBTCSuperNode', 'active': False}]
+    ret = []
     for _delegate in conn.lbtc.lbtc_delegate.find().sort("index", pymongo.ASCENDING):
         ret.append(_delegate)
     return ret
@@ -616,7 +600,9 @@ def update_address_info(address, amount, time):
             raise
 
 
-def update_many_address_info(address_list, key, current_height_info):
+def update_many_address_info(address_list, key, current_height_info, current_delegate_address,
+                             current_delegate, current_index, not_working_delegate,
+                             current_delegate_mysql, key_delegate):
     """Add a node.
 
     Args:
@@ -625,6 +611,7 @@ def update_many_address_info(address_list, key, current_height_info):
         dict of node info or None.
     """
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        have_update_mongo = False
         try:
             _address_info_match = []
             for tx_info in address_list:
@@ -667,11 +654,74 @@ def update_many_address_info(address_list, key, current_height_info):
                 session.add(_block_status)
             _block_status.update_time = time_now
             _block_status.value = json.dumps(current_height_info)
+
+
+            current_delegate_mysql_new = {}
+            current_delegate_mysql_new['index'] = current_index
+            if current_delegate:
+                current_delegate_mysql_new['current_delegate'] = current_delegate
+            else:
+                current_delegate_mysql_new['current_delegate'] = current_delegate_mysql['current_delegate']
+            _delegate_status = session.query(BlockStatus).filter(BlockStatus.key == key_delegate).first()
+            if _delegate_status is None:
+                _delegate_status = BlockStatus()
+                _delegate_status.key = key_delegate
+                _delegate_status.create_time = time_now
+                session.add(_delegate_status)
+            _delegate_status.update_time = time_now
+            _delegate_status.value = json.dumps(current_delegate_mysql_new)
+
+            update_delegate_info_mongo(current_delegate_address, current_delegate, not_working_delegate, current_delegate_mysql_new['current_delegate'])
+            have_update_mongo = True
             session.commit()
             return True
         except Exception:
             session.rollback()
+            if(have_update_mongo):
+                restore_delegate_info_mongo(current_delegate_address, current_delegate, not_working_delegate)
             raise
+
+
+def update_delegate_info_mongo(current_delegate_address, current_delegate, not_working_delegate, current_delegate_mysql):
+    '''
+    status 0: not working, 1: normal
+    active 0: waiting, 1: block producting
+    '''
+    conn = db_conn.gen_mongo_connection('base')
+    if current_delegate_mysql:
+        conn.lbtc.lbtc_delegate.update_many({'_id': {'$in': current_delegate_mysql}}, {'$set': {'active': 0}}, upsert=False)
+    if current_delegate:
+        for _delegate in current_delegate:
+            conn.lbtc.lbtc_delegate.update_one({'_id': _delegate}, {'$inc': {'block_vote': 1}}, upsert=False)
+        current_delegate_info = conn.lbtc.lbtc_delegate.find({'_id': {'$in': current_delegate}})
+        for _delegate in current_delegate_info:
+            conn.lbtc.lbtc_delegate.update_one(
+                {'_id': _delegate['_id']},
+                {'$set': {'ratio': _delegate['block_product'] / float(_delegate['block_vote'])}}, upsert=False)
+
+    if not_working_delegate:
+        for _delegate in not_working_delegate:
+            conn.lbtc.lbtc_delegate.update_one({'_id': _delegate}, {'$set': {'status': 0}}, upsert=False)
+    if current_delegate_address:
+        conn.lbtc.lbtc_delegate.update_one({'_id': current_delegate_address}, {'$set': {'status': 1, 'active': 1}, '$inc': {'block_product': 1}}, upsert=True)
+        current_delegate_info = conn.lbtc.lbtc_delegate.find({'_id': {'$in': [current_delegate_address]}})
+        for _delegate in current_delegate_info:
+            conn.lbtc.lbtc_delegate.update_one(
+                {'_id': _delegate['_id']},
+                {'$set': {'ratio': _delegate['block_product'] / float(_delegate['block_vote'])}}, upsert=False)
+
+
+def restore_delegate_info_mongo(current_delegate_address, current_delegate, not_working_delegate):
+    '''
+    status 0: not working, 1: normal
+    active 0: waiting, 1: block producting
+    '''
+    conn = db_conn.gen_mongo_connection('base')
+    if current_delegate:
+        for _delegate in current_delegate:
+            conn.lbtc.lbtc_delegate.update_one({'_id': _delegate}, {'$inc': {'block_vote': -1}}, upsert=False)
+    if current_delegate_address:
+        conn.lbtc.lbtc_delegate.update_one({'_id': current_delegate_address}, {'$set': {'status': 1, 'active': 1}, '$inc': {'block_product': -1}}, upsert=True)
 
 
 def get_address_info(address, page=1, since_id=0, size=10):

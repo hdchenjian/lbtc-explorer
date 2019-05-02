@@ -12,7 +12,16 @@ config.from_object(config_online)
 def update_rpc_node():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
-        print(rpc_connection.getblock('8c45c1b3ef9821a481acff0a932d081867bc65dd111'))
+        tx = rpc_connection.gettransactionnew('c30d4992d456efcc4bc390d3facaf68138fe0729d84d96cf1560d1e7479c2c57')
+        print(len(tx['vout'][1]['delegates']))
+        exit()
+        print(len(tx['vout']))
+        #print(tx['vout'][0])
+        for key in tx['vout'][1]:
+            #pass
+            print(key)
+        #print(rpc_connection.getblock('bf56320e87e513232081ffee7c0d0b467e2cbf671624640b67dfe1ccbc9314ae'))
+        exit()
     except JSONRPCException:
         pass
     try:
