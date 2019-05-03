@@ -671,6 +671,7 @@ def update_many_address_info(address_list, key, current_height_info, current_del
             _delegate_status.update_time = time_now
             _delegate_status.value = json.dumps(current_delegate_mysql_new)
 
+            reset_delegate_daily_info()
             update_delegate_info_mongo(current_delegate_address, current_delegate, not_working_delegate, current_delegate_mysql_new['current_delegate'])
             have_update_mongo = True
             session.commit()
@@ -701,14 +702,48 @@ def update_delegate_info_mongo(current_delegate_address, current_delegate, not_w
 
     if not_working_delegate:
         for _delegate in not_working_delegate:
-            conn.lbtc.lbtc_delegate.update_one({'_id': _delegate}, {'$set': {'status': 0}}, upsert=False)
+            conn.lbtc.lbtc_delegate.update_one(
+                {'_id': _delegate}, {'$set': {'status': 0}, '$inc': {'failed_daily': 1}}, upsert=False)
     if current_delegate_address:
-        conn.lbtc.lbtc_delegate.update_one({'_id': current_delegate_address}, {'$set': {'status': 1, 'active': 1}, '$inc': {'block_product': 1}}, upsert=True)
+        conn.lbtc.lbtc_delegate.update_one(
+            {'_id': current_delegate_address},
+            {'$set': {'status': 1, 'active': 1}, '$inc': {'block_product': 1, 'success_daily': 1}}, upsert=True)
         current_delegate_info = conn.lbtc.lbtc_delegate.find({'_id': {'$in': [current_delegate_address]}})
         for _delegate in current_delegate_info:
             conn.lbtc.lbtc_delegate.update_one(
                 {'_id': _delegate['_id']},
                 {'$set': {'ratio': _delegate['block_product'] / float(_delegate['block_vote'])}}, upsert=False)
+
+
+def reset_delegate_daily_info():
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        need_reset = False
+        key = 'rest_block_status:key_delegate_daily'
+        time_now = datetime.datetime.now()
+        _delegate_daily_status = session.query(BlockStatus).filter(BlockStatus.key == key).first()
+        if _delegate_daily_status is None:
+            need_reset = True
+            _delegate_daily_status = BlockStatus()
+            _delegate_daily_status.key = key
+            _delegate_daily_status.value = json.dumps(time_now.strftime('%Y-%m-%d'))
+            _delegate_daily_status.create_time = time_now
+            _delegate_daily_status.update_time = time_now
+            session.add(_delegate_daily_status)
+        else:
+            old_value = datetime.datetime.strptime(json.loads(_delegate_daily_status.value), '%Y-%m-%d').date()
+            if (time_now.date() - old_value).days > 0:
+                need_reset = True
+                _delegate_daily_status.value = json.dumps(time_now.strftime('%Y-%m-%d'))
+                _delegate_daily_status.update_time = time_now
+        if need_reset:
+            conn = db_conn.gen_mongo_connection('base')
+            for _delegate in conn.lbtc.lbtc_delegate.find():
+                conn.lbtc.lbtc_delegate.update_one({'_id': _delegate['_id']}, {'$set': {'failed_daily': 0, 'success_daily': 0}}, upsert=False)
+        try:
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
 
 
 def restore_delegate_info_mongo(current_delegate_address, current_delegate, not_working_delegate):

@@ -1,4 +1,4 @@
-{% extends "en/base.html" %}
+{% extends "cn/base.html" %}
 
 {% block body %}
 
@@ -10,36 +10,262 @@
       <li>Delegate Monitor </li> 
     </ol>
   </div>
+  <br><br>
 
-  
   <div class="row">
+    <div class="row">
+      <div class="col-xs-3" style="padding-left: 40px; padding-right: 40px;">
+        <form method="GET" action="{{ url_for('lbtc_delegate') }}">
+          <div class="form-group">
+            <input type="hidden" name="type" value="all" />
+            <button id="delegate_votes_button" class="btn btn-primary btn-block"
+                    style="background-color: #0069d9; text-align: center; font-size: 18px; padding: 28px 28px;" >
+              {{ delegate_count }} Delegate
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="col-xs-3" style="padding-left: 30px; padding-right: 30px;">
+        <form method="GET" action="{{ url_for('lbtc_delegate') }}">
+          <div class="form-group">
+            <input type="hidden" name="type" value="active" />
+            <button id="delegate_votes_button" class="btn btn-info btn-block" style="text-align: center; font-size: 17px; padding: 28px 0px;" >
+              101 Active Delegate
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="col-xs-3" style="padding-left: 40px; padding-right: 40px;">
+        <form method="GET" action="{{ url_for('lbtc_delegate') }}">
+          <div class="form-group">
+            <input type="hidden" name="type" value="normal" />
+            <button id="delegate_normal" class="btn btn-success btn-block" style="text-align: center; font-size: 18px; padding: 28px 28px;" >
+              {{ normal_count }} Forging
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="col-xs-3" style="padding-left: 40px; padding-right: 40px;">
+        <form method="GET" action="{{ url_for('lbtc_delegate') }}">
+          <div class="form-group">
+            <input type="hidden" name="type" value="stop" />
+            <button id="delegate_stop" class="btn btn-danger btn-block" style="text-align: center; font-size: 18px; padding: 28px 28px;" >
+              {{ stop_count }} Stop Forging
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <br><br><br>
+
+  <div class="row">
+      <div id="DelegateInfo" style="z-index: 999999; position: absolute; display: none; background-color: #000;
+                                    opacity: 0.9; font-size:12px; overflow-y: hidden; overflow-x: auto;">
+      </div>
     <div class="col-xs-12" style="padding-left: 10; padding-right: 0px;">
-      <div class="panel-body">
-        <table class="table">
-          <tr>
-            <th class="text-center">Rank</th>
-            <th class="text-center">Name</th>
-            <th class="text-center">Address</th>
-            <th class="text-center">Votes</th>
-          </tr>
-          {% for _info in delegate_info %}
-          <tr>
-            <td class="text-center" >
-              {{ _info["index"] }}
-            </td>
-            <td class="text-center" >
-              {{ _info["name"] }}
-            </td><td class="text-center">
-              <a href="{{ url_for('lbtc_address', address=_info['_id']) }}"> {{ _info["_id"] }} </a>
-            </td>
-            <td class="text-center">
-              {{ _info["votes"] }}
-            </td>
-          </tr>
-          {% endfor %}
-        </table>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="panel-heading-title">
+              {% if type == "active" %}
+              Active Delegate({{ delegate_info.__len__() }})
+              {% elif type == "normal" %}
+              Forging({{ delegate_info.__len__() }})
+              {% elif type == "stop" %}
+              Stop Forging({{ delegate_info.__len__() }})
+              {% else %}
+              All Delegate({{ delegate_info.__len__() }})
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          {% if type in ["active", "normal", "stop"] %}
+          <table class="table" id="delegate_table">
+            <tr>
+              <th class="text-center">Index</th>
+              <th class="text-center">Name</th>
+              <th class="text-center">Address</th>
+              <th class="text-center">Votes</th>
+              <th class="text-center">Ratio</th>
+              <th class="text-center">Daily Forging(success/failed)</th>
+              <th class="text-center">Status</th>
+            </tr>
+            {% for _info in delegate_info %}
+            <tr>
+              <td class="text-center" >
+                {{ _info["index"] }}
+              </td>
+              <td class="text-center" >
+                <a href="{{ url_for('lbtc_address', address=_info['_id']) }}"> {{ _info["name"] }} </a>
+              </td><td class="text-center">
+                <a href="{{ url_for('lbtc_address', address=_info['_id']) }}"> {{ _info["_id"] }} </a>
+              </td>
+              <td class="text-center">
+                {{ _info["votes"] }}
+              </td>
+              <td class="text-center">
+                {{ _info["ratio"] }}
+              </td>
+              <td class="text-center">
+                {% if _info["failed_daily"] > 9 %}
+                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["success_daily"] }} </span>/
+                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["failed_daily"] }} </span>
+                {% else %}
+                <span style="color: #009900;"> {{ _info["success_daily"] }} </span>/
+                <span style="color: #FF6666;"> {{ _info["failed_daily"] }} </span>
+                {% endif %}
+              </td>
+
+              <td class="text-center">
+                {% if _info["active"] %}
+                <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;"
+                      onmouseenter="pop_delegate_info(this, 'Forging');"
+                      onmouseleave="hide_delegate_info()";>
+                </span>
+                {% else %}
+                {% if _info["status"] %}
+                <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;"
+                      onmouseenter="pop_delegate_info(this, 'Waiting forging');"
+                      onmouseleave="hide_delegate_info()";>
+                </span>
+
+                {% else %}
+                <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;"
+                      onmouseenter="pop_delegate_info(this, 'Not forging');"
+                      onmouseleave="hide_delegate_info()";>
+                </span>
+                {% endif %}
+                {% endif %}
+              </td>
+              
+            </tr>
+            {% endfor %}
+          </table>
+          {% else %}
+
+          <table class="table">
+            <tr>
+              <th class="text-center">Index</th>
+              <th class="text-center">Name</th>
+              <th class="text-center">Address</th>
+              <th class="text-center">Votes</th>
+              <th class="text-center">Ratio</th>
+              <th class="text-center">Daily Forging(success/failed)</th>
+            </tr>
+            {% for _info in delegate_info %}
+            <tr>
+              <td class="text-center" >
+                {{ _info["index"] }}
+              </td>
+              <td class="text-center" >
+                <a href="{{ url_for('lbtc_address', address=_info['_id']) }}"> {{ _info["name"] }} </a>
+              </td><td class="text-center">
+                <a href="{{ url_for('lbtc_address', address=_info['_id']) }}"> {{ _info["_id"] }} </a>
+              </td>
+              <td class="text-center">
+                {{ _info["votes"] }}
+              </td>
+              <td class="text-center">
+                {{ _info["ratio"] }}
+              </td>
+              <td class="text-center">
+                {% if _info["failed_daily"] > 9 %}
+                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["success_daily"] }} </span>/
+                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["failed_daily"] }} </span>
+                {% else %}
+                <span style="color: #009900;"> {{ _info["success_daily"] }} </span>/
+                <span style="color: #FF6666;"> {{ _info["failed_daily"] }} </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+
+          {% endif %}
+        </div>
+        
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+
+{% block js %}
+<script type="text/javascript">
+
+{% if type == "active" %}
+var int=self.setInterval("httpGetDelegate()", 4000);
+{% endif %}
+
+function httpGetDelegate() {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", "/lbtc/delegate_api?type=active", false ); // false for synchronous request
+    xmlHttp.send( null );
+    if(xmlHttp.status==200){
+        var delegate_info = JSON.parse(xmlHttp.responseText)
+        var button_normal = document.getElementById('delegate_normal');
+        button_normal.innerHTML = delegate_info.normal_count + 'Forging';
+        var button_stop = document.getElementById('delegate_stop');
+        button_stop.innerHTML = delegate_info.stop_count + 'Stop Forging';
+        var table = document.getElementById('delegate_table');
+
+        var table_length = table.rows.length;
+        for (var i = 0; i < table_length; i++){
+            var row = table.rows[i+1];
+            row.cells[0].innerHTML = delegate_info.delegate_info[i].index;
+            row.cells[1].innerHTML = '<a href="/lbtc/address?address=' + delegate_info.delegate_info[i]._id + '">' + delegate_info.delegate_info[i].name + '</a>'
+            row.cells[2].innerHTML = '<a href="/lbtc/address?address=' + delegate_info.delegate_info[i]._id + '">' + delegate_info.delegate_info[i]._id + '</a>'
+            row.cells[3].innerHTML = delegate_info.delegate_info[i].votes;
+            row.cells[4].innerHTML = delegate_info.delegate_info[i].ratio;
+            if(delegate_info.delegate_info[i].failed_daily > 9){
+                row.cells[5].innerHTML = '<span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].failed_daily;
+            } else {
+                row.cells[5].innerHTML = '<span style="color: #009900;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF6666;">' + delegate_info.delegate_info[i].failed_daily;
+            }
+            if(delegate_info.delegate_info[i].active == 1){
+                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Forging\');" onmouseleave="hide_delegate_info()";> </span>';
+            } else if (delegate_info.delegate_info[i].status == 1){
+                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Waiting forging\');" onmouseleave="hide_delegate_info()";> </span>';
+            } else {
+                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Not forging\');" onmouseleave="hide_delegate_info()";> </span>';
+            }
+        }
+        //able.innerHTML = "";
+        /*
+        while ( table.rows.length > 0 )
+        {
+            table.deleteRow(0);
+        }
+        */
+        
+        //table.deleteRow();
+    } else {
+        console.log(xmlHttp.responseText);
+    }
+    return ;
+}
+
+function pop_delegate_info(obj, msg) {
+    var offset = $(obj).offset();
+    var html = "";
+    if (msg != "") {
+        html += "<span style='color:white;'>" + msg + "</span>";
+        $("#DelegateInfo").html(html);
+        var x = offset.top;
+        var y = offset.left;
+        var div_obj = $("#DelegateInfo").show();
+        div_obj.css({ "top": x, "left": $(obj).prop("offsetWidth") + y + 10});
+    }
+}
+
+function hide_delegate_info() {
+    $("#DelegateInfo").empty().hide();
+}
+</script>
 {% endblock %}
