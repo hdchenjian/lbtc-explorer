@@ -36,7 +36,7 @@ config.from_object(config_online)
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000/day, 20/minute"])
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000/day, 15/minute"])
 
 
 address_daily_info_global = None
@@ -431,6 +431,7 @@ def lbtc_bill():
 
 
 @app.route('/lbtc/delegate_api', methods=['GET'])
+@limiter.limit("20/minute")
 def lbtc_delegate_api():
     delegate_type = request.args.get('type', '')
     delegate_info = query_all_delegate()
@@ -829,7 +830,7 @@ def lbtc_nodes():
                            node_distribution=node_distribution, node_status=node_status)
 
 
-@app.route('/lbtc_change_language')
+@app.route('/lbtc/change_language')
 def lbtc_change_language():
     if request.args.get('language', '') in ['cn', 'en']:
         session["language"] = request.args['language']
@@ -917,5 +918,5 @@ def teardown_request(exception):
 
 
 if __name__ == '__main__':
-    app.config['DEBUG'] = True
+    app.config['DEBUG'] = False
     app.run(host='0.0.0.0', port=5025)

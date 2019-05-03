@@ -1,0 +1,12 @@
+Description=parse_lbtc_block
+After=multi-user.target
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/usr/bin/python3 /home/ubuntu/.bin/lbtc/lbtcnode/src/parse_lbtc_block.py
+Restart=always
+RestartSec=15s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+Description=LbtcCore
+After=multi-user.target
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/home/ubuntu/.bin/lbtc/bitcoind --txindex
+Restart=always
+RestartSec=15s
+
+[Install]
+WantedBy=multi-user.target

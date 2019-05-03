@@ -210,9 +210,9 @@ function httpGetDelegate() {
     if(xmlHttp.status==200){
         var delegate_info = JSON.parse(xmlHttp.responseText)
         var button_normal = document.getElementById('delegate_normal');
-        button_normal.innerHTML = delegate_info.normal_count + 'Forging';
+        button_normal.innerHTML = delegate_info.normal_count + ' Forging';
         var button_stop = document.getElementById('delegate_stop');
-        button_stop.innerHTML = delegate_info.stop_count + 'Stop Forging';
+        button_stop.innerHTML = delegate_info.stop_count + ' Stop Forging';
         var table = document.getElementById('delegate_table');
 
         var table_length = table.rows.length;
