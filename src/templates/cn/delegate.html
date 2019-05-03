@@ -124,19 +124,19 @@
               <td class="text-center">
                 {% if _info["active"] %}
                 <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;"
-                      onmouseenter="pop_delegate_info(this, 'Forging');"
+                      onmouseenter="pop_delegate_info(this, '出块中');"
                       onmouseleave="hide_delegate_info()";>
                 </span>
                 {% else %}
                 {% if _info["status"] %}
                 <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;"
-                      onmouseenter="pop_delegate_info(this, 'Waiting forging');"
+                      onmouseenter="pop_delegate_info(this, '等待出块');"
                       onmouseleave="hide_delegate_info()";>
                 </span>
 
                 {% else %}
                 <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;"
-                      onmouseenter="pop_delegate_info(this, 'Not forging');"
+                      onmouseenter="pop_delegate_info(this, '未出块');"
                       onmouseleave="hide_delegate_info()";>
                 </span>
                 {% endif %}
@@ -237,11 +237,11 @@ function httpGetDelegate() {
                 row.cells[5].innerHTML = '<span style="color: #009900;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF6666;">' + delegate_info.delegate_info[i].failed_daily;
             }
             if(delegate_info.delegate_info[i].active == 1){
-                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Forging\');" onmouseleave="hide_delegate_info()";> </span>';
+                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'出块中\');" onmouseleave="hide_delegate_info()";> </span>';
             } else if (delegate_info.delegate_info[i].status == 1){
-                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Waiting forging\');" onmouseleave="hide_delegate_info()";> </span>';
+                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'等待出块\');" onmouseleave="hide_delegate_info()";> </span>';
             } else {
-                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Not forging\');" onmouseleave="hide_delegate_info()";> </span>';
+                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'未出块\');" onmouseleave="hide_delegate_info()";> </span>';
             }
         }
         //able.innerHTML = "";

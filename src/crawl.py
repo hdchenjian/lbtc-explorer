@@ -115,7 +115,7 @@ def find_node(node, max_height, ip_to_node):
            'No route to host' not in exception_str and 'closed connection' not in exception_str \
            and 'Network is unreachable' not in exception_str:
             print(node['ip'], e)
-        if node['height'] != -1:
+        if node['height'] != -10:
             if (datetime.datetime.now() -
                 datetime.datetime.strptime(node['create_time'], '%Y-%m-%dT%H:%M:%S')) \
                     .total_seconds > 3600:
@@ -250,7 +250,7 @@ def crawl_all_node():
     all_not_valid_node = get_all_not_valid_node()
     for _node in all_not_valid_node:
         # print('start', _node['ip'])
-        _node['height'] = -1
+        _node['height'] = -10
         _node['status'] = 0
         t = threading.Thread(target=find_node, args=(_node, max_height, ip_to_node))
         t.start()
