@@ -121,7 +121,8 @@ def update_or_add_node(ip, node_info):
             session.commit()
         except Exception:
             session.rollback()
-            raise
+            return None
+            #raise
         return model_to_dict(_node)
 
 

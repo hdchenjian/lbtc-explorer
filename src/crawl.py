@@ -118,10 +118,10 @@ def find_node(node, max_height, ip_to_node):
         if node['height'] != -10:
             if (datetime.datetime.now() -
                 datetime.datetime.strptime(node['create_time'], '%Y-%m-%dT%H:%M:%S')) \
-                    .total_seconds > 3600:
+                    .total_seconds() > 3600*6:
                 if max_height - node['height'] > 24 * 3600 or \
                    (max_height - node['height'] > 8 * 3600 and not node['ip'].endswith(':9333')):
-                    # print(node['ip'], 'long time offline, delete it')
+                    #print('delete_node', node, 'long time offline, delete it')
                     delete_node(node['ip'])
                     # pass
         else:

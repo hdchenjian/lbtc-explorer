@@ -112,7 +112,7 @@
                 {{ _info["ratio"] }}
               </td>
               <td class="text-center">
-                {% if _info["failed_daily"] > 9 %}
+                {% if _info["failed_daily"] > 14 %}
                 <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["success_daily"] }} </span>/
                 <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["failed_daily"] }} </span>
                 {% else %}
@@ -174,7 +174,7 @@
                 {{ _info["ratio"] }}
               </td>
               <td class="text-center">
-                {% if _info["failed_daily"] > 9 %}
+                {% if _info["failed_daily"] > 14 %}
                 <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["success_daily"] }} </span>/
                 <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["failed_daily"] }} </span>
                 {% else %}
@@ -200,62 +200,48 @@
 <script type="text/javascript">
 
 {% if type == "active" %}
-var int=self.setInterval("httpGetDelegate()", 4000);
-/*
-$(document).ready(function(){
-    while(true){
-        var t = setTimeout('console.log("start api")', 3500);
-        httpGetDelegate();
-    }
-});
-*/
+var int=self.setInterval("httpGetDelegate()", 3500);
 {% endif %}
 
 function httpGetDelegate() {
     var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "GET", "/lbtc/delegate_api?type=active", false ); // false for synchronous request
-    xmlHttp.send( null );
-    if(xmlHttp.status==200){
-        var delegate_info = JSON.parse(xmlHttp.responseText)
-        var button_normal = document.getElementById('delegate_normal');
-        button_normal.innerHTML = delegate_info.normal_count + ' 正常出块';
-        var button_stop = document.getElementById('delegate_stop');
-        button_stop.innerHTML = delegate_info.stop_count + ' 未出块';
-        var table = document.getElementById('delegate_table');
+    xmlHttp.open( "GET", "/lbtc/delegate_api?type=active", true ); // false for synchronous request
+    xmlHttp.onreadystatechange = function(e) {
+        if (this.readyState == 4 && this.status == 200) {
+            var delegate_info = JSON.parse(this.responseText)
+            var button_normal = document.getElementById('delegate_normal');
+            button_normal.innerHTML = delegate_info.normal_count + ' 正常出块';
+            var button_stop = document.getElementById('delegate_stop');
+            button_stop.innerHTML = delegate_info.stop_count + ' 未出块';
+            var table = document.getElementById('delegate_table');
 
-        var table_length = table.rows.length;
-        for (var i = 0; i < table_length; i++){
-            var row = table.rows[i+1];
-            row.cells[0].innerHTML = delegate_info.delegate_info[i].index;
-            row.cells[1].innerHTML = '<a href="/lbtc/address?address=' + delegate_info.delegate_info[i]._id + '">' + delegate_info.delegate_info[i].name + '</a>'
-            row.cells[2].innerHTML = '<a href="/lbtc/address?address=' + delegate_info.delegate_info[i]._id + '">' + delegate_info.delegate_info[i]._id + '</a>'
-            row.cells[3].innerHTML = delegate_info.delegate_info[i].votes;
-            row.cells[4].innerHTML = delegate_info.delegate_info[i].ratio;
-            if(delegate_info.delegate_info[i].failed_daily > 9){
-                row.cells[5].innerHTML = '<span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].failed_daily;
-            } else {
-                row.cells[5].innerHTML = '<span style="color: #009900;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF6666;">' + delegate_info.delegate_info[i].failed_daily;
+            for (var i = 0; i < 101; i++){
+                var row = table.rows[i+1];
+                if(!row) continue;
+                row.cells[0].innerHTML = delegate_info.delegate_info[i].index;
+                row.cells[1].innerHTML = '<a href="/lbtc/address?address=' + delegate_info.delegate_info[i]._id + '">' + delegate_info.delegate_info[i].name + '</a>'
+                row.cells[2].innerHTML = '<a href="/lbtc/address?address=' + delegate_info.delegate_info[i]._id + '">' + delegate_info.delegate_info[i]._id + '</a>'
+                row.cells[3].innerHTML = delegate_info.delegate_info[i].votes;
+                row.cells[4].innerHTML = delegate_info.delegate_info[i].ratio;
+                if(delegate_info.delegate_info[i].failed_daily > 14){
+                    row.cells[5].innerHTML = '<span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].failed_daily;
+                } else {
+                    row.cells[5].innerHTML = '<span style="color: #009900;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF6666;">' + delegate_info.delegate_info[i].failed_daily;
+                }
+                if(delegate_info.delegate_info[i].active == 1){
+                    row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'出块中\');" onmouseleave="hide_delegate_info()";> </span>';
+                } else if (delegate_info.delegate_info[i].status == 1){
+                    row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'等待出块\');" onmouseleave="hide_delegate_info()";> </span>';
+                } else {
+                    row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'未出块\');" onmouseleave="hide_delegate_info()";> </span>';
+                }
             }
-            if(delegate_info.delegate_info[i].active == 1){
-                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'出块中\');" onmouseleave="hide_delegate_info()";> </span>';
-            } else if (delegate_info.delegate_info[i].status == 1){
-                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'等待出块\');" onmouseleave="hide_delegate_info()";> </span>';
-            } else {
-                row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'未出块\');" onmouseleave="hide_delegate_info()";> </span>';
-            }
+        } else if (this.readyState == 4 && this.status != 200) {
+            console.log(this.responseText);
+        } else {
         }
-        //able.innerHTML = "";
-        /*
-        while ( table.rows.length > 0 )
-        {
-            table.deleteRow(0);
-        }
-        */
-        
-        //table.deleteRow();
-    } else {
-        console.log(xmlHttp.responseText);
-    }
+    };
+    xmlHttp.send();
     return ;
 }
 

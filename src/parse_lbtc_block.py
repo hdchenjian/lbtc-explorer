@@ -168,6 +168,8 @@ def parse_lbtc_block_main():
                 print("error: index 0 not coinbase")
                 raise ValueError()
             # print(current_delegate_address, current_delegate, current_index, not_working_delegate)
+            if not_working_delegate:
+                print('current_height ', current_height, datetime.datetime.now(), not_working_delegate)
 
             vin_tx_id = []
             tx_id_to_raw_tx_info = {}
