@@ -36,7 +36,7 @@ def parse_lbtc_delegate():
         best_height = block_status['height'] - 1
         #best_height = 7006 + 3
         current_height = 7005
-        print('start from height ', current_height)
+        print('start from height ', current_height, 'best_height: ', best_height)
         next_block_hash = ''
         address_to_delegate_info = {}
         for _delegate_info in query_all_delegate():
@@ -46,6 +46,7 @@ def parse_lbtc_delegate():
         delegate_rate = {}
         current_delegate = []
         while current_height <= best_height:
+            current_delegate_list = []
             if not next_block_hash:
                 next_block_hash = rpc_connection.getblockhash(current_height)
             current_block_info = rpc_connection.getblock(next_block_hash)
@@ -60,9 +61,10 @@ def parse_lbtc_delegate():
                         current_delegate = []
                         for _delegate in _vout['delegates']:
                             if _delegate in address_to_delegate_info:
+                                current_delegate_list.append(_delegate)
                                 current_delegate.append(_delegate)
                                 if _delegate not in delegate_rate:
-                                    delegate_rate[_delegate] = {'block_vote': 1, 'block_product': 0, 'status': False}
+                                    delegate_rate[_delegate] = {'block_vote': 1, 'block_product': 0}
                                 else:
                                     delegate_rate[_delegate]['block_vote'] += 1
                         #print('current_delegate', current_delegate, len(current_delegate))
@@ -72,9 +74,12 @@ def parse_lbtc_delegate():
                     if len(tx_info['vout'][0]['scriptPubKey']['addresses']) != 1:
                         raise ValueError('vout multi addresses')
                     current_delegate_address = tx_info['vout'][0]['scriptPubKey']['addresses'][0]
-                    delegate_rate[current_delegate_address]['block_product'] += 1
-                    delegate_rate[current_delegate_address]['status'] = True
-                    current_index = current_delegate.index(current_delegate_address)
+                    if current_delegate_address in delegate_rate:
+                        delegate_rate[current_delegate_address]['block_product'] += 1
+                        current_index = current_delegate.index(current_delegate_address)
+                        if current_index == 0 and not current_delegate_list:
+                            print('current_index == 0 and not current_delegate_list error\n\n\n')
+                            return
             else:
                 print("error: index 0 not coinbase")
                 raise ValueError()
@@ -129,14 +134,14 @@ def parse_lbtc_block_main():
 
             current_delegate_mysql = get_block_status(REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)
             current_delegate_address = None
-            current_delegate = []
+            current_delegate_list = []
             not_working_delegate = []
             current_index = ''
             tx_info = rpc_connection.gettransactionnew(current_block_info['tx'][0])
             if 'coinbase' in tx_info['vin'][0]:
                 for _vout in tx_info['vout']:
                     if 'delegates' in _vout:
-                        current_delegate = _vout['delegates']
+                        current_delegate_list = _vout['delegates']
                     else:
                         pass
                 if tx_info['vout'][0]['scriptPubKey']['type'] == 'pubkeyhash' or \
@@ -144,8 +149,8 @@ def parse_lbtc_block_main():
                     if len(tx_info['vout'][0]['scriptPubKey']['addresses']) != 1:
                         raise ValueError('vout multi addresses')
                     current_delegate_address = tx_info['vout'][0]['scriptPubKey']['addresses'][0]
-                    if current_delegate:
-                        current_index = current_delegate.index(current_delegate_address)
+                    if current_delegate_list:
+                        current_index = current_delegate_list.index(current_delegate_address)
                     else:
                         current_index = current_delegate_mysql['current_delegate'].index(current_delegate_address)
                     if current_index > current_delegate_mysql['index']:
@@ -157,9 +162,9 @@ def parse_lbtc_block_main():
                     else:
                         for _index in range(current_delegate_mysql['index'] + 1, 101):
                             not_working_delegate.append(current_delegate_mysql['current_delegate'][_index])
-                        if current_delegate:
+                        if current_delegate_list:
                             for _index in range(0, current_index):
-                                not_working_delegate.append(current_delegate[_index])
+                                not_working_delegate.append(current_delegate_list[_index])
                         else:
                             pass
                 else:
@@ -167,9 +172,28 @@ def parse_lbtc_block_main():
             else:
                 print("error: index 0 not coinbase")
                 raise ValueError()
-            # print(current_delegate_address, current_delegate, current_index, not_working_delegate)
+            # print(current_delegate_address, current_delegate_list, current_index, not_working_delegate)
+            if current_index == 0 and not current_delegate_list:
+                print('current_index == 0 and not current_delegate_list error\n\n\n')
+                return
+                #raise ValueError('current_index == 0 and not current_delegate_list error')
             if not_working_delegate:
-                print('current_height ', current_height, datetime.datetime.now(), not_working_delegate)
+                print('current_height: ', current_height, current_delegate_address, current_index,
+                      'current_delegate_list: ', current_delegate_list, current_delegate_mysql, 'not_working_delegate: ', not_working_delegate)
+            '''
+            current_height += 1
+            if 'nextblockhash' not in current_block_info:
+                break
+            next_block_hash = current_block_info['nextblockhash']
+            current_delegate_mysql_new = {}
+            current_delegate_mysql_new['index'] = current_index
+            if current_delegate_list:
+                current_delegate_mysql_new['current_delegate'] = current_delegate_list
+            else:
+                current_delegate_mysql_new['current_delegate'] = current_delegate_mysql['current_delegate']
+            update_block_status(REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE, current_delegate_mysql_new)
+            continue
+            '''
 
             vin_tx_id = []
             tx_id_to_raw_tx_info = {}
@@ -275,7 +299,7 @@ def parse_lbtc_block_main():
             current_height += 1
             update_many_address_info(need_update, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
                                      {'height': current_height},
-                                     current_delegate_address, current_delegate,
+                                     current_delegate_address, current_delegate_list,
                                      current_index, not_working_delegate, current_delegate_mysql,
                                      REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)
             if 'nextblockhash' not in current_block_info:
@@ -507,5 +531,6 @@ def parse_lbtc_block():
 
 if __name__ == '__main__':
     #query_all_delegate_local()
-    #parse_lbtc_delegate()
-    parse_lbtc_block()
+    parse_lbtc_delegate()
+    #parse_lbtc_block()
+    #parse_lbtc_block_main()

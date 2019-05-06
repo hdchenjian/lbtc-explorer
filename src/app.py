@@ -36,7 +36,7 @@ config.from_object(config_online)
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000/day, 15/minute"])
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000/day, 30/minute"])
 
 
 address_daily_info_global = None
@@ -476,6 +476,10 @@ def lbtc_delegate_api():
         for _delegate in current_delegate:
             if _delegate in address_to_delegate:
                 address_to_delegate[_delegate]['index'] = index
+                if 'block_product' in address_to_delegate[_delegate]:
+                    address_to_delegate[_delegate].pop('block_product')
+                if 'block_vote' in address_to_delegate[_delegate]:
+                    address_to_delegate[_delegate].pop('block_vote')
                 delegate_info.append(address_to_delegate[_delegate])
                 index += 1
     ret = {'delegate_info': delegate_info, 'type': delegate_type,
