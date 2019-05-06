@@ -80,6 +80,9 @@ def parse_lbtc_delegate():
                         if current_index == 0 and not current_delegate_list:
                             print('current_index == 0 and not current_delegate_list error\n\n\n')
                             return
+                    else:
+                        print(delegate_rate)
+                        return
             else:
                 print("error: index 0 not coinbase")
                 raise ValueError()
@@ -180,6 +183,8 @@ def parse_lbtc_block_main():
             if not_working_delegate:
                 print('current_height: ', current_height, current_delegate_address, current_index,
                       'current_delegate_list: ', current_delegate_list, current_delegate_mysql, 'not_working_delegate: ', not_working_delegate)
+                if len(not_working_delegate) > 1:
+                    print('many_not_working_delegate')
             '''
             current_height += 1
             if 'nextblockhash' not in current_block_info:
@@ -490,6 +495,12 @@ def parse_lbtc_block():
     update_address_growth_daily_info_time = None
     query_all_delegate_time = None
     while(True):
+        config_file = open('exit_parse', 'rU')
+        for line in config_file.readlines():
+            if(int(line)):
+                print('exit_parse exit')
+                config_file.close()
+                exit()
         parse_lbtc_block_main()
 
         time_now = datetime.datetime.now()
@@ -531,6 +542,5 @@ def parse_lbtc_block():
 
 if __name__ == '__main__':
     #query_all_delegate_local()
-    parse_lbtc_delegate()
-    #parse_lbtc_block()
-    #parse_lbtc_block_main()
+    #parse_lbtc_delegate()
+    parse_lbtc_block()
