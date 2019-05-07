@@ -1,3 +1,10 @@
+backup_db/
+backup_db/
+backup_db/
+run/
+src/logs/parse_lbtc_block.log
+src/logs/update_delegate_committee.log
+src/valid.py
 src/geoip/COPYRIGHT.txt
 src/geoip/GeoLite2-ASN.mmdb
 src/geoip/GeoLite2-City.mmdb
