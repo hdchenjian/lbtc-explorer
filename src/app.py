@@ -43,6 +43,11 @@ address_daily_info_global = None
 transaction_daily_info_global = None
 transaction_daily_info_global_update_time = None
 
+delegate_count_global = 0
+normal_count_global = 0
+stop_count_global = 0
+delegate_info_global = []
+delegate_info_global_update_time = None
 
 @app.route('/lbtc/explorer', methods=['GET'])
 def lbtc_index():
@@ -434,57 +439,66 @@ def lbtc_bill():
 @limiter.limit("35/minute")
 def lbtc_delegate_api():
     delegate_type = request.args.get('type', '')
-    delegate_info = query_all_delegate()
-    current_delegate = get_block_status(REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)['current_delegate']
-
-    current_delegate_dict = {}
-    for _delegate in current_delegate:
-        current_delegate_dict[_delegate] = 1
+    global delegate_count_global
+    global normal_count_global
+    global stop_count_global
+    global delegate_info_global
+    global delegate_info_global_update_time
+    time_now = datetime.datetime.now()
+    if delegate_info_global_update_time is None or \
+       (time_now - delegate_info_global_update_time).total_seconds() > 0.2:
+        delegate_info_global_update_time = time_now
+        delegate_count_global = 0
+        normal_count_global = 0
+        stop_count_global = 0
+        delegate_info_global = query_all_delegate()
+        current_delegate = get_block_status(REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)['current_delegate']
     
-    delegate_count = 0
-    normal_count = 0
-    stop_count = 0
-    delegate_info_filter = []
-    index = 1
-    for _delegate in delegate_info:
-        _delegate['ratio'] = '{0:.2f}%'.format(_delegate.get('ratio', 0) * 100)
-        delegate_count += 1
-        if _delegate['_id'] in current_delegate_dict:
-            if _delegate['status'] == 1:
-                normal_count += 1
-            else:
-                stop_count += 1
-        if delegate_type == 'active':
-            if _delegate['_id'] in current_delegate_dict:
-                delegate_info_filter.append(_delegate)
-        elif delegate_type == 'normal':
-            if _delegate['_id'] in current_delegate_dict and _delegate['status'] == 1:
-                _delegate['index'] = index
-                delegate_info_filter.append(_delegate)
-        elif delegate_type == 'stop':
-            if _delegate['_id'] in current_delegate_dict and _delegate['status'] == 0:
-                _delegate['index'] = index
-                index += 1
-                delegate_info_filter.append(_delegate)
-    if delegate_info_filter:
-        delegate_info = delegate_info_filter
-    address_to_delegate = {}
-    if delegate_type == 'active' or delegate_type == 'normal':
-        for _delegate in delegate_info:
-            address_to_delegate[_delegate['_id']] = _delegate
-        delegate_info = []
+        current_delegate_dict = {}
         for _delegate in current_delegate:
-            if _delegate in address_to_delegate:
-                address_to_delegate[_delegate]['index'] = index
-                if 'block_product' in address_to_delegate[_delegate]:
-                    address_to_delegate[_delegate].pop('block_product')
-                if 'block_vote' in address_to_delegate[_delegate]:
-                    address_to_delegate[_delegate].pop('block_vote')
-                delegate_info.append(address_to_delegate[_delegate])
-                index += 1
-    ret = {'delegate_info': delegate_info, 'type': delegate_type,
-           'delegate_count': delegate_count, 'normal_count': normal_count,
-           'stop_count': stop_count}
+            current_delegate_dict[_delegate] = 1
+        
+        delegate_info_filter = []
+        index = 1
+        for _delegate in delegate_info_global:
+            _delegate['ratio'] = '{0:.2f}%'.format(_delegate.get('ratio', 0) * 100)
+            delegate_count_global += 1
+            if _delegate['_id'] in current_delegate_dict:
+                if _delegate['status'] == 1:
+                    normal_count_global += 1
+                else:
+                    stop_count_global += 1
+            if delegate_type == 'active':
+                if _delegate['_id'] in current_delegate_dict:
+                    delegate_info_filter.append(_delegate)
+            elif delegate_type == 'normal':
+                if _delegate['_id'] in current_delegate_dict and _delegate['status'] == 1:
+                    _delegate['index'] = index
+                    delegate_info_filter.append(_delegate)
+            elif delegate_type == 'stop':
+                if _delegate['_id'] in current_delegate_dict and _delegate['status'] == 0:
+                    _delegate['index'] = index
+                    index += 1
+                    delegate_info_filter.append(_delegate)
+        if delegate_info_filter:
+            delegate_info_global = delegate_info_filter
+        address_to_delegate = {}
+        if delegate_type == 'active' or delegate_type == 'normal':
+            for _delegate in delegate_info_global:
+                address_to_delegate[_delegate['_id']] = _delegate
+            delegate_info_global = []
+            for _delegate in current_delegate:
+                if _delegate in address_to_delegate:
+                    address_to_delegate[_delegate]['index'] = index
+                    if 'block_product' in address_to_delegate[_delegate]:
+                        address_to_delegate[_delegate].pop('block_product')
+                    if 'block_vote' in address_to_delegate[_delegate]:
+                        address_to_delegate[_delegate].pop('block_vote')
+                    delegate_info_global.append(address_to_delegate[_delegate])
+                    index += 1
+    ret = {'delegate_info': delegate_info_global, 'type': delegate_type,
+           'delegate_count': delegate_count_global, 'normal_count': normal_count_global,
+           'stop_count': stop_count_global}
     return jsonify(ret)
 
 
