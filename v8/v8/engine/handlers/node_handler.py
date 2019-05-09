@@ -798,9 +798,10 @@ def update_network_tx_statistics(key, network_tx_statistics):
                    .filter(AddressInfo.create_time > time_14d_ago) \
                    .count()
         network_tx_statistics_old = get_block_status(key)
-        for _key in network_tx_statistics_old:
-            if _key not in network_tx_statistics:
-                network_tx_statistics[_key] = network_tx_statistics_old[_key]
+        if network_tx_statistics_old:
+            for _key in network_tx_statistics_old:
+                if _key not in network_tx_statistics:
+                    network_tx_statistics[_key] = network_tx_statistics_old[_key]
         update_block_status(key, network_tx_statistics)
 
 

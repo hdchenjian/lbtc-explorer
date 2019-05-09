@@ -29,9 +29,6 @@ config.from_object(config_online)
 def parse_lbtc_delegate():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
-        best_block_hash = rpc_connection.getbestblockhash()
-        best_block = rpc_connection.getblock(best_block_hash)
-        best_height = best_block['height']
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
         best_height = block_status['height'] - 1
         #best_height = 7006 + 3
@@ -87,7 +84,8 @@ def parse_lbtc_delegate():
                 print("error: index 0 not coinbase")
                 raise ValueError()
 
-            print('current_height ', current_height)
+            if current_height % 100000 == 0:
+                print('current_height ', current_height)
             current_height += 1
             if 'nextblockhash' not in current_block_info:
                 break
@@ -118,7 +116,7 @@ def parse_lbtc_block_main():
     try:
         best_block_hash = rpc_connection.getbestblockhash()
         best_block = rpc_connection.getblock(best_block_hash)
-        best_height = best_block['height']
+        best_height = best_block['height'] - 6
         # best_height = 14
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
         if not block_status:
@@ -136,6 +134,7 @@ def parse_lbtc_block_main():
                 break
 
             current_delegate_mysql = get_block_status(REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)
+            #current_delegate_mysql = None
             current_delegate_address = None
             current_delegate_list = []
             not_working_delegate = []
@@ -185,6 +184,7 @@ def parse_lbtc_block_main():
                       'current_delegate_list: ', current_delegate_list, current_delegate_mysql, 'not_working_delegate: ', not_working_delegate)
                 if len(not_working_delegate) > 1:
                     print('many_not_working_delegate')
+
             '''
             current_height += 1
             if 'nextblockhash' not in current_block_info:
@@ -332,3 +332,4 @@ def parse_lbtc_block():
 if __name__ == '__main__':
     #parse_lbtc_delegate()
     parse_lbtc_block()
+    #parse_lbtc_block_main()

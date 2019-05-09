@@ -112,9 +112,9 @@
                 {{ _info["ratio"] }}
               </td>
               <td class="text-center">
-                {% if _info["failed_daily"] > 9 %}
-                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["success_daily"] }} </span>/
-                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["failed_daily"] }} </span>
+                {% if _info["failed_daily"] > 999999 %}
+                <span style="color: #FF0000;"> {{ _info["success_daily"] }} </span>/
+                <span style="color: #FF0000;"> {{ _info["failed_daily"] }} </span>
                 {% else %}
                 <span style="color: #009900;"> {{ _info["success_daily"] }} </span>/
                 <span style="color: #FF6666;"> {{ _info["failed_daily"] }} </span>
@@ -174,9 +174,9 @@
                 {{ _info["ratio"] }}
               </td>
               <td class="text-center">
-                {% if _info["failed_daily"] > 9 %}
-                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["success_daily"] }} </span>/
-                <span style="color: #FF0000;font-size:20px;font-weight:bold;"> {{ _info["failed_daily"] }} </span>
+                {% if _info["failed_daily"] > 999999 %}
+                <span style="color: #FF0000;"> {{ _info["success_daily"] }} </span>/
+                <span style="color: #FF0000;"> {{ _info["failed_daily"] }} </span>
                 {% else %}
                 <span style="color: #009900;"> {{ _info["success_daily"] }} </span>/
                 <span style="color: #FF6666;"> {{ _info["failed_daily"] }} </span>
@@ -223,8 +223,8 @@ function httpGetDelegate() {
                 row.cells[2].innerHTML = '<a href="/lbtc/address?address=' + delegate_info.delegate_info[i]._id + '">' + delegate_info.delegate_info[i]._id + '</a>'
                 row.cells[3].innerHTML = delegate_info.delegate_info[i].votes;
                 row.cells[4].innerHTML = delegate_info.delegate_info[i].ratio;
-                if(delegate_info.delegate_info[i].failed_daily > 9){
-                    row.cells[5].innerHTML = '<span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF0000;font-size:20px;font-weight:bold;">' + delegate_info.delegate_info[i].failed_daily;
+                if(delegate_info.delegate_info[i].failed_daily > 999999){
+                    row.cells[5].innerHTML = '<span style="color: #FF0000;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF0000;">' + delegate_info.delegate_info[i].failed_daily;
                 } else {
                     row.cells[5].innerHTML = '<span style="color: #009900;">' + delegate_info.delegate_info[i].success_daily + '</span> / <span style="color: #FF6666;">' + delegate_info.delegate_info[i].failed_daily;
                 }
