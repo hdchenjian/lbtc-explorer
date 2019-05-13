@@ -20,3 +20,4 @@ REST_BLOCK_STATUS_KYE_NETWORK_TX_STATISTICS = 'rest_block_status:key_network_tx_
 REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE = 'rest_block_status:key_current_delegate'
 
 PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT = 'parse_block_status:kye_mysql_current_height'
+PARSE_BLOCK_STATUS_KYE_MYSQL_VALID_TX_HEIGHT = 'parse_block_status:kye_mysql_valid_tx_height'

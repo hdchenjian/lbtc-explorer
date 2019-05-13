@@ -36,7 +36,7 @@ config.from_object(config_online)
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["35/minute"])
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["2000/day; 31/minute"])
 
 
 address_daily_info_global = None
@@ -436,7 +436,7 @@ def lbtc_bill():
 
 
 @app.route('/lbtc/delegate_api', methods=['GET'])
-@limiter.limit("35/minute")
+@limiter.limit("60/minute")
 def lbtc_delegate_api():
     delegate_type = request.args.get('type', '')
     global delegate_count_global
