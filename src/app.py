@@ -5,6 +5,9 @@ import datetime
 import time
 import traceback
 from decimal import Decimal
+import re
+import pprint
+import json
 
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
@@ -75,7 +78,6 @@ def lbtc_rpc():
             index += 1
         cmd_help = rpc_connection.help(cmd)
         index_param = 0
-        print('params', params)
         if cmd_help.find('Arguments:') > 0:
             cmd_params = cmd_help[cmd_help.find('Arguments:') + len('Arguments:') : cmd_help.find('Result')]
             cmd_params = cmd_params.split('\n')
@@ -106,7 +108,6 @@ def lbtc_rpc():
         _function = getattr(rpc_connection, cmd)
         if cmd == 'gettxoutproof':
             params[0] = [params[0]]
-        print(_function, params)
         if _function:
             try:
                 result = _function(*params)

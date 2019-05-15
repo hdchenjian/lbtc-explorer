@@ -25,7 +25,7 @@ def rpc_doc():
             _function_name = _function.split(' ')[0]
         all_function.append(_function_name)
         
-        supported_commands += ('<li><a href="/rpc?cmd=%s">%s</a></li>\n' % (_function_name, _function_name))
+        supported_commands += ('<li><a href="/lbtc/rpc?cmd=%s">%s</a></li>\n' % (_function_name, _function_name))
         #print(all_function)
     html_header = '''{% extends "rpc/base.html" %}
     {% block body %}
@@ -72,7 +72,7 @@ def rpc_doc():
         doc_file = open('templates/rpc/' + _function + '.html', 'w')
         cmd_help = rpc_connection.help(_function)
         api_form_start = '''
-        <form method="GET" action="/rpc">
+        <form method="GET" action="/lbtc/rpc">
           <div class="form-group">
             <input id='run' type="hidden" name="run" value="1" />
             <input id='param0' type="hidden" name="cmd" value="%s" />
