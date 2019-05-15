@@ -52,12 +52,35 @@ stop_count_global = 0
 delegate_info_global = []
 delegate_info_global_update_time = None
 
+all_rpc_function = []
 
 @app.route('/lbtc/rpc', methods=['GET'])
 def lbtc_rpc():
     cmd = request.args.get('cmd', '')
     run = int(request.args.get('run', '0'))
     result = 'default_string_doc'
+    global all_rpc_function
+    if not all_rpc_function:
+        rpc_connection_local = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+        all_function_str = rpc_connection_local.help()
+        all_function_str = all_function_str.split('\n')
+
+        all_rpc_function_local = []
+        for _function in all_function_str:
+            if not _function:
+                continue
+            if '== ' in _function:
+                continue
+            if ' ' not in _function:
+                _function_name = _function
+            else:
+                _function_name = _function.split(' ')[0]
+            all_rpc_function_local.append(_function_name)
+        all_rpc_function = all_rpc_function_local
+
+    if cmd not in all_rpc_function:
+        flash(u'Command not found: ' + cmd , 'error')
+        return render_template('rpc/getblock' + '.html')
     if run:
         if cmd in ['getdifficulty', 'pruneblockchain', 'stop', 'disconnectnode', 'setban',
                    'setnetworkactive', 'backupwallet', 'dumpprivkey', 'dumpwallet',
@@ -68,7 +91,6 @@ def lbtc_rpc():
 
         index = 1
         params = []
-        rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
         while True:
             param_name = 'param' + str(index)
             if param_name not in request.args:
@@ -76,6 +98,7 @@ def lbtc_rpc():
             if request.args[param_name]:
                 params.append(request.args[param_name].strip(' '))
             index += 1
+        rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
         cmd_help = rpc_connection.help(cmd)
         index_param = 0
         if cmd_help.find('Arguments:') > 0:
@@ -92,16 +115,16 @@ def lbtc_rpc():
                         if 'numeric' in param_type and index_param < len(params):
                             params[index_param] = params[index_param]
                     elif cmd == 'createrawtransaction':
-                        if index_param < 2:
+                        if index_param < len(params) and index_param < 2:
                             params[index_param] = json.loads(params[index_param])
-                        elif params[index_param]:
+                        elif index_param < len(params) and params[index_param]:
                             params[index_param] = int(params[index_param])
                     else:
                         if 'numeric' in param_type and index_param < len(params):
                             params[index_param] = int(params[index_param])
                 except Exception as e:
                     traceback.print_exc()
-                    flash(u'run command failed: the ' + str(index_param + 1) + ' th parameter should a number' , 'error')
+                    flash(u'run command failed: the ' + str(index_param + 1) + 'th parameter should a number' , 'error')
                     return render_template('rpc/' + cmd + '.html')
                 index_param += 1
 

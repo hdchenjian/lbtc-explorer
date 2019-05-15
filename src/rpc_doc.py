@@ -139,7 +139,7 @@ def rpc_doc():
 this will send the two address 0.01 LBTC each
 
 Result is the hex string of the transaction.
-You can use decoderawtransaction command to decode the hex-encoded transaction.
+You can use <a href="/lbtc/rpc?cmd=decoderawtransaction">decoderawtransaction</a> command to decode the hex-encoded transaction.
     </pre>
             '''
         doc_file.write(html_header + _function + command_parameter + api_form_start + api_params + api_form_end +
