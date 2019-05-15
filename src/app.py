@@ -49,6 +49,79 @@ stop_count_global = 0
 delegate_info_global = []
 delegate_info_global_update_time = None
 
+
+@app.route('/lbtc/rpc', methods=['GET'])
+def lbtc_rpc():
+    cmd = request.args.get('cmd', '')
+    run = int(request.args.get('run', '0'))
+    result = 'default_string_doc'
+    if run:
+        if cmd in ['getdifficulty', 'pruneblockchain', 'stop', 'disconnectnode', 'setban',
+                   'setnetworkactive', 'backupwallet', 'dumpprivkey', 'dumpwallet',
+                   'encryptwallet']:
+            return render_template('rpc/' + cmd + '.html', result=0)
+        if cmd in ['getmempoolancestors', 'getmempooldescendants', 'getmempoolentry']:
+            return render_template('rpc/' + cmd + '.html', result=[])
+
+        index = 1
+        params = []
+        rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
+        while True:
+            param_name = 'param' + str(index)
+            if param_name not in request.args:
+                break
+            if request.args[param_name]:
+                params.append(request.args[param_name].strip(' '))
+            index += 1
+        cmd_help = rpc_connection.help(cmd)
+        index_param = 0
+        print('params', params)
+        if cmd_help.find('Arguments:') > 0:
+            cmd_params = cmd_help[cmd_help.find('Arguments:') + len('Arguments:') : cmd_help.find('Result')]
+            cmd_params = cmd_params.split('\n')
+            for _param in cmd_params:
+                if not _param:
+                    continue
+                if not re.match('[0-9]\. ', _param):
+                    continue
+                param_type = _param[_param.find(' (') : _param.find(') ')]
+                try:
+                    if cmd == 'settxfee':
+                        if 'numeric' in param_type and index_param < len(params):
+                            params[index_param] = params[index_param]
+                    elif cmd == 'createrawtransaction':
+                        if index_param < 2:
+                            params[index_param] = json.loads(params[index_param])
+                        elif params[index_param]:
+                            params[index_param] = int(params[index_param])
+                    else:
+                        if 'numeric' in param_type and index_param < len(params):
+                            params[index_param] = int(params[index_param])
+                except Exception as e:
+                    traceback.print_exc()
+                    flash(u'run command failed: the ' + str(index_param + 1) + ' th parameter should a number' , 'error')
+                    return render_template('rpc/' + cmd + '.html')
+                index_param += 1
+
+        _function = getattr(rpc_connection, cmd)
+        if cmd == 'gettxoutproof':
+            params[0] = [params[0]]
+        print(_function, params)
+        if _function:
+            try:
+                result = _function(*params)
+            except Exception as e:
+                traceback.print_exc()
+                flash(u'run command failed: ' + str(e), 'error')
+                return render_template('rpc/' + cmd + '.html')
+            result = pprint.pformat(result)
+        return render_template('rpc/' + cmd + '.html', result=result)
+    if not cmd:
+        return render_template('rpc/getblock' + '.html')
+    else:
+        return render_template('rpc/' + cmd + '.html', result=result)
+
+
 @app.route('/lbtc/explorer', methods=['GET'])
 def lbtc_index():
     lbtc_info = {}

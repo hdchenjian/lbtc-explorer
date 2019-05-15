@@ -67,7 +67,7 @@ def delete_node(ip):
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
         count = 0
         try:
-            count = session.query(LbtcNode).filter(LbtcNode.ip == ip).delete()
+            count = session.query(LbtcNode).filter(LbtcNode.ip == ip).delete(synchronize_session=False)
             session.commit()
         except Exception:
             session.rollback()
@@ -177,7 +177,7 @@ def delete_not_valid_node(node_ip):
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
         count = 0
         try:
-            count = session.query(NodeNotValid).filter(NodeNotValid.ip == node_ip).delete()
+            count = session.query(NodeNotValid).filter(NodeNotValid.ip == node_ip).delete(synchronize_session=False)
             session.commit()
             return count
         except Exception:
@@ -556,7 +556,7 @@ def delete_block_info(height):
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
         count = 0
         try:
-            count = session.query(BlockInfo).filter(BlockInfo.height == height).delete()
+            count = session.query(BlockInfo).filter(BlockInfo.height == height).delete(synchronize_session=False)
             session.commit()
             return count
         except Exception:

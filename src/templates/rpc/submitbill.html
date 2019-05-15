@@ -1,0 +1,239 @@
+{% extends "rpc/base.html" %}
+    {% block body %}
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <h3>A web based interface to the LBTC API JSON-RPC</h3>
+          </div>
+          <div class="col-md-9">
+            <br/>
+            <h4>Command: submitbill</h4><br/><h4>Command parameter:</h4>
+        <form method="GET" action="/rpc">
+          <div class="form-group">
+            <input id='run' type="hidden" name="run" value="1" />
+            <input id='param0' type="hidden" name="cmd" value="submitbill" />
+          </div>
+        
+                <div class="form-group">
+                  <input size=55 id="param1" name="param1" value="" placeholder="address" required/>
+                </div>
+                
+                <div class="form-group">
+                  <input size=55 id="param2" name="param2" value="" placeholder="title" required/>
+                </div>
+                
+                <div class="form-group">
+                  <input size=55 id="param3" name="param3" value="" placeholder="detail" required/>
+                </div>
+                
+                <div class="form-group">
+                  <input size=55 id="param4" name="param4" value="" placeholder="url" required/>
+                </div>
+                
+                <div class="form-group">
+                  <input size=55 id="param5" name="param5" value="" placeholder="endtime" required/>
+                </div>
+                
+                <div class="form-group">
+                  <input size=55 id="param6" name="param6" value="" placeholder="options" required/>
+                </div>
+                
+                <div class="form-group">
+                  <input size=55 id="param7" name="param7" value="" placeholder="options" required/>
+                </div>
+                
+                <div class="form-group">
+                  <input size=55 id="param8" name="param8" value="" placeholder="options" required/>
+                </div>
+                
+            <button class="btn btn-primary" id="current_page_next_button" >Execute Command</button>
+            <br/><br/><br/>
+        </form>
+        
+        {% if result != 'default_string_doc' %}
+        <label class="control-label">Command Result</label>
+        <pre>{{ result }}</pre>
+        <br/><br/><br/>
+        {% endif %}
+        
+            <label class="control-label">RPC Help</label>
+            <pre>submitbill address title detail url endtime options
+
+submit bill.
+
+Arguments:
+1. "address"             (string, required) The lbtc address.
+2. "title"               (string, required) The bill title. The title not allow empty and the max length of title is 128 bytes.
+3. "detail"              (string, required) The bill detail infomation. The max length of detail is 256 bytes.
+4. "url"                 (string, required) The bill related url. The max length of url  is 256 bytes.
+5. "endtime"             (numeric, required) The bill duration in days.
+6. "options"             (string, required) The bill option1. The max lengh of option is 256 bytes.
+7. "options"             (string, required) The bill option2.
+8. "options"             (string, required) The other options. The max number of option is 16.
+
+Result:
+"{"
+    "txid:"                   (string) The transaction id.
+    "billid:"                 (string) The bill id.
+"}"
+
+Examples:
+&gt bitcoin-cli submitbill "1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd" "bill1" "modify test" "http://test.com/bill1" "24" "yes" "no"
+&gt curl --user myusername --data-binary '{"jsonrpc": "1.0", "id":"curltest", "method": "submitbill", "params": ["1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd", "bill1", "modify test", "http://test.com/bill1", "24", "yes", "no"] }' -H 'content-type: text/plain;' http://127.0.0.1:8332/
+
+            </pre>
+          </div>
+    
+          <div class="col-md-3">
+            <p>Supported Commands:</p>
+            <ul>
+        <li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Blockchain</p></li>
+<li><a href="/rpc?cmd=getaddresstxids">getaddresstxids</a></li>
+<li><a href="/rpc?cmd=getbestblockhash">getbestblockhash</a></li>
+<li><a href="/rpc?cmd=getblock">getblock</a></li>
+<li><a href="/rpc?cmd=getblockchaininfo">getblockchaininfo</a></li>
+<li><a href="/rpc?cmd=getblockcount">getblockcount</a></li>
+<li><a href="/rpc?cmd=getblockhash">getblockhash</a></li>
+<li><a href="/rpc?cmd=getblockheader">getblockheader</a></li>
+<li><a href="/rpc?cmd=getchaintips">getchaintips</a></li>
+<li><a href="/rpc?cmd=getdifficulty">getdifficulty</a></li>
+<li><a href="/rpc?cmd=getmempoolancestors">getmempoolancestors</a></li>
+<li><a href="/rpc?cmd=getmempooldescendants">getmempooldescendants</a></li>
+<li><a href="/rpc?cmd=getmempoolentry">getmempoolentry</a></li>
+<li><a href="/rpc?cmd=getmempoolinfo">getmempoolinfo</a></li>
+<li><a href="/rpc?cmd=getrawmempool">getrawmempool</a></li>
+<li><a href="/rpc?cmd=gettxout">gettxout</a></li>
+<li><a href="/rpc?cmd=gettxoutproof">gettxoutproof</a></li>
+<li><a href="/rpc?cmd=gettxoutsetinfo">gettxoutsetinfo</a></li>
+<li><a href="/rpc?cmd=preciousblock">preciousblock</a></li>
+<li><a href="/rpc?cmd=pruneblockchain">pruneblockchain</a></li>
+<li><a href="/rpc?cmd=verifychain">verifychain</a></li>
+<li><a href="/rpc?cmd=verifytxoutproof">verifytxoutproof</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Control</p></li>
+<li><a href="/rpc?cmd=getinfo">getinfo</a></li>
+<li><a href="/rpc?cmd=getmemoryinfo">getmemoryinfo</a></li>
+<li><a href="/rpc?cmd=help">help</a></li>
+<li><a href="/rpc?cmd=stop">stop</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Dpos</p></li>
+<li><a href="/rpc?cmd=cancelvote">cancelvote</a></li>
+<li><a href="/rpc?cmd=getdelegatefunds">getdelegatefunds</a></li>
+<li><a href="/rpc?cmd=getdelegatevotes">getdelegatevotes</a></li>
+<li><a href="/rpc?cmd=listdelegates">listdelegates</a></li>
+<li><a href="/rpc?cmd=listreceivedvotes">listreceivedvotes</a></li>
+<li><a href="/rpc?cmd=listvoteddelegates">listvoteddelegates</a></li>
+<li><a href="/rpc?cmd=register">register</a></li>
+<li><a href="/rpc?cmd=vote">vote</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Generating</p></li>
+<li><a href="/rpc?cmd=generate">generate</a></li>
+<li><a href="/rpc?cmd=generatetoaddress">generatetoaddress</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Govern</p></li>
+<li><a href="/rpc?cmd=cancelvotecommittee">cancelvotecommittee</a></li>
+<li><a href="/rpc?cmd=getbill">getbill</a></li>
+<li><a href="/rpc?cmd=getcommittee">getcommittee</a></li>
+<li><a href="/rpc?cmd=listbills">listbills</a></li>
+<li><a href="/rpc?cmd=listbillvoters">listbillvoters</a></li>
+<li><a href="/rpc?cmd=listcommitteebills">listcommitteebills</a></li>
+<li><a href="/rpc?cmd=listcommittees">listcommittees</a></li>
+<li><a href="/rpc?cmd=listcommitteevoters">listcommitteevoters</a></li>
+<li><a href="/rpc?cmd=listvoterbills">listvoterbills</a></li>
+<li><a href="/rpc?cmd=listvotercommittees">listvotercommittees</a></li>
+<li><a href="/rpc?cmd=registercommittee">registercommittee</a></li>
+<li><a href="/rpc?cmd=submitbill">submitbill</a></li>
+<li><a href="/rpc?cmd=votebill">votebill</a></li>
+<li><a href="/rpc?cmd=votecommittee">votecommittee</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Mining</p></li>
+<li><a href="/rpc?cmd=getblocktemplate">getblocktemplate</a></li>
+<li><a href="/rpc?cmd=getmininginfo">getmininginfo</a></li>
+<li><a href="/rpc?cmd=getnetworkhashps">getnetworkhashps</a></li>
+<li><a href="/rpc?cmd=prioritisetransaction">prioritisetransaction</a></li>
+<li><a href="/rpc?cmd=startforging">startforging</a></li>
+<li><a href="/rpc?cmd=stopforging">stopforging</a></li>
+<li><a href="/rpc?cmd=submitblock">submitblock</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Network</p></li>
+<li><a href="/rpc?cmd=addnode">addnode</a></li>
+<li><a href="/rpc?cmd=clearbanned">clearbanned</a></li>
+<li><a href="/rpc?cmd=disconnectnode">disconnectnode</a></li>
+<li><a href="/rpc?cmd=getaddednodeinfo">getaddednodeinfo</a></li>
+<li><a href="/rpc?cmd=getconnectioncount">getconnectioncount</a></li>
+<li><a href="/rpc?cmd=getnettotals">getnettotals</a></li>
+<li><a href="/rpc?cmd=getnetworkinfo">getnetworkinfo</a></li>
+<li><a href="/rpc?cmd=getpeerinfo">getpeerinfo</a></li>
+<li><a href="/rpc?cmd=listbanned">listbanned</a></li>
+<li><a href="/rpc?cmd=ping">ping</a></li>
+<li><a href="/rpc?cmd=setban">setban</a></li>
+<li><a href="/rpc?cmd=setnetworkactive">setnetworkactive</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Rawtransactions</p></li>
+<li><a href="/rpc?cmd=createrawtransaction">createrawtransaction</a></li>
+<li><a href="/rpc?cmd=decoderawtransaction">decoderawtransaction</a></li>
+<li><a href="/rpc?cmd=decodescript">decodescript</a></li>
+<li><a href="/rpc?cmd=fundrawtransaction">fundrawtransaction</a></li>
+<li><a href="/rpc?cmd=getrawtransaction">getrawtransaction</a></li>
+<li><a href="/rpc?cmd=sendrawtransaction">sendrawtransaction</a></li>
+<li><a href="/rpc?cmd=signrawtransaction">signrawtransaction</a></li>
+
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Rawtransactionsnew</p></li>
+<li><a href="/rpc?cmd=gettransactionnew">gettransactionnew</a></li>
+
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Util</p></li>
+<li><a href="/rpc?cmd=createmultisig">createmultisig</a></li>
+<li><a href="/rpc?cmd=estimatefee">estimatefee</a></li>
+<li><a href="/rpc?cmd=estimatepriority">estimatepriority</a></li>
+<li><a href="/rpc?cmd=estimatesmartfee">estimatesmartfee</a></li>
+<li><a href="/rpc?cmd=estimatesmartpriority">estimatesmartpriority</a></li>
+<li><a href="/rpc?cmd=signmessagewithprivkey">signmessagewithprivkey</a></li>
+<li><a href="/rpc?cmd=validateaddress">validateaddress</a></li>
+<li><a href="/rpc?cmd=verifymessage">verifymessage</a></li>
+<li style="list-style-type: none;"><p style="font-weight:bold; margin-top: 10px;margin-bottom: 0px;">Wallet</p></li>
+<li><a href="/rpc?cmd=abandontransaction">abandontransaction</a></li>
+<li><a href="/rpc?cmd=addmultisigaddress">addmultisigaddress</a></li>
+<li><a href="/rpc?cmd=addwitnessaddress">addwitnessaddress</a></li>
+<li><a href="/rpc?cmd=backupwallet">backupwallet</a></li>
+<li><a href="/rpc?cmd=bumpfee">bumpfee</a></li>
+<li><a href="/rpc?cmd=dumpprivkey">dumpprivkey</a></li>
+<li><a href="/rpc?cmd=dumpwallet">dumpwallet</a></li>
+<li><a href="/rpc?cmd=encryptwallet">encryptwallet</a></li>
+<li><a href="/rpc?cmd=getaccount">getaccount</a></li>
+<li><a href="/rpc?cmd=getaccountaddress">getaccountaddress</a></li>
+<li><a href="/rpc?cmd=getaddressbalance">getaddressbalance</a></li>
+<li><a href="/rpc?cmd=getaddressesbyaccount">getaddressesbyaccount</a></li>
+<li><a href="/rpc?cmd=getbalance">getbalance</a></li>
+<li><a href="/rpc?cmd=getcoindistribution">getcoindistribution</a></li>
+<li><a href="/rpc?cmd=getcoinrank">getcoinrank</a></li>
+<li><a href="/rpc?cmd=getnewaddress">getnewaddress</a></li>
+<li><a href="/rpc?cmd=getrawchangeaddress">getrawchangeaddress</a></li>
+<li><a href="/rpc?cmd=getreceivedbyaccount">getreceivedbyaccount</a></li>
+<li><a href="/rpc?cmd=getreceivedbyaddress">getreceivedbyaddress</a></li>
+<li><a href="/rpc?cmd=gettransaction">gettransaction</a></li>
+<li><a href="/rpc?cmd=getunconfirmedbalance">getunconfirmedbalance</a></li>
+<li><a href="/rpc?cmd=getwalletinfo">getwalletinfo</a></li>
+<li><a href="/rpc?cmd=importaddress">importaddress</a></li>
+<li><a href="/rpc?cmd=importmulti">importmulti</a></li>
+<li><a href="/rpc?cmd=importprivkey">importprivkey</a></li>
+<li><a href="/rpc?cmd=importprunedfunds">importprunedfunds</a></li>
+<li><a href="/rpc?cmd=importpubkey">importpubkey</a></li>
+<li><a href="/rpc?cmd=importwallet">importwallet</a></li>
+<li><a href="/rpc?cmd=keypoolrefill">keypoolrefill</a></li>
+<li><a href="/rpc?cmd=listaccounts">listaccounts</a></li>
+<li><a href="/rpc?cmd=listaddressgroupings">listaddressgroupings</a></li>
+<li><a href="/rpc?cmd=listlockunspent">listlockunspent</a></li>
+<li><a href="/rpc?cmd=listreceivedbyaccount">listreceivedbyaccount</a></li>
+<li><a href="/rpc?cmd=listreceivedbyaddress">listreceivedbyaddress</a></li>
+<li><a href="/rpc?cmd=listsinceblock">listsinceblock</a></li>
+<li><a href="/rpc?cmd=listtransactions">listtransactions</a></li>
+<li><a href="/rpc?cmd=listunspent">listunspent</a></li>
+<li><a href="/rpc?cmd=lockunspent">lockunspent</a></li>
+<li><a href="/rpc?cmd=move">move</a></li>
+<li><a href="/rpc?cmd=removeprunedfunds">removeprunedfunds</a></li>
+<li><a href="/rpc?cmd=sendfromaddress">sendfromaddress</a></li>
+<li><a href="/rpc?cmd=sendmany">sendmany</a></li>
+<li><a href="/rpc?cmd=sendtoaddress">sendtoaddress</a></li>
+<li><a href="/rpc?cmd=setaccount">setaccount</a></li>
+<li><a href="/rpc?cmd=settxfee">settxfee</a></li>
+<li><a href="/rpc?cmd=signmessage">signmessage</a></li>
+
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endblock %}
+    
