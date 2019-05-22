@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import multiprocessing
 
+from v8.engine import db_conn
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
     get_block_status, add_block_info, update_many_address_info, add_many_tx, \
@@ -23,6 +24,14 @@ config.from_object(config_online)
 
 @singleton('/tmp/valid_tx.pid')
 def valid_tx():
+    conn = db_conn.gen_mongo_connection('base')
+    current_delegate_info = conn.lbtc.lbtc_delegate.find({'index': {'$gt': -1}})
+    for _delegate in current_delegate_info:
+        if 'ratio' not in _delegate and _delegate.get('block_vote', 0) > 0:
+            conn.lbtc.lbtc_delegate.update_one(
+                {'_id': _delegate['_id']},
+                {'$set': {'ratio': _delegate.get('block_product', 0) / float(_delegate['block_vote'])}}, upsert=False)
+        
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
         best_block_hash = rpc_connection.getbestblockhash()

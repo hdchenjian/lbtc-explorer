@@ -4,6 +4,7 @@
 import datetime
 import time
 from decimal import Decimal
+import multiprocessing
 
 from v8.config import config, config_online
 from v8.engine.handlers.node_handler import find_many_tx, update_block_status, \
@@ -204,7 +205,7 @@ def update_network_tx_statistics_function(days):
 def update_delegate_committee():
     update_most_rich_address_time = None
     update_network_tx_statistics_time_1_day = None
-    update_network_tx_statistics_time_14_day = None
+    update_network_tx_statistics_time_14_day = datetime.datetime.now()
     update_address_growth_daily_info_time = None
     query_all_delegate_time = None
 
@@ -228,15 +229,16 @@ def update_delegate_committee():
             query_all_delegate_time = time_now
 
         if update_network_tx_statistics_time_1_day is None or \
-           (time_now - update_network_tx_statistics_time_1_day).total_seconds() > 300:
-            update_network_tx_statistics_function(1)
+           (time_now - update_network_tx_statistics_time_1_day).total_seconds() > 3600:
+            t1 = multiprocessing.Process(target=update_network_tx_statistics_function, args=(1,))
+            t1.start()
             update_network_tx_statistics_time_1_day = time_now
         if update_network_tx_statistics_time_14_day is None or \
-           (time_now - update_network_tx_statistics_time_14_day).total_seconds() > 3600 * 6:
-            update_network_tx_statistics_function(14)
+           (time_now - update_network_tx_statistics_time_14_day).total_seconds() > 3600 * 12:
+            t14 = multiprocessing.Process(target=update_network_tx_statistics_function, args=(14,))
+            t14.start()
             update_network_tx_statistics_time_14_day = time_now
         time.sleep(1)
-        break
 
 
 if __name__ == '__main__':

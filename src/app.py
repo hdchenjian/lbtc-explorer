@@ -78,7 +78,7 @@ def lbtc_rpc():
             all_rpc_function_local.append(_function_name)
         all_rpc_function = all_rpc_function_local
 
-    if cmd not in all_rpc_function:
+    if cmd and cmd not in all_rpc_function:
         flash(u'Command not found: ' + cmd , 'error')
         return render_template('rpc/getblock' + '.html')
     if run:

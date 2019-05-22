@@ -1,1 +1,1 @@
-#the mysql database engine for updating device form
+#the mysql database engine for LBTC explorer

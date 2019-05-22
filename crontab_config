@@ -21,6 +21,8 @@
 # 
 # m h  dom mon dow   command
 
-*/2 * * * * ((/home/ubuntu/webrtc/update_device/update_facedistribution/env/bin/python /home/ubuntu/webrtc/collider_server/clean_not_active_connection.py) >> /home/ubuntu/log/clean_not_active_connection_log)
-* * * * * ((/home/ubuntu/webrtc/update_device/update_facedistribution/env/bin/python /home/ubuntu/webrtc/update_device/update_facedistribution/src/update_rule_crontab.py) >> /home/ubuntu/log/update_rule_crontab_log)
-* * * * * ((/home/ubuntu/webrtc/update_device/update_facedistribution/env/bin/python /home/ubuntu/webrtc/update_device_test/update_facedistribution/src/update_rule_crontab.py) >> /home/ubuntu/log/update_rule_crontab_test_log)
+*/5 * * * * cd /home/ubuntu/.bin/lbtc/lbtcnode/src && /home/ubuntu/.bin/env/bin/python rpc.py >> logs/rpc_log.log
+*/3 * * * * cd /home/ubuntu/.bin/lbtc/lbtcnode/src && /home/ubuntu/.bin/env/bin/python crawl.py >> logs/crawl_log.log
+* * * * * cd /home/ubuntu/.bin/lbtc/lbtcnode/src && /usr/bin/python3 parse_lbtc_block.py >> logs/parse_lbtc_block.log 2>&1
+* * * * * cd /home/ubuntu/.bin/lbtc/lbtcnode/src && /usr/bin/python3 update_delegate_committee.py >> logs/update_delegate_committee.log 2>&1
+1 1 * * * cd /home/ubuntu/.bin/lbtc/lbtcnode/src && /usr/bin/python3 valid_tx.py >> logs/valid_tx.log 2>&1
