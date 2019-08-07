@@ -86,7 +86,7 @@ if __name__ == '__main__':
     valid_tx()
     '''
     conn = db_conn.gen_mongo_connection('base')
-    current_delegate_info = conn.lbtc.lbtc_delegate.find({'index': {'$gt': -1}})
+    current_delegate_info = conn.lbtc.lbtc_delegate.find({'index': {'$lt': 103}})
     for _delegate in current_delegate_info:
         conn.lbtc.lbtc_delegate.update_one({'_id': _delegate['_id']},
                 {'$set': {'failed_daily': 10, 'success_daily': 144 }}, upsert=False)
