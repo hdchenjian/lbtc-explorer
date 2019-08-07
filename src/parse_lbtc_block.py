@@ -116,7 +116,7 @@ def parse_lbtc_block_main():
     try:
         best_block_hash = rpc_connection.getbestblockhash()
         best_block = rpc_connection.getblock(best_block_hash)
-        best_height = best_block['height'] - 6
+        best_height = best_block['height'] - 18
         # best_height = 14
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
         if not block_status:

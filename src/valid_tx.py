@@ -43,6 +43,8 @@ def valid_tx():
         if not block_status:
             block_status = {'height': 5827263}
         current_height = block_status['height']
+        #current_height = 8235221
+        #best_height = 8275221
         print('start from height ', current_height, 'best_height: ', best_height)
         next_block_hash = ''
         tx_hash = []
@@ -56,7 +58,7 @@ def valid_tx():
 
             tx_hash += current_block_info['tx']
 
-            if current_height % 50000 == 0:
+            if current_height % 100000 == 0:
                 print('current_height ', current_height)
             current_height += 1
             if 'nextblockhash' not in current_block_info:
@@ -77,3 +79,10 @@ def valid_tx():
 
 if __name__ == '__main__':
     valid_tx()
+    '''
+    conn = db_conn.gen_mongo_connection('base')
+    current_delegate_info = conn.lbtc.lbtc_delegate.find({'index': {'$gt': -1}})
+    for _delegate in current_delegate_info:
+        conn.lbtc.lbtc_delegate.update_one({'_id': _delegate['_id']},
+                {'$set': {'failed_daily': 10, 'success_daily': 144 }}, upsert=False)
+    '''
