@@ -9,4 +9,6 @@ mkdir $back_dir
 mongodump -d lbtc -o $back_dir/mongodump
 mysqldump -ulbtc -psxfMd4_f12508ccsdfdf  --databases lbtcnode > $back_dir/lbtcnode.sql
 
+sync
+sleep 3
 sed -i 's/1/0/g' /home/ubuntu/.bin/lbtc/lbtcnode/src/exit_parse

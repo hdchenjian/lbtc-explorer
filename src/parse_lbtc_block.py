@@ -4,7 +4,7 @@
 import datetime
 import time
 from decimal import Decimal
-
+import subprocess
 import multiprocessing
 
 from v8.config import config, config_online
@@ -116,7 +116,13 @@ def parse_lbtc_block_main():
     try:
         best_block_hash = rpc_connection.getbestblockhash()
         best_block = rpc_connection.getblock(best_block_hash)
-        best_height = best_block['height'] - 18
+        best_height = best_block['height'] - 300
+
+        irreversibleBlock = subprocess.getstatusoutput('tail -n 2000 /home/ubuntu/.bitcoin/debug.log | grep NewIrreversibleBlock | tail -1')
+        start_index = irreversibleBlock[1].find('NewIrreversibleBlock height:') + len('NewIrreversibleBlock height:')
+        end_index = irreversibleBlock[1].find(' hash')
+        irreversible_block_height = int(irreversibleBlock[1][start_index: end_index])
+
         # best_height = 14
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)
         if not block_status:
@@ -125,7 +131,7 @@ def parse_lbtc_block_main():
         current_height = block_status['height']
         # print('start from height ', current_height)
         next_block_hash = ''
-        while current_height <= best_height:
+        while current_height <= best_height and current_height < irreversible_block_height:
             current_mongo_add_tx_ids = []
             if not next_block_hash:
                 next_block_hash = rpc_connection.getblockhash(current_height)
@@ -304,7 +310,7 @@ def parse_lbtc_block_main():
             #print('current_height ', current_height)
             current_height += 1
             update_many_address_info(need_update, PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
-                                     {'height': current_height},
+                                     {'height': current_height, 'best_height': best_block['height'], 'irreversible_block_height': irreversible_block_height},
                                      current_delegate_address, current_delegate_list,
                                      current_index, not_working_delegate, current_delegate_mysql,
                                      REST_BLOCK_STATUS_KYE_CURRENT_DELEGATE)

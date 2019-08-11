@@ -54,6 +54,10 @@ delegate_info_global_update_time = None
 
 all_rpc_function = []
 
+address_to_no_mongo_tx = {}
+memcache_block_height = 0
+memcache_reset_time = 0
+
 @app.route('/lbtc/rpc', methods=['GET'])
 def lbtc_rpc():
     cmd = request.args.get('cmd', '')
@@ -161,7 +165,8 @@ def lbtc_index():
     node_status = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
 
     previous_block_hash = ''
-    current_height = block_status['height'] - 1
+    current_height = block_status['best_height'] - 6
+    irreversible_block_height = block_status['irreversible_block_height']
     best_height_time = 0
     _tx_id_list = []
     rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
@@ -201,20 +206,21 @@ def lbtc_index():
         traceback.print_exc()
         flash(u'获取区块数据错误', 'error')
         return u'区块高度错误'
-    _tx_list = query_coinbase_tx(_tx_id_list)
-    _tx_id_to_tx = {}
-    for _tx_item in _tx_list:
-        _tx_id_to_tx[_tx_item['_id']] = _tx_item
+
     for _new_block in new_block:
         _new_block['delegate_address'] = ''
         _new_block['award'] = 0
         _new_block['miner'] = ''
-        for _tx_id in _new_block['tx']:
-            if _tx_id in _tx_id_to_tx:
-                _new_block['delegate_address'] = _tx_id_to_tx[_tx_id]['output'][1]
-                _new_block['award'] = _tx_id_to_tx[_tx_id]['output'][2].rstrip('0').rstrip('.')
-                _new_block['miner'] = delegate_address_to_name[_new_block['delegate_address']]
-                break
+        ransactionnew = rpc_connection.gettransactionnew(_new_block['tx'][0])
+        if ransactionnew['vout'][0]['scriptPubKey']['type'] == 'pubkeyhash' or \
+           ransactionnew['vout'][0]['scriptPubKey']['type'] == 'scripthash':
+            if len(ransactionnew['vout'][0]['scriptPubKey']['addresses']) != 1:
+                raise ValueError('vout multi addresses')
+            current_delegate_address = ransactionnew['vout'][0]['scriptPubKey']['addresses'][0]
+            _new_block['delegate_address'] = current_delegate_address
+            _new_block['award'] = str(ransactionnew['vout'][0]['value'])
+            _new_block['miner'] = delegate_address_to_name[current_delegate_address]
+
     lbtc_info['block_info'] = new_block
 
     lbtc_info['delegate_count'] = node_status['node_num']
@@ -339,6 +345,67 @@ def get_tx_detail_info(_tx_list, current_height=0, confirmations=None, income_ad
     return tx_info
 
 
+def getrawtransactionnewinfo(rpc_connection, _tx_id_list):
+    _tx_list = []
+    vin_tx_id = []
+    tx_id_to_raw_tx_info = {}
+    tx_mongos = []
+    for _tx_id in _tx_id_list:
+        try:
+            tx_info = rpc_connection.gettransactionnew(_tx_id)
+        except Exception:
+            return _tx_list
+        tx_mongo = {'_id': _tx_id,
+                    'time': datetime.datetime.fromtimestamp(tx_info['time']),
+                    'size': tx_info['vsize'],
+                    'height': tx_info['height'],
+                    'input': [],
+                    'output': []}
+        tx_id_to_raw_tx_info[_tx_id] = tx_info
+        for _vin in tx_info['vin']:
+            if 'coinbase' in _vin:
+                pass
+            else:
+                vin_tx_id.append(_vin['txid'])
+        vout_index = 0
+        for _vout in tx_info['vout']:
+            if _vout['n'] != vout_index:
+                raise(ValueError('vout index error'))
+            if _vout['scriptPubKey']['type'] == 'pubkeyhash' or \
+               _vout['scriptPubKey']['type'] == 'scripthash':
+                if len(_vout['scriptPubKey']['addresses']) != 1:
+                    raise ValueError('vout multi addresses')
+                tx_mongo['output'] += [_vout['n'], _vout['scriptPubKey']['addresses'][0],
+                                       str(_vout['value'])]
+            elif _vout['scriptPubKey']['type'] == 'nulldata':
+                tx_mongo['output'] += [_vout['n'], 'nulldata', str(_vout['value'])]
+            else:
+                raise(ValueError('vout type unknow'))
+            vout_index += 1
+        _tx_list.append(tx_mongo)
+        tx_mongos.append(tx_mongo)
+
+    old_mongo_tx_info_map = {}
+    if vin_tx_id:
+        old_mongo_tx_info = find_many_tx(vin_tx_id)
+        for item in old_mongo_tx_info:
+            old_mongo_tx_info_map[item['_id']] = item
+        for item in tx_mongos:
+            old_mongo_tx_info_map[item['_id']] = item
+    for _tx_info_mongo in tx_mongos:
+        tx_info = tx_id_to_raw_tx_info[_tx_info_mongo['_id']]
+        for _vin in tx_info['vin']:
+            if 'coinbase' in _vin:
+                _tx_info_mongo['input'] += ['coinbase', '']
+            else:
+                _tx_info_mongo['input'] += \
+                    [old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 1],
+                     old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 2]]
+        if not _tx_info_mongo['input']:
+            _tx_info_mongo['input'] = ['', '0']
+    return _tx_list
+
+
 @app.route('/lbtc/get_block', methods=['GET'])
 def lbtc_block():
     block_hash = request.args.get('hash', None)
@@ -379,6 +446,15 @@ def lbtc_block():
     for _tx_id in _info_block['tx']:
         _tx_id_list.append(_tx_id)
     _tx_list = find_many_tx(_tx_id_list)
+    if not _tx_list:
+        _tx_list = getrawtransactionnewinfo(rpc_connection, _tx_id_list)
+        if not _tx_list:
+            if 'language' in session and session['language'] == 'cn':
+                flash(u'区块Hash或高度错误', 'error')
+            else:
+                flash(u'Block Hash or Height error', 'error')
+            return redirect(url_for('lbtc_index'))
+
     tx_info = []
     key_list = [PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT,
                 REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME]
@@ -396,6 +472,8 @@ def lbtc_block():
     block_info['transaction_num'] = len(_info_block['tx'])
 
     coinbase_tx = query_coinbase_tx(_info_block['tx'])
+    if not coinbase_tx:
+        coinbase_tx = _tx_list[0:1]
     if len(coinbase_tx) != 1:
         if 'language' in session and session['language'] == 'cn':
             flash(u'区块数据未同步', 'error')
@@ -444,9 +522,12 @@ def lbtc_search():
     except JSONRPCException:
         pass
     _address_info = query_address_info(param)
-    if _address_info:
+    if _address_info or param in address_to_no_mongo_tx:
         return redirect(url_for('lbtc_address', address=param))
     _tx_info = find_one_tx(param)
+    if _tx_info:
+        return redirect(url_for('lbtc_tx', hash=param))
+    _tx_info = getrawtransactionnewinfo(rpc_connection, [param])
     if _tx_info:
         return redirect(url_for('lbtc_tx', hash=param))
     key_list = [REST_BLOCK_STATUS_KYE_DELEGATE_NAME_TO_ADDRESS,
@@ -655,6 +736,70 @@ def lbtc_delegate():
                            stop_count=stop_count)
 
 
+def get_address_extra_tx(rpc_connection, address, address_tx_height, current_height, best_height):
+    global address_to_no_mongo_tx
+    global memcache_block_height
+    global memcache_reset_time
+    time_now = datetime.datetime.now()
+    if memcache_block_height == 0:
+        memcache_reset_time = time_now
+    else:
+        if (time_now - memcache_reset_time).total_seconds() > 30:
+            memcache_reset_time = time_now
+            memcache_block_height = 0
+            address_to_no_mongo_tx = {}
+
+    extra_tx = []
+    start_height = 0
+    if memcache_block_height > current_height:
+        start_height = memcache_block_height
+    else:
+        start_height = current_height
+    next_block_hash = ''
+    _tx_id_list = []
+    try:
+        while start_height <= best_height:
+            if not next_block_hash:
+                next_block_hash = rpc_connection.getblockhash(start_height)
+            block = rpc_connection.getblock(next_block_hash)
+            if not block:
+                return extra_tx
+            next_block_hash = block.get('nextblockhash', '')
+            _tx_id_list += block['tx']
+            start_height += 1
+    except Exception:
+        return extra_tx
+    if _tx_id_list:
+        extra_tx = getrawtransactionnewinfo(rpc_connection, _tx_id_list)
+    address_to_no_mongo_tx_local = {}
+    for _address in address_to_no_mongo_tx:
+        no_mongo_tx = []
+        for _tx in address_to_no_mongo_tx[_address]:
+            if _tx['height'] >= current_height:
+                no_mongo_tx.append(_tx)
+        address_to_no_mongo_tx_local[_address] = no_mongo_tx
+    address_to_no_mongo_tx = address_to_no_mongo_tx_local
+
+    for _tx in extra_tx:
+        contain_address = set()
+        for i in range(0, len(_tx['input']) // 2):
+            if _tx['input'][2*i] != 'coinbase':
+                contain_address.add(_tx['input'][2*i])
+        for i in range(0, len(_tx['output']) // 3):
+            if _tx['output'][3*i + 1] != 'nulldata':
+                contain_address.add(_tx['output'][3*i + 1])
+        for _address in contain_address:
+            if _address not in address_to_no_mongo_tx:
+                address_to_no_mongo_tx[_address] = []
+            address_to_no_mongo_tx[_address].append(_tx)
+    memcache_block_height = best_height + 1
+    extra_tx = []
+    for _tx in address_to_no_mongo_tx.get(address, []):
+        if _tx['height'] > address_tx_height:
+            extra_tx.insert(0, _tx)
+    return extra_tx
+
+
 @app.route('/lbtc/address', methods=['GET'])
 def lbtc_address():
     address = request.args.get('address', '')
@@ -668,6 +813,15 @@ def lbtc_address():
             flash(u'Address Or Page error', 'error')
         return redirect(url_for('lbtc_index'))
     _address_info = get_address_info(address, page=current_page, size=tx_per_page)
+    if not _address_info:
+        if address in address_to_no_mongo_tx:
+            _address_info = {'address': address,
+                             'tx': [],
+                             'send': '0',
+                             'receive': '0',
+                             'update_time': '',
+                             'create_time': '',
+                             'tx_num': 0}
     if not _address_info:
         if 'language' in session and session['language'] == 'cn':
             flash(u'钱包地址错误', 'error')
@@ -683,17 +837,31 @@ def lbtc_address():
                 REST_BLOCK_STATUS_KYE_DELEGATE_ADDRESS_TO_NAME,
                 REST_BLOCK_STATUS_KYE_COMMITTEE_ADDRESS_TO_NAME]
     block_status_multi_key_value = get_block_status_multi_key(key_list)
-    current_height = \
-        block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
+    best_height = \
+        block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['best_height']
+    rpc_connection = None
+    update_time = None
+    extra_tx = []
+    if current_page == 1:
+        rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
+        address_balance = float(rpc_connection.getaddressbalance(address)) / 100000000
+        current_height = \
+            block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
+        extra_tx = get_address_extra_tx(rpc_connection, address, address_tx_info[0]['height'], current_height, best_height - 6)
+        if extra_tx:
+            update_time = extra_tx[0]['time'].isoformat().replace('T', ' ')
+        else:
+            update_time = _address_info['update_time'].replace('T', ' ')
+    else:
+        address_balance = "{:.8f}".format(Decimal(_address_info['balance'])).rstrip('0').rstrip('.')
+        update_time = _address_info['update_time'].replace('T', ' ')
 
-    tx_info = get_tx_detail_info(address_tx_info, current_height=current_height,
-                                 income_address=address)
+    tx_info = get_tx_detail_info(extra_tx + address_tx_info, current_height=best_height, income_address=address)
     address_info = {'address': address,
-                    'balance':
-                    "{:.8f}".format(Decimal(_address_info['balance'])).rstrip('0').rstrip('.'),
-                    'transaction_num': _address_info['tx_num'],
+                    'balance': address_balance,
+                    'transaction_num': _address_info['tx_num'] + len(extra_tx),
                     'create_time': _address_info['create_time'].replace('T', ' '),
-                    'update_time': _address_info['update_time'].replace('T', ' '),
+                    'update_time': update_time,
                     'receive': _address_info['receive'].rstrip('0').rstrip('.'),
                     'send': "{:.8f}".format(float(_address_info['send'])).rstrip('0').rstrip('.'),
                     'tx_info': tx_info}
@@ -710,7 +878,6 @@ def lbtc_address():
     else:
         current_page_next = current_page + 1
     if current_page == 1:
-        rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
         try:
             voted_delegates = rpc_connection.listvoteddelegates(address)
             delegate_address_to_name = \
@@ -815,9 +982,19 @@ def lbtc_tx():
         else:
             flash(u'Tx Hash error', 'error')
         return redirect(url_for('lbtc_index'))
-    current_height = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)['height']
+    current_height = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)['best_height']
     _tx_list = find_one_tx(tx_hash)
-    _tx_list = [_tx_list]
+    if not _tx_list:
+        rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
+        _tx_list = getrawtransactionnewinfo(rpc_connection, [tx_hash])
+        if not _tx_list:
+            if 'language' in session and session['language'] == 'cn':
+                flash(u'交易hash错误', 'error')
+            else:
+                flash(u'Tx Hash error', 'error')
+            return redirect(url_for('lbtc_index'))
+    else:
+        _tx_list = [_tx_list]
     tx_info = get_tx_detail_info(_tx_list, current_height=current_height)
     if 'language' in session and session['language'] == 'cn':
         template_name = 'cn/tx.html'

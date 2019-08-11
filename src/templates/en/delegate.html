@@ -112,7 +112,7 @@
                 {{ _info["ratio"] }}
               </td>
               <td class="text-center">
-                {% if _info["failed_daily"] > 999999 %}
+                {% if _info.get("failed_daily", 0) > 999999 %}
                 <span style="color: #FF0000;"> {{ _info["success_daily"] }} </span>/
                 <span style="color: #FF0000;"> {{ _info["failed_daily"] }} </span>
                 {% else %}

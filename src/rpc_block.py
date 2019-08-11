@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+import subprocess
+import time
+
 from v8.config import config, config_online
 # from v8.engine.handlers.node_handler import update_all_committee, update_all_proposal
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
@@ -12,6 +15,17 @@ config.from_object(config_online)
 def update_rpc_node():
     rpc_connection = AuthServiceProxy("http://%s:%s@127.0.0.1:9332" % ('luyao', 'DONNNN'))
     try:
+        aa = time.time()
+        print(rpc_connection.gettransactionnew('c30d4992d456efcc4bc390d3facaf68138fe0729d84d96cf1560d1e7479c2c57'))
+        exit()
+        irreversibleBlock = subprocess.getstatusoutput('tail -n 2000 /home/ubuntu/.bitcoin/debug.log | grep NewIrreversibleBlock | tail -1')
+        print(irreversibleBlock)
+        start_index = irreversibleBlock[1].find('NewIrreversibleBlock height:') + len('NewIrreversibleBlock height:')
+        end_index = irreversibleBlock[1].find(' hash')
+        irreversible_block_height = int(irreversibleBlock[1][start_index: end_index])
+        print(int(irreversibleBlock[1][start_index: end_index]))
+        # print(rpc_connection.help())
+        exit()
         tx = rpc_connection.gettransactionnew('c30d4992d456efcc4bc390d3facaf68138fe0729d84d96cf1560d1e7479c2c57')
         print(len(tx['vout'][1]['delegates']))
         exit()
@@ -23,6 +37,7 @@ def update_rpc_node():
         #print(rpc_connection.getblock('bf56320e87e513232081ffee7c0d0b467e2cbf671624640b67dfe1ccbc9314ae'))
         exit()
     except JSONRPCException:
+        raise
         pass
     try:
         # print(rpc_connection.help())
