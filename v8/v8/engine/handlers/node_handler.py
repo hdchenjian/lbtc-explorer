@@ -713,7 +713,7 @@ def update_delegate_info_mongo(current_delegate_address, current_delegate, not_w
         for _delegate in current_delegate_info:
             conn.lbtc.lbtc_delegate.update_one(
                 {'_id': _delegate['_id']},
-                {'$set': {'ratio': _delegate.get('block_product', 0) / float(_delegate['block_vote'])}}, upsert=False)
+                {'$set': {'ratio': _delegate.get('block_product', 0) / float(_delegate.get('block_vote', 1))}}, upsert=False)
 
 
 def reset_delegate_daily_info():
