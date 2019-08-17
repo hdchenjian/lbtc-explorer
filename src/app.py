@@ -58,6 +58,12 @@ address_to_no_mongo_tx = {}
 memcache_block_height = 0
 memcache_reset_time = 0
 
+address_to_remark = {'1Hp9ECFZLFUVUGFEPBcUg8tGM229bchWBg': 'richest',
+                     '1DZCJu71LZtftX1njhhZeCL1v8xgKdKXnv': 'cobo',
+                     '13ZWkQNxaLCuEoHBmLHju4hVqEs3kgZJca': 'zb',
+                     '115pmmN6tgxPkQ4RiyiM5F2VB4gy1uHfeW': 'mxc'
+}
+
 @app.route('/lbtc/rpc', methods=['GET'])
 def lbtc_rpc():
     cmd = request.args.get('cmd', '')
@@ -842,16 +848,12 @@ def lbtc_daily_tx():
     #print(_tx_list[0])
     #print('len(show_txs)', len(show_txs))
     show_txs.sort(key=lambda x: x['height'], reverse=False)
-    address_to_remark = {'1Hp9ECFZLFUVUGFEPBcUg8tGM229bchWBg': 'richest',
-                         '1DZCJu71LZtftX1njhhZeCL1v8xgKdKXnv': 'cobo',
-                         '13ZWkQNxaLCuEoHBmLHju4hVqEs3kgZJca': 'zb',
-                         '115pmmN6tgxPkQ4RiyiM5F2VB4gy1uHfeW': 'mxc'
-                         }
     block_info = {'previousblockhash': '', 'miner_name': '', 'delegate_address': '',
                   'versionHex': '', 'height': '0', 'strippedsize': 0, 'tx': [''],
                   'confirmations': 0, 'next_hash': '', 'transaction_num': len(show_txs), 'merkleroot': '', 'hash': '',
                   'time': '', 'nonce': 0}
     block_info['tx_info'] = get_tx_detail_info(show_txs, current_height=end_height+2)
+    global address_to_remark
     for _tx in block_info['tx_info']:
         for _output in _tx['output_tx']:
             if address_to_remark.get(_output['address'], ''):
@@ -859,7 +861,7 @@ def lbtc_daily_tx():
         for _input in _tx['input_tx']:
             if address_to_remark.get(_input['address'], ''):
                 _input['address'] += '(' + address_to_remark.get(_input['address'], '') + ')'
-    print(block_info['tx_info'][0])
+    #print(block_info['tx_info'][0])
     return render_template('en/block.html', block_info=block_info, show_tx_hash=True, float=float)
 
 
@@ -1008,6 +1010,15 @@ def lbtc_address():
         template_name = 'cn/address.html'
     else:
         template_name = 'en/address.html'
+    if request.args.get('remark', '') == 'remark':
+        global address_to_remark
+        for _tx in address_info['tx_info']:
+            for _output in _tx['output_tx']:
+                if address_to_remark.get(_output['address'], ''):
+                    _output['address'] += '(' + address_to_remark.get(_output['address'], '') + ')'
+            for _input in _tx['input_tx']:
+                if address_to_remark.get(_input['address'], ''):
+                    _input['address'] += '(' + address_to_remark.get(_input['address'], '') + ')'
     return render_template(template_name, address_info=address_info, not_href_address=address,
                            show_income=True, show_tx_hash=True, show_tx_height=True,
                            show_tx_time=True, float=float,
