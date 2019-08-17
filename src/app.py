@@ -22,7 +22,7 @@ from v8.engine.handlers.node_handler import get_all_node, get_node_distribution,
     get_block_status, get_block_status_multi_key, query_all_committee, query_all_delegate, \
     query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info, \
     query_most_rich_address, query_address_info, query_transaction_daily_info, \
-    query_address_daily_info
+    query_address_daily_info, get_block_during
 from v8.config import config, config_online
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, \
@@ -39,7 +39,7 @@ config.from_object(config_online)
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["2000/day; 31/minute"])
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["100/minute"])
 
 
 address_daily_info_global = None
@@ -798,6 +798,69 @@ def get_address_extra_tx(rpc_connection, address, address_tx_height, current_hei
         if _tx['height'] > address_tx_height:
             extra_tx.insert(0, _tx)
     return extra_tx
+
+
+@app.route('/lbtc/daily_tx', methods=['GET'])
+def lbtc_daily_tx():
+    start_time = request.args.get('start_time', '')
+    end_time = request.args.get('end_time', '')
+    if not start_time or not end_time:
+        return 'wrong time'
+    start_time = datetime.datetime.strptime(start_time, '%Y-%m-%d')
+    end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d')
+    #print(start_time, end_time)
+    ret = get_block_during(start_time, end_time)
+    start_height = ret[0]
+    end_height = ret[1]
+    #print(start_height, end_height)
+
+    next_block_hash = ''
+    current_height = start_height
+    _tx_id_list = []
+    rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
+    for i in range(start_height, end_height+1):
+        block_info = {}
+        if not next_block_hash:
+            next_block_hash = rpc_connection.getblockhash(current_height)
+        block = rpc_connection.getblock(next_block_hash)
+        if not block:
+            flash(u'区块高度错误', 'error')
+            return u'区块高度错误'
+        next_block_hash = block['nextblockhash']
+        for _tx_id in block['tx']:
+            _tx_id_list.append(_tx_id)
+    _tx_list = find_many_tx(_tx_id_list)
+    show_txs = []
+    for _tx in _tx_list:
+        amount = 0
+        for i in range(0, len(_tx['output']) // 3):
+            if _tx['output'][3*i + 1] == 'nulldata':
+                continue
+            amount += float(_tx['output'][3*i + 2])
+        if amount > 50:
+            show_txs.append(_tx)
+    #print(_tx_list[0])
+    #print('len(show_txs)', len(show_txs))
+    show_txs.sort(key=lambda x: x['height'], reverse=False)
+    address_to_remark = {'1Hp9ECFZLFUVUGFEPBcUg8tGM229bchWBg': 'richest',
+                         '1DZCJu71LZtftX1njhhZeCL1v8xgKdKXnv': 'cobo',
+                         '13ZWkQNxaLCuEoHBmLHju4hVqEs3kgZJca': 'zb',
+                         '115pmmN6tgxPkQ4RiyiM5F2VB4gy1uHfeW': 'mxc'
+                         }
+    block_info = {'previousblockhash': '', 'miner_name': '', 'delegate_address': '',
+                  'versionHex': '', 'height': '0', 'strippedsize': 0, 'tx': [''],
+                  'confirmations': 0, 'next_hash': '', 'transaction_num': len(show_txs), 'merkleroot': '', 'hash': '',
+                  'time': '', 'nonce': 0}
+    block_info['tx_info'] = get_tx_detail_info(show_txs, current_height=end_height+2)
+    for _tx in block_info['tx_info']:
+        for _output in _tx['output_tx']:
+            if address_to_remark.get(_output['address'], ''):
+                _output['address'] += '(' + address_to_remark.get(_output['address'], '') + ')'
+        for _input in _tx['input_tx']:
+            if address_to_remark.get(_input['address'], ''):
+                _input['address'] += '(' + address_to_remark.get(_input['address'], '') + ')'
+    print(block_info['tx_info'][0])
+    return render_template('en/block.html', block_info=block_info, show_tx_hash=True, float=float)
 
 
 @app.route('/lbtc/address', methods=['GET'])

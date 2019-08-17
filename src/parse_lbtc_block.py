@@ -189,7 +189,7 @@ def parse_lbtc_block_main():
                 print('current_height: ', current_height, current_delegate_address, current_index,
                       'current_delegate_list: ', current_delegate_list, current_delegate_mysql, 'not_working_delegate: ', not_working_delegate)
                 if len(not_working_delegate) > 1:
-                    print('many_not_working_delegate')
+                    print('many_not_working_delegate', len(not_working_delegate))
 
             '''
             current_height += 1
