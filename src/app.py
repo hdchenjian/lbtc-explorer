@@ -58,7 +58,7 @@ address_to_no_mongo_tx = {}
 memcache_block_height = 0
 memcache_reset_time = 0
 
-address_to_remark = {'1Hp9ECFZLFUVUGFEPBcUg8tGM229bchWBg': 'richest',
+address_to_remark = {'1F3mbWEw32ove5FvogXJkLExCRszuUQnDF': 'richest',
                      '1DZCJu71LZtftX1njhhZeCL1v8xgKdKXnv': 'cobo',
                      '13ZWkQNxaLCuEoHBmLHju4hVqEs3kgZJca': 'zb',
                      '115pmmN6tgxPkQ4RiyiM5F2VB4gy1uHfeW': 'mxc'
