@@ -31,7 +31,7 @@
           <div class="form-group">
             <input type="hidden" name="type" value="active" />
             <button id="delegate_votes_button" class="btn btn-info btn-block" style="text-align: center; font-size: 18px; padding: 28px 28px;" >
-              101 活跃代理
+              101 出块代理
             </button>
           </div>
         </form>
@@ -71,7 +71,7 @@
           <div class="row">
             <div class="panel-heading-title">
               {% if type == "active" %}
-              活跃代理({{ delegate_info.__len__() }})
+              出块代理({{ delegate_info.__len__() }})
               {% elif type == "normal" %}
               正常出块({{ delegate_info.__len__() }})
               {% elif type == "stop" %}
