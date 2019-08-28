@@ -171,7 +171,7 @@ def lbtc_index():
     node_status = block_status_multi_key_value[REST_BLOCK_STATUS_KYE_NODE_IP_TYPE]
 
     previous_block_hash = ''
-    current_height = block_status['best_height'] - 6
+    current_height = block_status['best_height'] - 3
     irreversible_block_height = block_status['irreversible_block_height']
     best_height_time = 0
     _tx_id_list = []
@@ -912,7 +912,7 @@ def lbtc_address():
         address_balance = float(rpc_connection.getaddressbalance(address)) / 100000000
         current_height = \
             block_status_multi_key_value[PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT]['height']
-        extra_tx = get_address_extra_tx(rpc_connection, address, address_tx_info[0]['height'], current_height, best_height - 6)
+        extra_tx = get_address_extra_tx(rpc_connection, address, address_tx_info[0]['height'], current_height, best_height - 3)
         if extra_tx:
             update_time = extra_tx[0]['time'].isoformat().replace('T', ' ')
         else:
