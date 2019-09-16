@@ -713,7 +713,7 @@ def update_delegate_info_mongo(current_delegate_address, current_delegate, not_w
         for _delegate in current_delegate_info:
             conn.lbtc.lbtc_delegate.update_one(
                 {'_id': _delegate['_id']},
-                {'$set': {'ratio': _delegate.get('block_product', 0) / float(_delegate['block_vote'])}}, upsert=False)
+                {'$set': {'ratio': _delegate.get('block_product', 0) / float(_delegate.get('block_vote', 1))}}, upsert=False)
 
 
 def reset_delegate_daily_info():
@@ -980,4 +980,16 @@ def query_address_daily_info():
         ret = []
         for _address_daily in session.query(AddressGrowthDaily).order_by(AddressGrowthDaily.id):
             ret.append(model_to_dict(_address_daily))
+        return ret
+
+
+def get_block_during(start_time, end_time):
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        ret = []
+        _block_info = session.query(BlockInfo).filter(
+            BlockInfo.create_time >= start_time).order_by(BlockInfo.height).first()
+        ret.append(_block_info.height)
+        _block_info = session.query(BlockInfo).filter(
+            BlockInfo.create_time < end_time).order_by(BlockInfo.height.desc()).first()
+        ret.append(_block_info.height)
         return ret

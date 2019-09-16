@@ -2,6 +2,7 @@
 <html lang="zh-cn">
   <head>
     <title>闪电比特币区块浏览器</title>
+    <link rel="icon" href="{{ url_for('static', filename='image/favicon.ico') }}" type="image/png">
 
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -43,7 +44,7 @@
               </li>
 
               <li class="nav-item">
-                <a href="{{ url_for('lbtc_delegate') }}" >代理</a>
+                <a href="{{ url_for('lbtc_delegate', type='active') }}" >代理</a>
               </li>
 
               <li class="nav-item">

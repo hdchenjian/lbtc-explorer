@@ -31,7 +31,7 @@
           <div class="form-group">
             <input type="hidden" name="type" value="active" />
             <button id="delegate_votes_button" class="btn btn-info btn-block" style="text-align: center; font-size: 17px; padding: 28px 0px;" >
-              101 Active Delegate
+              101 Forging Delegate
             </button>
           </div>
         </form>
@@ -71,7 +71,7 @@
           <div class="row">
             <div class="panel-heading-title">
               {% if type == "active" %}
-              Active Delegate({{ delegate_info.__len__() }})
+              Forging Delegate({{ delegate_info.__len__() }})
               {% elif type == "normal" %}
               Forging({{ delegate_info.__len__() }})
               {% elif type == "stop" %}
@@ -112,7 +112,7 @@
                 {{ _info["ratio"] }}
               </td>
               <td class="text-center">
-                {% if _info["failed_daily"] > 999999 %}
+                {% if _info.get("failed_daily", 0) > 999999 %}
                 <span style="color: #FF0000;"> {{ _info["success_daily"] }} </span>/
                 <span style="color: #FF0000;"> {{ _info["failed_daily"] }} </span>
                 {% else %}
@@ -129,7 +129,7 @@
                 </span>
                 {% else %}
                 {% if _info["status"] %}
-                <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;"
+                <span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6495ED; border-radius: 50%; display: inline-block;"
                       onmouseenter="pop_delegate_info(this, 'Waiting forging');"
                       onmouseleave="hide_delegate_info()";>
                 </span>
@@ -174,7 +174,7 @@
                 {{ _info["ratio"] }}
               </td>
               <td class="text-center">
-                {% if _info["failed_daily"] > 999999 %}
+                {% if _info.get("failed_daily", 0) > 999999 %}
                 <span style="color: #FF0000;"> {{ _info["success_daily"] }} </span>/
                 <span style="color: #FF0000;"> {{ _info["failed_daily"] }} </span>
                 {% else %}
@@ -231,7 +231,7 @@ function httpGetDelegate() {
                 if(delegate_info.delegate_info[i].active == 1){
                     row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #19be6b; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Forging\');" onmouseleave="hide_delegate_info()";> </span>';
                 } else if (delegate_info.delegate_info[i].status == 1){
-                    row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6c757d; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Waiting forging\');" onmouseleave="hide_delegate_info()";> </span>';
+                    row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #6495ED; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Waiting forging\');" onmouseleave="hide_delegate_info()";> </span>';
                 } else {
                     row.cells[6].innerHTML = '<span style="float: center; margin-top: 5px; height: 15px; width: 15px; background-color: #ed3f14; border-radius: 50%; display: inline-block;" onmouseenter="pop_delegate_info(this, \'Not forging\');" onmouseleave="hide_delegate_info()";> </span>';
                 }

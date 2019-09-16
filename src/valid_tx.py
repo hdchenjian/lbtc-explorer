@@ -3,6 +3,7 @@
 
 import datetime
 import time
+import requests
 from decimal import Decimal
 
 import multiprocessing
@@ -43,6 +44,8 @@ def valid_tx():
         if not block_status:
             block_status = {'height': 5827263}
         current_height = block_status['height']
+        #current_height = 8235221
+        #best_height = 8275221
         print('start from height ', current_height, 'best_height: ', best_height)
         next_block_hash = ''
         tx_hash = []
@@ -56,7 +59,7 @@ def valid_tx():
 
             tx_hash += current_block_info['tx']
 
-            if current_height % 50000 == 0:
+            if current_height % 100000 == 0:
                 print('current_height ', current_height)
             current_height += 1
             if 'nextblockhash' not in current_block_info:
@@ -66,6 +69,10 @@ def valid_tx():
         txs = find_many_tx(tx_hash)
         if len(txs) != len(tx_hash):
             print('blockchain rollback!\n', 'start from height ', block_status['height'], 'best_height: ', best_height)
+            data = {'apikey': 'dc4768d332a1aa9f78e1c76b6fd64f6f',
+                    'text': u'【中新智擎】您的验证码是lbtcmerollback。如非本人操作，请忽略本短信', 'mobile': '+8615919460519'}
+            ret = requests.post('https://sms.yunpian.com/v2/sms/single_send.json', data=data)
+            print(ret.content)
         else:
             update_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_VALID_TX_HEIGHT, {'height': current_height})
 
@@ -77,3 +84,10 @@ def valid_tx():
 
 if __name__ == '__main__':
     valid_tx()
+    '''
+    conn = db_conn.gen_mongo_connection('base')
+    current_delegate_info = conn.lbtc.lbtc_delegate.find({'index': {'$lt': 103}})
+    for _delegate in current_delegate_info:
+        conn.lbtc.lbtc_delegate.update_one({'_id': _delegate['_id']},
+                {'$set': {'failed_daily': 10, 'success_daily': 144 }}, upsert=False)
+    '''

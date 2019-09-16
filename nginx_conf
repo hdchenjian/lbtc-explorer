@@ -1,0 +1,77 @@
+##
+# You should look at the following URL's in order to grasp a solid understanding
+# of Nginx configuration files in order to fully unleash the power of Nginx.
+# http://wiki.nginx.org/Pitfalls
+# http://wiki.nginx.org/QuickStart
+# http://wiki.nginx.org/Configuration
+#
+# Generally, you will want to move this file somewhere, and start with a clean
+# file but keep this around for reference. Or just disable in sites-enabled.
+#
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+# Default server configuration
+#
+
+server {
+#server_name lbtc.me;
+    listen 443;
+    ssl on; 
+    ssl_certificate /etc/letsencrypt/live/lbtc.me/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/lbtc.me/privkey.pem;
+
+    location / {
+        if ( $host = 'lbtc.me' ){
+            return 307 https://$host/lbtc/explorer;
+		}
+        if ( $host = 'www.lbtc.me' ){
+            return 307 https://$host/lbtc/explorer;
+		}
+	}   
+
+    location /lbtc/ {
+        proxy_pass http://127.0.0.1:5025;
+    }   
+    location /static/ {
+		root /home/ubuntu/.bin/lbtc/lbtcnode/src/;
+    }   
+}
+
+server {
+    listen 80; 
+    fastcgi_connect_timeout 180;
+    fastcgi_send_timeout 180;
+    fastcgi_read_timeout 180;
+    client_max_body_size 15m;
+
+    server_name  ~^(www\.)?(.+)$;
+	index index.html;
+    root /home/ubuntu/.bin/.git/faceDemoServer/src/templates/$2/html/;
+    #server_name *.lbtc.me;
+    location / {
+        if ( $host = 'lbtc.me' ){
+            return 307 https://$host/lbtc/explorer;
+		}
+        if ( $host = 'www.lbtc.me' ){
+            return 307 https://lbtc.me/lbtc/explorer;
+		}
+	}   
+
+    location /html/ {
+        root /home/ubuntu/.bin/.git/faceDemoServer/src/templates/duolekong.com/;
+    }
+    location /api/ {
+        proxy_pass http://127.0.0.1:5055/;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }   
+
+    location /lbtc/ {
+        return 307 https://$host$request_uri;
+    }   
+    location /static/ {
+		root /home/ubuntu/.bin/lbtc/lbtcnode/src/;
+    }   
+}
