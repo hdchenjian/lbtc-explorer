@@ -39,7 +39,7 @@ config.from_object(config_online)
 app = Flask(__name__)
 app.secret_key = 'green rseading key'
 app.config['SESSION_TYPE'] = 'filesystem'
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["500/hour; 40/minute"])
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["2000/day; 500/hour; 40/minute"])
 
 
 address_daily_info_global = None
