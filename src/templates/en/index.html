@@ -245,7 +245,7 @@ var transaction_count = new Chart(ctx, {
             mode: 'single',
             callbacks: {
                 label: function(tooltipItems, data) {
-                    var multistringText = ['transaction number: ' + tooltipItems.yLabel]
+                    var multistringText = ['transaction count: ' + tooltipItems.yLabel]
                     multistringText.push(['exclude coinbase transaction: ' + {{ lbtc_info['tx_daily']['tx_num_no_coinbase']|tojson }}[tooltipItems.index]]);
                     multistringText.push(['block count: ' + {{ lbtc_info['tx_daily']['total_block_count']|tojson }}[tooltipItems.index]]);
                     multistringText.push(['average block size: ' + {{ lbtc_info['tx_daily']['avg_block_size']|tojson }}[tooltipItems.index]]);
@@ -309,7 +309,7 @@ var address_count = new Chart(ctx_address, {
             mode: 'single',
             callbacks: {
                 label: function(tooltipItems, data) {
-                    var multistringText = ['total address number: ' + tooltipItems.yLabel]
+                    var multistringText = ['total address count: ' + tooltipItems.yLabel]
                     multistringText.push(['Daily increase: ' + {{ lbtc_info['address_daily']['increase_address']|tojson }}[tooltipItems.index]]);
                     return multistringText;
                 }
