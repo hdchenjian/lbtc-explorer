@@ -1,0 +1,73 @@
+{% extends "note/base.html" %}
+
+{% block body %}
+
+<div class="main-body">
+  <div class="container">
+
+    <div class="row">
+      <ol class="breadcrumb bm">
+        <li><a href="{{ url_for('lbtc_month', month=this_month) }}">Month</a></li>
+        <li><a href="{{ url_for('lbtc_note') }}">Home</a></li>
+      </ol>
+    </div>
+    <div class="row">
+      <ol class="breadcrumb bm">
+      </ol>
+    </div>
+
+    <form action="{{ url_for('lbtc_note') }}" method="POST">
+      <input type="text" id='date_id' name="date" placeholder="date" value={{ this_month }} size=20 required/><p></p>
+      <input type="text" id='event_id' name="event" placeholder="event" size=70 required/><p></p>
+      <input type="text" id='hour_id' name="hour" placeholder="hour" size=20 required/><p></p>
+      <input type="submit" id="submit_button" value="Submit" class="btn btn-primary" role="button"/>
+    </form>
+
+    <div class="row">
+      <ol class="breadcrumb bm">
+      </ol>
+    </div>
+    <div class="row">
+      <div class="col-xs-12" style="padding-left: 10; padding-right: 0px;">
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <div class="row">
+              <div class="panel-heading-title">
+                {% if avg_hours %}
+                Month average {{ '{0:.2f}'.format(avg_hours) }}
+                {% else %}
+                Recently event
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <table class="table">
+              <tr>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Events</th>
+              </tr>
+              {% for e in event_recent %}
+              <tr>
+                <td > {{ e[0] }} </td>
+                <td> {{ e[1] }} </td>
+                <td>
+                  {% for ee in e[2] %}
+                  {{ ee[0] }} | {{ ee[1] }}
+                  <p></p>
+                  {% endfor %}
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
