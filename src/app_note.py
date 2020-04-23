@@ -31,7 +31,7 @@ def create_table():
 
 
 def get_event_recent(c, start_time, end_time):
-    sql = "SELECT * FROM day where date > '%s' and date <= '%s' order by date desc" % (
+    sql = "SELECT * FROM day where date >= '%s' and date <= '%s' order by date desc" % (
         start_time.strftime("%Y-%m-%d"), end_time.strftime("%Y-%m-%d"))
     events = c.execute(sql)
     event_recent_dict = {}
@@ -64,12 +64,16 @@ def lbtc_note():
         if request.method == 'GET':
             event_recent = get_event_recent(c, start_time, end_time)
             conn.close()
-            return render_template('note/index.html', event_recent=event_recent, this_month=now.strftime("%Y-%m-%d"))
+            total_hours = 0
+            for e in event_recent:
+                total_hours += e[1]
+            return render_template('note/index.html', event_recent=event_recent, this_month=now.strftime("%Y-%m-%d"),
+                                   avg_hours = total_hours / len(event_recent))
         else:
             date = request.form.get('date', '')
             event = request.form.get('event', '')
             hour = float(request.form.get('hour', 0))
-            if not date or not event or hour < 0.0001:
+            if not date or not event or hour < 0:
                 conn.close()
                 return u'参数不能为空'
             date = datetime.datetime.strptime(date, '%Y-%m-%d')
@@ -84,7 +88,11 @@ def lbtc_note():
             conn.commit()
             event_recent = get_event_recent(c, start_time, end_time)
             conn.close()
-            return render_template('note/index.html', event_recent=event_recent, this_month=now.strftime("%Y-%m-%d"))
+            total_hours = 0
+            for e in event_recent:
+                total_hours += e[1]
+            return render_template('note/index.html', event_recent=event_recent, this_month=now.strftime("%Y-%m-%d"),
+                                   avg_hours = total_hours / len(event_recent))
     except Exception as e:
         raise
         traceback.format_exc()
@@ -107,7 +115,6 @@ def lbtc_month():
         total_hours = 0
         for e in event_recent:
             total_hours += e[1]
-            pass
         conn.close()
         return render_template('note/index.html', event_recent=event_recent, this_month=now.strftime("%Y-%m-%d"),
                                avg_hours = total_hours / len(event_recent))

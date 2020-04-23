@@ -106,7 +106,8 @@ def find_node(node, max_height, ip_to_node):
 
         addr_msgs = conn.getaddr()
         if len(addr_msgs) > 1:
-            print('get new node list', addr_msgs)
+            pass
+            #print('get new node list', addr_msgs)
         else:
             pass
     except (socket.timeout, socket.error,  OSError, ValueError) as e:
