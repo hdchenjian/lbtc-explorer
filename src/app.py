@@ -404,9 +404,17 @@ def getrawtransactionnewinfo(rpc_connection, _tx_id_list):
             if 'coinbase' in _vin:
                 _tx_info_mongo['input'] += ['coinbase', '']
             else:
-                _tx_info_mongo['input'] += \
-                    [old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 1],
-                     old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 2]]
+                if _vin['txid'] not in old_mongo_tx_info_map:
+                    tx_info_temp = rpc_connection.gettransactionnew(_vin['txid'])
+                    #print('tx_info_temp', tx_info_temp['vout'])
+                    #[_vout['n'], _vout['scriptPubKey']['addresses'][0], str(_vout['value'])]
+                    _tx_info_mongo['input'] += \
+                        [tx_info_temp['vout'][_vin['vout']]['scriptPubKey']['addresses'][0],
+                         str(tx_info_temp['vout'][_vin['vout']]['value'])]
+                else :
+                    _tx_info_mongo['input'] += \
+                        [old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 1],
+                         old_mongo_tx_info_map[_vin['txid']]['output'][_vin['vout'] * 3 + 2]]
         if not _tx_info_mongo['input']:
             _tx_info_mongo['input'] = ['', '0']
     return _tx_list
