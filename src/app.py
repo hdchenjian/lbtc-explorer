@@ -551,7 +551,7 @@ def lbtc_search():
     return redirect(url_for('lbtc_bill', id=param))
 
 
-@app.route('/lbtc1/balance', methods=['GET'])
+@app.route('/lbtc/balance', methods=['GET'])
 def lbtc_balance():
     address_distribution = [[0, 0.001], [0.001, 0.01], [0.01, 0.1], [0.1, 1], [1, 10],
                             [10, 1000], [1000, 10000], [10000, 99999999]]
@@ -563,7 +563,7 @@ def lbtc_balance():
     address_distribution_label = []
     for i in range(0, len(address_distribution)):
         if i == len(address_distribution) - 1:
-            address_distribution_label.append('> ' + str(address_distribution[i][0]))
+            address_distribution_label.append(str(address_distribution[i][0]) + '-1000000')
         else:
             address_distribution_label.append(str(address_distribution[i][0]) + '-' + str(address_distribution[i][1]))
         address_count += balance_distribution[2*i]
