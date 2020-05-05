@@ -1,4 +1,4 @@
-back_dir='2019-08-11'
+back_dir='2020-04-23'
 
 mongo 127.0.0.1:27017/lbtc --eval "printjson(db.dropDatabase())"
 mysql -ulbtc -psxfMd4_f12508ccsdfdf -e "drop database lbtcnode"
