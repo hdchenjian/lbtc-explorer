@@ -6,11 +6,26 @@ import datetime
 import json
 from decimal import Decimal
 import pymongo
+import sqlalchemy
 
 from v8.engine import db_conn
 from v8.model.lbtc_node import LbtcNode, NodeNotValid, NodeDistribution, BlockStatus, BlockInfo, \
     AddressInfo, gen_address_tx_model, AddressGrowthDaily, TransactionDaily
 from v8.engine.util import model_to_dict
+
+def get_balance_distribution(address_distribution):
+    with contextlib.closing(db_conn.gen_session_class('base')()) as session:
+        ret = []
+        for item in address_distribution:
+            _count = session.query(AddressInfo) \
+                            .filter(AddressInfo.balance > item[0]) \
+                            .filter(AddressInfo.balance <= item[1]).count()
+            ret.append(_count)
+            _sum = session.query(sqlalchemy.func.sum(AddressInfo.balance)) \
+                            .filter(AddressInfo.balance > item[0]) \
+                            .filter(AddressInfo.balance <= item[1]).scalar()
+            ret.append(float(_sum))
+        return ret
 
 
 def get_node_by_ip(ip):

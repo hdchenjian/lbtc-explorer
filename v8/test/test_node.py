@@ -7,7 +7,7 @@ from v8.engine.handlers.node_handler import get_all_node, update_or_add_node, \
     add_not_valid_node, delete_not_valid_node, get_all_not_valid_node, add_many_tx, \
     add_one_tx, find_one_tx, query_all_committee, query_all_delegate, query_all_proposal, \
     query_coinbase_tx, update_address_info_update_time, update_address_growth_daily_info, \
-    update_transaction_daily_info
+    update_transaction_daily_info, get_balance_distribution
 
 config.from_object(config_online)
 
@@ -44,11 +44,37 @@ def test_not_valid_node():
     delete_not_valid_node(all_node[0]['id'])
 
 
+def test_get_balance_distribution():
+    address_distribution = [[10000, 99999999],
+                            [1000, 10000],
+                            [10, 1000],
+                            [1, 10],
+                            [0.1, 1],
+                            [0.01, 0.1],
+                            [0.001, 0.01],
+                            [-1, 0.001]]
+
+    print(get_balance_distribution(address_distribution))
+    ret = get_balance_distribution(address_distribution)
+    address_count = 0
+    balance_total = 0
+    address_stats = []
+    balance_stats = []
+    for i in range(0, len(address_distribution)):
+        address_count += ret[2*i]
+        address_stats.append(ret[2*i])
+        balance_total += ret[2*i + 1]
+        balance_stats.append(ret[2*i + 1])
+    print(address_count, balance_total)
+    print(ret[
+
+
 if __name__ == '__main__':
     # test_node()
     # test_not_valid_node()
     # test_mongo()
-    print(query_all_committee())
+    test_get_balance_distribution()
+    #print(query_all_committee())
     # print(query_all_delegate())
     # print(query_all_proposal())
     # print(query_coinbase_tx(['8c7ee1999644b81200390a182a0b9e4f85574991cddb7b7235538f02b79d2c26'])[0])

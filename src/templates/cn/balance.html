@@ -11,6 +11,15 @@
     </ol>
   </div>
 
+  <div class="row">
+    <div class="wrapper col-6" style="width:500px; height: 250px; float:left;">
+      <canvas id="address_stats" ></canvas>
+    </div>
+    <div class="wrapper col-6"  style="width:500px; height: 250px; float:right;">
+      <canvas id="balance_stats"></canvas>
+    </div>
+  </div>
+
   
   <div class="row">
     <div class="col-xs-12" style="padding-left: 10; padding-right: 0px;">
@@ -66,4 +75,110 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+
+{% block js %}
+<script type="text/javascript">
+var ctx = document.getElementById("address_stats");
+var transaction_count = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ address_distribution_label|tojson }},
+        datasets: [{
+            label: 'LBTC Address Distribution Chart',
+            data: {{ address_stats['count']|tojson }},
+
+            fill: 'start',
+            borderColor: "rgba(0,128,255,1)",
+            backgroundColor: "rgba(0,128,255,1)",
+            borderWidth: 1,
+            pointStyle: 'circle',
+            pointRadius:1,
+        }]
+    },
+    options: {
+        tooltips: {
+            enabled: true,
+            mode: 'single',
+            callbacks: {
+                label: function(tooltipItems, data) {
+                    var multistringText = ['Count: ' + tooltipItems.yLabel]
+                    multistringText.push(['Percent: ' + {{ address_stats['percent']|tojson }}[tooltipItems.index]]);
+                    return multistringText;
+                }
+            }
+        },
+
+        scales: {
+            yAxes: [{
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Address Count'
+                },
+            }],
+            xAxes: [{
+                type: 'category',
+                display: true,
+                scaleLabel: {
+                    display: true,
+                },
+            }],
+        }
+    }
+});
+
+var ctx = document.getElementById("balance_stats");
+var transaction_count = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ address_distribution_label|tojson }},
+        datasets: [{
+            label: 'LBTC Balance Distribution Chart',
+            data: {{ balance_stats['count']|tojson }},
+
+            fill: 'start',
+            borderColor: "rgba(0,128,255,1)",
+            backgroundColor: "rgba(0,128,255,1)",
+            borderWidth: 1,
+            pointStyle: 'circle',
+            pointRadius:1,
+        }]
+    },
+    options: {
+        tooltips: {
+            enabled: true,
+            mode: 'single',
+            callbacks: {
+                label: function(tooltipItems, data) {
+                    var multistringText = ['LBTC: ' + tooltipItems.yLabel]
+                    multistringText.push(['Percent: ' + {{ balance_stats['percent']|tojson }}[tooltipItems.index]]);
+                    return multistringText;
+                }
+            }
+        },
+        responsive: true,
+
+        scales: {
+            yAxes: [{
+                stacked: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: 'LBTC'
+                },
+            }],
+            xAxes: [{
+                stacked: true,
+                type: 'category',
+                display: true,
+                scaleLabel: {
+                    display: true,
+                },
+            }],
+        }
+    }
+});
+
+
+</script>
 {% endblock %}

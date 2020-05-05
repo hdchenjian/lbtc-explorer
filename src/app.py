@@ -22,7 +22,7 @@ from v8.engine.handlers.node_handler import get_all_node, get_node_distribution,
     get_block_status, get_block_status_multi_key, query_all_committee, query_all_delegate, \
     query_all_proposal, query_coinbase_tx, find_many_tx, find_one_tx, get_address_info, \
     query_most_rich_address, query_address_info, query_transaction_daily_info, \
-    query_address_daily_info, get_block_during
+    query_address_daily_info, get_block_during, get_balance_distribution
 from v8.config import config, config_online
 
 from config import REST_BLOCK_STATUS_KYE_NODE_IP_TYPE, \
@@ -551,15 +551,39 @@ def lbtc_search():
     return redirect(url_for('lbtc_bill', id=param))
 
 
-@app.route('/lbtc/balance', methods=['GET'])
+@app.route('/lbtc1/balance', methods=['GET'])
 def lbtc_balance():
+    address_distribution = [[0, 0.001], [0.001, 0.01], [0.01, 0.1], [0.1, 1], [1, 10],
+                            [10, 1000], [1000, 10000], [10000, 99999999]]
+    balance_distribution = get_balance_distribution(address_distribution)
+    address_count = 0
+    balance_total = 0
+    address_stats = {'count': [], 'percent': []}
+    balance_stats = {'count': [], 'percent': []}
+    address_distribution_label = []
+    for i in range(0, len(address_distribution)):
+        if i == len(address_distribution) - 1:
+            address_distribution_label.append('> ' + str(address_distribution[i][0]))
+        else:
+            address_distribution_label.append(str(address_distribution[i][0]) + '-' + str(address_distribution[i][1]))
+        address_count += balance_distribution[2*i]
+        address_stats['count'].append(balance_distribution[2*i])
+        balance_total += balance_distribution[2*i + 1]
+        balance_stats['count'].append(balance_distribution[2*i + 1])
+    for i in range(0, len(address_distribution)):
+        address_stats['percent'].append('{0:.2f}%'.format(100 * balance_distribution[2*i] / address_count))
+        balance_stats['percent'].append('{0:.2f}%'.format(100 * balance_distribution[2*i + 1] / balance_total))
+
     balance_info = query_most_rich_address(REST_BLOCK_STATUS_KYE_RICHEST_ADDRESS_LIST,
                                            REST_BLOCK_STATUS_KYE_TX_OUT_SET_INFO)
     if 'language' in session and session['language'] == 'cn':
         template_name = 'cn/balance.html'
     else:
         template_name = 'en/balance.html'
-    return render_template(template_name, balance_info=balance_info)
+    return render_template(template_name, balance_info=balance_info, address_distribution=address_distribution,
+                           address_count=address_count, address_stats=address_stats,
+                           balance_total=balance_total, balance_stats=balance_stats,
+                           address_distribution_label = address_distribution_label)
 
 
 @app.route('/lbtc/committee', methods=['GET'])
