@@ -86,7 +86,7 @@ var transaction_count = new Chart(ctx, {
     data: {
         labels: {{ address_distribution_label|tojson }},
         datasets: [{
-            label: 'LBTC Address Distribution Chart',
+            label: 'LBTC地址分布图',
             data: {{ address_stats['count']|tojson }},
 
             fill: 'start',
@@ -114,7 +114,7 @@ var transaction_count = new Chart(ctx, {
             yAxes: [{
                 scaleLabel: {
                     display: true,
-                    labelString: 'Address Count'
+                    labelString: '地址数'
                 },
             }],
             xAxes: [{
@@ -134,7 +134,7 @@ var transaction_count = new Chart(ctx, {
     data: {
         labels: {{ address_distribution_label|tojson }},
         datasets: [{
-            label: 'LBTC Balance Distribution Chart',
+            label: 'LBTC余额分布图',
             data: {{ balance_stats['count']|tojson }},
 
             fill: 'start',

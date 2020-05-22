@@ -502,7 +502,7 @@ def lbtc_block():
     try:
         block_info['next_hash'] = rpc_connection.getblockhash(_info_block['height'] + 1)
     except Exception:
-        traceback.print_exc()
+        #traceback.print_exc()
         block_info['next_hash'] = ''
     block_info['height'] = '{:,}'.format(block_info['height'])
     if 'language' in session and session['language'] == 'cn':
