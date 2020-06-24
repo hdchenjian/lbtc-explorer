@@ -66,7 +66,6 @@ def test_get_balance_distribution():
         balance_total += ret[2*i + 1]
         balance_stats.append(ret[2*i + 1])
     print(address_count, balance_total)
-    print(ret[
 
 
 if __name__ == '__main__':

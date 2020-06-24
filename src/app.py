@@ -848,15 +848,15 @@ def lbtc_daily_tx():
     end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d')
     #print(start_time, end_time)
     ret = get_block_during(start_time, end_time)
-    start_height = ret[0]
-    end_height = ret[1]
-    #print(start_height, end_height)
+    if not ret:
+        return 'no tx'
+    end_height = ret[-1]
+    print('ret', len(ret), ret[0:10], ret[-10:])
 
     next_block_hash = ''
-    current_height = start_height
     _tx_id_list = []
     rpc_connection = AuthServiceProxy('http://%s:%s@127.0.0.1:9332' % ('luyao', 'DONNNN'))
-    for i in range(start_height, end_height+1):
+    for current_height in ret:
         block_info = {}
         if not next_block_hash:
             next_block_hash = rpc_connection.getblockhash(current_height)

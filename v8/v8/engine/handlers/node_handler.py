@@ -1001,10 +1001,8 @@ def query_address_daily_info():
 def get_block_during(start_time, end_time):
     with contextlib.closing(db_conn.gen_session_class('base')()) as session:
         ret = []
-        _block_info = session.query(BlockInfo).filter(
-            BlockInfo.create_time >= start_time).order_by(BlockInfo.height).first()
-        ret.append(_block_info.height)
-        _block_info = session.query(BlockInfo).filter(
-            BlockInfo.create_time < end_time).order_by(BlockInfo.height.desc()).first()
-        ret.append(_block_info.height)
+        for _block_info in session.query(BlockInfo).filter(
+                BlockInfo.create_time >= start_time, BlockInfo.create_time < end_time,
+                BlockInfo.tx_num > 1).order_by(BlockInfo.height):
+            ret.append(_block_info.height)
         return ret
