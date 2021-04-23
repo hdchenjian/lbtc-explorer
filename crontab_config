@@ -40,3 +40,6 @@
 #1 1 * * * cd /home/ubuntu/.bin/lbtc/lbtcnode/src && /usr/bin/python3 valid_tx.py >> logs/valid_tx.log 2>&1
 #1 1 * * * cd /home/ubuntu/.bin/lbtc/lbtcnode/src && /usr/bin/python3 send_lbtc_test.py >> logs/send_lbtc_test.log 2>&1
 #4 4 9 * * cd /home/ubuntu/.bin/lbtc/lbtcnode/backup_db && /bin/sh backup_db.sh
+
+
+1 1 * * * /usr/bin/certbot renew --pre-hook "service nginx stop" --post-hook "service nginx start"
