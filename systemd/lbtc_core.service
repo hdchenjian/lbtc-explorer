@@ -5,6 +5,7 @@ After=multi-user.target
 Type=simple
 User=ubuntu
 ExecStart=/home/ubuntu/.bin/lbtc/bitcoind --txindex
+#-dbcache=50 -maxmempool=100 -maxorphantx=30 -mempoolexpiry=1 -maxconnections=15 -rpcthreads=2
 Restart=always
 RestartSec=15s
 

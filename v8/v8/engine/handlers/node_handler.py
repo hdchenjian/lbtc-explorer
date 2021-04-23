@@ -945,6 +945,8 @@ def update_transaction_daily_info():
         if not block_info_latest:
             return
         end_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        if (datetime.datetime.now() - end_time).seconds < 3000:
+            return
         transaction_daily_latest = session.query(TransactionDaily) \
                                           .order_by(TransactionDaily.time.desc()).first()
         if not transaction_daily_latest:

@@ -121,7 +121,10 @@ def parse_lbtc_block_main():
         irreversibleBlock = subprocess.getstatusoutput('tail -n 2000 /home/ubuntu/.bitcoin/debug.log | grep NewIrreversibleBlock | tail -1')
         start_index = irreversibleBlock[1].find('NewIrreversibleBlock height:') + len('NewIrreversibleBlock height:')
         end_index = irreversibleBlock[1].find(' hash')
-        irreversible_block_height = int(irreversibleBlock[1][start_index: end_index])
+        try:
+            irreversible_block_height = int(irreversibleBlock[1][start_index: end_index])
+        except Exception as e:
+            irreversible_block_height = best_height - 3000
 
         # best_height = 14
         block_status = get_block_status(PARSE_BLOCK_STATUS_KYE_MYSQL_CURRENT_HEIGHT)

@@ -17,7 +17,7 @@ def update_rpc_node():
         print(rpc_connection.getwalletinfo())
         _address = None
         transform_amount = 0.000006
-        for i in range(0, int(500 / 7 + 2)):
+        for i in range(0, int(200 / 7 + 2)):
             while(True):
                 _address = rpc_connection.getnewaddress('lbtc')  # 1PV5fUPErEvX3wAQBVhvsecnyYGzSUvF9D
                 if(rpc_connection.getaddressbalance(_address) == 0): break
